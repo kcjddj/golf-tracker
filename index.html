@@ -1,0 +1,733 @@
+<title>스코어카드 — 골프 라운드 기록</title>
+<style>
+  :root {
+    color-scheme: light;
+    --paper:      #f3efe3;
+    --paper-alt:  #e9e1cb;
+    --card:       #faf7ee;
+    --ink:        #1e2a20;
+    --ink-2:      #55604f;
+    --muted:      #8a8578;
+    --line:       #d9d2bc;
+    --turf:       #2f6b4f;
+    --turf-deep:  #1f4d38;
+    --turf-wash:  #e3ece4;
+    --flag:       #b8452f;
+    --flag-wash:  #f3e2dc;
+    --good:       #0ca30c;
+    --good-deep:  #008300;
+    --warn:       #c98500;
+    --serious:    #ec835a;
+    --critical:   #d03b3b;
+    --shadow:     0 1px 2px rgba(30,42,32,0.06), 0 4px 14px rgba(30,42,32,0.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --paper:      #141d17;
+      --paper-alt:  #1b2620;
+      --card:       #1a251e;
+      --ink:        #ece7d8;
+      --ink-2:      #aab0a1;
+      --muted:      #7d8579;
+      --line:       #2b362e;
+      --turf:       #62a884;
+      --turf-deep:  #8fcbab;
+      --turf-wash:  #1e332a;
+      --flag:       #e0805f;
+      --flag-wash:  #33221d;
+      --good:       #35c235;
+      --good-deep:  #4bd24b;
+      --warn:       #f0a93a;
+      --serious:    #f0997a;
+      --critical:   #e8685f;
+      --shadow:     0 1px 2px rgba(0,0,0,0.3), 0 4px 18px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper:      #141d17;
+    --paper-alt:  #1b2620;
+    --card:       #1a251e;
+    --ink:        #ece7d8;
+    --ink-2:      #aab0a1;
+    --muted:      #7d8579;
+    --line:       #2b362e;
+    --turf:       #62a884;
+    --turf-deep:  #8fcbab;
+    --turf-wash:  #1e332a;
+    --flag:       #e0805f;
+    --flag-wash:  #33221d;
+    --good:       #35c235;
+    --good-deep:  #4bd24b;
+    --warn:       #f0a93a;
+    --serious:    #f0997a;
+    --critical:   #e8685f;
+    --shadow:     0 1px 2px rgba(0,0,0,0.3), 0 4px 18px rgba(0,0,0,0.35);
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --paper: #f3efe3; --paper-alt: #e9e1cb; --card: #faf7ee;
+    --ink: #1e2a20; --ink-2: #55604f; --muted: #8a8578; --line: #d9d2bc;
+    --turf: #2f6b4f; --turf-deep: #1f4d38; --turf-wash: #e3ece4;
+    --flag: #b8452f; --flag-wash: #f3e2dc;
+    --good: #0ca30c; --good-deep: #008300; --warn: #c98500;
+    --serious: #ec835a; --critical: #d03b3b;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--paper); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body { padding-bottom: 48px; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  .num { font-family: ui-serif, Georgia, "Nanum Myeongjo", serif; font-variant-numeric: tabular-nums; }
+  button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
+  input, select { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--turf); outline-offset: 2px; }
+
+  /* ── Header ───────────────────────────────────────────── */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    padding: 9px 16px 7px;
+  }
+  .brand { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .brand-name { font-family: ui-serif, Georgia, serif; font-size: 20px; font-weight: 600; letter-spacing: 0.2px; }
+  .brand-name .accent { color: var(--turf); }
+  .hcp-chip {
+    display: flex; align-items: baseline; gap: 5px;
+    background: var(--flag-wash); border-radius: 999px;
+    padding: 4px 12px 4px 10px;
+  }
+  .hcp-chip .lbl { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--flag); opacity: 0.85; }
+  .hcp-chip .val { font-size: 17px; font-weight: 600; color: var(--flag); }
+
+  nav.tabs {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px; margin-top: 8px;
+    background: var(--paper-alt); border-radius: 12px; padding: 4px;
+  }
+  nav.tabs button {
+    border: none; background: transparent; color: var(--ink-2);
+    padding: 7px 4px; border-radius: 9px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+  }
+  nav.tabs button.active { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+
+  main { max-width: 560px; margin: 0 auto; padding: 16px; }
+  section.panel { display: none; }
+  section.panel.active { display: block; animation: fade 0.18s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px; box-shadow: var(--shadow);
+  }
+  .card + .card { margin-top: 14px; }
+  .card-title { font-size: 13px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 12px; }
+
+  /* ── Round entry form ─────────────────────────────────── */
+  .field-row { display: flex; gap: 10px; margin-bottom: 8px; }
+  .field { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .field label { font-size: 12px; color: var(--ink-2); font-weight: 600; }
+  .field input[type="date"], .field input[type="text"] {
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 9px; padding: 7px 10px; font-size: 15px; width: 100%;
+  }
+
+  .nine-block { margin-bottom: 10px; }
+  .nine-title {
+    display: flex; align-items: baseline; justify-content: space-between;
+    font-size: 13px; font-weight: 700; color: var(--turf); margin-bottom: 5px;
+    padding-bottom: 4px; border-bottom: 1px solid var(--line);
+  }
+  .nine-title .sub-total { font-family: ui-serif, Georgia, serif; font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  .nine-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
+  .hole-table { min-width: 384px; }
+  .hole-head, .hole-row {
+    display: grid;
+    grid-template-columns: 16px 34px 24px 24px 24px 24px 24px 24px 30px 30px 30px 30px 34px;
+    align-items: center; gap: 3px;
+  }
+  .hole-head {
+    font-size: 8.5px; font-weight: 700; color: var(--muted); text-align: center;
+    text-transform: uppercase; letter-spacing: 0.01em;
+    padding-bottom: 5px; border-bottom: 1px solid var(--line);
+  }
+  .hole-row { padding: 10px 0; }
+  .hole-row + .hole-row { border-top: 1px solid var(--line); }
+  .h-no { font-size: 12px; color: var(--muted); font-weight: 700; text-align: center; }
+  .hole-row select {
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 6px; padding: 6px 0; font-size: 11.5px; text-align: center;
+    width: 100%; font-variant-numeric: tabular-nums;
+  }
+  .hole-row input[type="checkbox"] {
+    width: 21px; height: 21px; margin: 0 auto; display: block;
+    accent-color: var(--turf); cursor: pointer;
+  }
+  .hole-row input[type="checkbox"]:disabled { opacity: 0.3; cursor: not-allowed; }
+  .h-score {
+    font-family: ui-serif, Georgia, serif; font-size: 13px; font-weight: 700;
+    text-align: center; font-variant-numeric: tabular-nums; color: var(--flag);
+  }
+
+  .live-total {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--turf-wash); border-radius: 10px; padding: 9px 14px; margin-bottom: 10px;
+  }
+  .live-total .lbl { font-size: 12px; color: var(--ink-2); font-weight: 600; }
+  .live-total .v { font-family: ui-serif, Georgia, serif; font-size: 20px; font-weight: 700; }
+
+  .save-btn {
+    width: 100%; border: none; background: var(--turf); color: #fff;
+    padding: 13px; border-radius: 11px; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .save-btn:disabled { background: var(--muted); cursor: not-allowed; opacity: 0.6; }
+  .save-btn:active:not(:disabled) { background: var(--turf-deep); }
+  .hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: 8px; }
+
+  /* ── Analysis ─────────────────────────────────────────── */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat-tile { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 12px; box-shadow: var(--shadow); }
+  .stat-tile .lbl { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-2); font-weight: 700; margin-bottom: 6px; }
+  .stat-tile .v { font-family: ui-serif, Georgia, serif; font-size: 30px; font-weight: 600; line-height: 1; }
+  .stat-tile .v.accent { color: var(--flag); }
+  .stat-tile .sub { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+
+  .save-grid { display: flex; flex-direction: column; gap: 9px; }
+  .save-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .save-row .lbl { font-size: 13px; color: var(--ink-2); font-weight: 600; }
+  .save-row .v { font-family: ui-serif, Georgia, serif; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .empty { text-align: center; padding: 40px 16px; color: var(--ink-2); }
+  .empty .big { font-size: 34px; margin-bottom: 10px; }
+
+  svg text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .chart-wrap { position: relative; }
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--ink); color: var(--paper);
+    font-size: 12px; padding: 6px 9px; border-radius: 7px; transform: translate(-50%, -115%);
+    white-space: nowrap; opacity: 0; transition: opacity 0.1s; box-shadow: var(--shadow);
+  }
+  .tooltip.show { opacity: 1; }
+  .tooltip .t-date { color: var(--ink-2); font-size: 10.5px; }
+
+  .dist-row { display: grid; grid-template-columns: 60px 1fr 92px; align-items: center; gap: 8px; padding: 5px 0; }
+  .dist-row .lbl { font-size: 12.5px; font-weight: 700; }
+  .dist-track { height: 16px; background: var(--paper-alt); border-radius: 4px; overflow: hidden; position: relative; }
+  .dist-fill { height: 100%; border-radius: 4px; min-width: 2px; }
+  .dist-row .cnt { font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+
+  /* ── History ──────────────────────────────────────────── */
+  .round-row {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow);
+  }
+  .round-row summary {
+    list-style: none; cursor: pointer; padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .round-row summary::-webkit-details-marker { display: none; }
+  .round-row .r-left { display: flex; flex-direction: column; gap: 2px; }
+  .round-row .r-date { font-size: 12px; color: var(--muted); }
+  .round-row .r-course { font-size: 14.5px; font-weight: 700; }
+  .round-row .r-right { display: flex; align-items: center; gap: 8px; }
+  .score-chip { font-family: ui-serif, Georgia, serif; font-size: 16px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .score-chip.under { background: var(--turf-wash); color: var(--turf-deep); }
+  .score-chip.even  { background: var(--paper-alt); color: var(--ink-2); }
+  .score-chip.over  { background: var(--flag-wash); color: var(--flag); }
+  .chevron { color: var(--muted); transition: transform 0.15s; }
+  .round-row[open] .chevron { transform: rotate(180deg); }
+  .r-detail { padding: 0 14px 14px; border-top: 1px solid var(--line); }
+  .r-mini-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; margin: 10px 0 4px; }
+  .r-hole { text-align: center; font-size: 10.5px; }
+  .r-hole .hn { color: var(--muted); }
+  .r-hole .hs { font-weight: 700; font-variant-numeric: tabular-nums; border-radius: 5px; padding: 2px 0; margin-top: 1px; }
+  .r-extra { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); margin: 10px 0; }
+  .r-extra b { color: var(--ink); }
+  .del-btn { border: 1px solid var(--flag); color: var(--flag); background: transparent; border-radius: 8px; padding: 6px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+  .del-btn.confirming { background: var(--flag); color: #fff; }
+
+  ::selection { background: var(--turf-wash); }
+</style>
+
+<header>
+  <div class="brand">
+    <div class="brand-name">스코어<span class="accent">카드</span></div>
+    <div class="hcp-chip"><span class="lbl">HCP</span><span class="val" id="hdrHcp">—</span></div>
+  </div>
+  <nav class="tabs">
+    <button data-tab="add" class="active">기록 추가</button>
+    <button data-tab="analysis">분석</button>
+    <button data-tab="history">기록 보기</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ── 기록 추가 ─────────────────────────────────────── -->
+  <section class="panel active" id="panel-add">
+    <div class="card">
+      <div class="field-row">
+        <div class="field">
+          <label for="inDate">날짜</label>
+          <input type="date" id="inDate">
+        </div>
+        <div class="field">
+          <label for="inCourse">골프장명</label>
+          <input type="text" id="inCourse" placeholder="예: 남서울CC">
+        </div>
+      </div>
+
+      <div class="live-total">
+        <span class="lbl">현재 합계</span>
+        <span class="v" id="liveTotal">— / 파 —</span>
+      </div>
+
+      <div class="nine-block">
+        <div class="nine-title"><span>전반 (1–9)</span><span class="sub-total" id="frontSub">0</span></div>
+        <div class="nine-scroll">
+          <div class="hole-table">
+            <div class="hole-head"><span>#</span><span>Par</span><span>OB</span><span>PA</span><span>FIR</span><span>OB</span><span>PA</span><span>GIR</span><span>AP</span><span>BK</span><span>CP</span><span>PUT</span><span>타수</span></div>
+            <div id="frontHoles"></div>
+          </div>
+        </div>
+      </div>
+      <div class="nine-block">
+        <div class="nine-title"><span>후반 (10–18)</span><span class="sub-total" id="backSub">0</span></div>
+        <div class="nine-scroll">
+          <div class="hole-table">
+            <div class="hole-head"><span>#</span><span>Par</span><span>OB</span><span>PA</span><span>FIR</span><span>OB</span><span>PA</span><span>GIR</span><span>AP</span><span>BK</span><span>CP</span><span>PUT</span><span>타수</span></div>
+            <div id="backHoles"></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="save-btn" id="saveBtn">라운드 저장</button>
+      <div class="hint" id="saveHint">값을 확인한 후 저장하세요</div>
+    </div>
+  </section>
+
+  <!-- ── 분석 ─────────────────────────────────────────── -->
+  <section class="panel" id="panel-analysis"></section>
+
+  <!-- ── 기록 보기 ─────────────────────────────────────── -->
+  <section class="panel" id="panel-history"></section>
+</main>
+
+<script>
+(() => {
+  const STORE_KEY = "golf-tracker-rounds-v1";
+  const PAR_COLORS = { par: "var(--muted)" };
+  const BUCKET_META = [
+    { key: "eagle",  label: "이글",     color: "var(--good-deep)" },
+    { key: "birdie", label: "버디",     color: "var(--good)" },
+    { key: "par",    label: "파",       color: "var(--muted)" },
+    { key: "bogey",  label: "보기",     color: "var(--warn)" },
+    { key: "double", label: "더블보기", color: "var(--serious)" },
+    { key: "triple", label: "트리플보기", color: "var(--critical)" },
+    { key: "quad",   label: "쿼드러플+", color: "var(--critical)" },
+  ];
+
+  const sum  = a => a.reduce((x, y) => x + y, 0);
+  const mean = a => a.length ? sum(a) / a.length : 0;
+  const fmt1 = n => (Math.round(n * 10) / 10).toFixed(1);
+  const fmtRate = (num, den) => den ? `${num}/${den} (${fmt1(num / den * 100)}%)` : `${num}/${den} (—)`;
+  const fmtPer18 = (num, den) => den ? `${num}/${den} (${fmt1(num / den * 18)}/18)` : `${num}/${den} (—)`;
+
+  // ── storage ──────────────────────────────────────────
+  function loadRounds() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+    catch { return []; }
+  }
+  function saveRounds(rounds) {
+    localStorage.setItem(STORE_KEY, JSON.stringify(rounds));
+  }
+  let rounds = loadRounds();
+
+  // ── round entry state ────────────────────────────────
+  // ob1/pa1 = tee-shot OB/해저드 (drives FIR off); ob2/pa2 = approach-shot OB/해저드 (drives GIR off)
+  const defaultHole = () => ({ par: 4, ob1: false, pa1: false, fir: true, ob2: false, pa2: false, gir: true, ap: 0, bk: 0, cp: 0, put: 2 });
+  let holes = Array.from({ length: 18 }, defaultHole);
+
+  // FIR/GIR always contribute +1 to the raw total regardless of checked state.
+  // Par 5 holes get +1 raw stroke (reaching the green in regulation takes 3 shots, not 2).
+  // Par 3 holes get -1 raw stroke to cancel out FIR's constant +1 (no fairway target on a par 3).
+  // Final per-hole "score" is the raw total minus par (i.e. the score is already expressed relative to par).
+  function holeScore(h) {
+    let raw = (h.ob1 ? 2 : 0) + (h.pa1 ? 1 : 0) + (h.ob2 ? 2 : 0) + (h.pa2 ? 1 : 0) + 1 + 1 + h.ap + h.bk + h.cp + h.put;
+    if (h.par === 5) raw += 1;
+    if (h.par === 3) raw -= 1;
+    return raw - h.par;
+  }
+  const fmtDiff = d => d === 0 ? "E" : (d > 0 ? `+${d}` : `${d}`);
+  const selectOptions = (n, sel) =>
+    Array.from({ length: n + 1 }, (_, v) => `<option value="${v}" ${v === sel ? "selected" : ""}>${v}</option>`).join("");
+
+  function holeRowHTML(i) {
+    const h = holes[i];
+    const teeDisabled = h.par === 3; // no fairway target on a par 3, so OB/PA/FIR off the tee don't apply
+    return `
+        <span class="h-no">${i + 1}</span>
+        <select data-hole="${i}" data-field="par">${[3, 4, 5].map(p => `<option value="${p}" ${h.par === p ? "selected" : ""}>${p}</option>`).join("")}</select>
+        <input type="checkbox" data-hole="${i}" data-field="ob1" ${h.ob1 ? "checked" : ""} ${teeDisabled ? "disabled" : ""}>
+        <input type="checkbox" data-hole="${i}" data-field="pa1" ${h.pa1 ? "checked" : ""} ${teeDisabled ? "disabled" : ""}>
+        <input type="checkbox" data-hole="${i}" data-field="fir" ${h.fir ? "checked" : ""} ${teeDisabled ? "disabled" : ""}>
+        <input type="checkbox" data-hole="${i}" data-field="ob2" ${h.ob2 ? "checked" : ""}>
+        <input type="checkbox" data-hole="${i}" data-field="pa2" ${h.pa2 ? "checked" : ""}>
+        <input type="checkbox" data-hole="${i}" data-field="gir" ${h.gir ? "checked" : ""}>
+        <select data-hole="${i}" data-field="ap">${selectOptions(3, h.ap)}</select>
+        <select data-hole="${i}" data-field="bk">${selectOptions(3, h.bk)}</select>
+        <select data-hole="${i}" data-field="cp">${selectOptions(3, h.cp)}</select>
+        <select data-hole="${i}" data-field="put">${selectOptions(4, h.put)}</select>
+        <span class="h-score">${fmtDiff(holeScore(h))}</span>`;
+  }
+
+  function buildHoleRows() {
+    const front = document.getElementById("frontHoles");
+    const back  = document.getElementById("backHoles");
+    front.innerHTML = ""; back.innerHTML = "";
+    for (let i = 0; i < 18; i++) {
+      const row = document.createElement("div");
+      row.className = "hole-row";
+      row.innerHTML = holeRowHTML(i);
+      (i < 9 ? front : back).appendChild(row);
+    }
+  }
+  buildHoleRows();
+
+  function refreshLiveTotals() {
+    const totalDiff = sum(holes.map(holeScore));
+    const totalPar = sum(holes.map(h => h.par));
+    const totalStrokes = totalDiff + totalPar;
+    document.getElementById("liveTotal").textContent = `${totalStrokes} / 파${totalPar} (${fmtDiff(totalDiff)})`;
+    document.getElementById("frontSub").textContent = sum(holes.slice(0, 9).map(holeScore)) + sum(holes.slice(0, 9).map(h => h.par));
+    document.getElementById("backSub").textContent  = sum(holes.slice(9, 18).map(holeScore)) + sum(holes.slice(9, 18).map(h => h.par));
+  }
+
+  document.getElementById("panel-add").addEventListener("change", e => {
+    const field = e.target.dataset.field;
+    if (!field) return;
+    const h = +e.target.dataset.hole;
+    const hole = holes[h];
+    hole[field] = e.target.type === "checkbox" ? e.target.checked : +e.target.value;
+
+    // OB/해저드 off the tee means the fairway wasn't hit; off the approach means the green wasn't hit.
+    // The score itself is unaffected — FIR/GIR always contribute a constant +1 either way.
+    if ((field === "ob1" || field === "pa1") && hole[field]) hole.fir = false;
+    if ((field === "ob2" || field === "pa2") && hole[field]) hole.gir = false;
+    if (field === "par" && hole.par === 3) { hole.ob1 = false; hole.pa1 = false; hole.fir = false; }
+    if ((field === "ap" || field === "bk" || field === "cp") && hole[field] > 0) hole.gir = false;
+
+    e.target.closest(".hole-row").outerHTML = `<div class="hole-row">${holeRowHTML(h)}</div>`;
+    refreshLiveTotals();
+  });
+  refreshLiveTotals();
+
+  document.getElementById("inDate").valueAsDate = new Date();
+
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    const round = {
+      id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+      date: document.getElementById("inDate").value || new Date().toISOString().slice(0, 10),
+      course: document.getElementById("inCourse").value.trim() || "이름 없는 골프장",
+      holes: holes.map(h => ({
+        par: h.par, score: holeScore(h),
+        ob1: h.ob1, pa1: h.pa1, fir: h.fir, ob2: h.ob2, pa2: h.pa2, gir: h.gir,
+        ap: h.ap, bk: h.bk, cp: h.cp, put: h.put,
+      })),
+      fairways: holes.filter(h => h.fir && h.par !== 3).length,
+      greens:   holes.filter(h => h.gir).length,
+      obCount:  holes.filter(h => h.ob1).length + holes.filter(h => h.ob2).length,
+      paCount:  holes.filter(h => h.pa1).length + holes.filter(h => h.pa2).length,
+      apTotal:  sum(holes.map(h => h.ap)),
+      bkTotal:  sum(holes.map(h => h.bk)),
+      cpTotal:  sum(holes.map(h => h.cp)),
+      putts:    sum(holes.map(h => h.put)),
+    };
+    rounds.push(round);
+    saveRounds(rounds);
+
+    holes = Array.from({ length: 18 }, defaultHole);
+    buildHoleRows();
+    document.getElementById("inCourse").value = "";
+    document.getElementById("inDate").valueAsDate = new Date();
+    refreshLiveTotals();
+
+    renderAnalysis(); renderHistory(); renderHeaderHcp();
+    switchTab("history");
+  });
+
+  // ── per-round derived metrics ────────────────────────
+  // h.score is stored already relative to par (see holeScore()), so the raw stroke total is score + par.
+  function roundMetrics(r) {
+    const totalPar   = sum(r.holes.map(h => h.par));
+    const totalDiff  = sum(r.holes.map(h => h.score));
+    const totalScore = totalDiff + totalPar;
+    const par45Count = r.holes.filter(h => h.par >= 4).length;
+    const buckets = { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 };
+    r.holes.forEach(h => {
+      const d = h.score;
+      if (d <= -2) buckets.eagle++;
+      else if (d === -1) buckets.birdie++;
+      else if (d === 0) buckets.par++;
+      else if (d === 1) buckets.bogey++;
+      else if (d === 2) buckets.double++;
+      else if (d === 3) buckets.triple++;
+      else buckets.quad++;
+    });
+    return { totalScore, totalPar, diff: totalDiff, par45Count, buckets };
+  }
+
+  function analyze() {
+    if (!rounds.length) return null;
+    const byDateDesc = [...rounds].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const metrics = byDateDesc.map(roundMetrics);
+
+    const last20 = metrics.slice(0, 20).map(m => m.diff);
+    const nBest = Math.min(8, last20.length);
+    const handicap = mean([...last20].sort((a, b) => a - b).slice(0, nBest));
+
+    const fwHit = sum(rounds.map(r => r.fairways));
+    const fwApplicable = sum(metrics.map(m => m.par45Count));
+    const fairwayRate = fwApplicable ? (fwHit / fwApplicable) * 100 : 0;
+
+    const girHit = sum(rounds.map(r => r.greens));
+    const girRate = (girHit / (rounds.length * 18)) * 100;
+
+    const avgPutts = mean(rounds.map(r => r.putts));
+
+    const bucketCounts = {};
+    BUCKET_META.forEach(b => bucketCounts[b.key] = sum(metrics.map(m => m.buckets[b.key])));
+    const totalHoles = rounds.length * 18;
+
+    const trend = [...rounds].sort((a, b) => new Date(a.date) - new Date(b.date))
+      .map(r => ({ date: r.date, diff: roundMetrics(r).diff }));
+
+    // ── short-game saves (hole-level, across all rounds) ──
+    const allHoles = rounds.flatMap(r => r.holes);
+    const bkSaveNum = allHoles.filter(h => h.bk === 1 && h.put === 1).length;
+    const bkSaveDen = allHoles.filter(h => h.bk >= 1 && h.put > 1).length + bkSaveNum;
+    const cpSaveNum = allHoles.filter(h => h.cp === 1 && h.put === 1).length;
+    const cpSaveDen = allHoles.filter(h => h.cp >= 1 && h.put > 1).length + cpSaveNum;
+    const chipInNum = allHoles.filter(h => h.cp >= 1 && h.put === 0).length;
+    const chipInDen = allHoles.filter(h => h.cp >= 1 && h.put > 0).length + chipInNum;
+    const parSaveDen = allHoles.filter(h => !h.gir).length;
+    const parSaveNum = allHoles.filter(h => !h.gir && h.score <= 0).length;
+
+    return {
+      handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: rounds.length,
+      bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
+    };
+  }
+
+  function renderHeaderHcp() {
+    const a = analyze();
+    document.getElementById("hdrHcp").textContent = a ? (a.handicap > 0 ? `+${fmt1(a.handicap)}` : fmt1(a.handicap)) : "—";
+  }
+
+  // ── analysis panel ───────────────────────────────────
+  function renderAnalysis() {
+    const el = document.getElementById("panel-analysis");
+    const a = analyze();
+    if (!a) {
+      el.innerHTML = `<div class="card"><div class="empty"><div class="big">⛳️</div>기록된 라운드가 없어요.<br>‘기록 추가’ 탭에서 첫 라운드를 입력해보세요.</div></div>`;
+      return;
+    }
+    const hcpStr = a.handicap > 0 ? `+${fmt1(a.handicap)}` : fmt1(a.handicap);
+    el.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-tile"><div class="lbl">간이 핸디캡</div><div class="v accent">${hcpStr}</div><div class="sub">최근 ${a.nBest}개 최소 차이 평균</div></div>
+        <div class="stat-tile"><div class="lbl">페어웨이 키핑률</div><div class="v">${fmt1(a.fairwayRate)}%</div><div class="sub">파4·5 홀 기준</div></div>
+        <div class="stat-tile"><div class="lbl">온그린율</div><div class="v">${fmt1(a.girRate)}%</div><div class="sub">18홀 기준</div></div>
+        <div class="stat-tile"><div class="lbl">평균 퍼팅수</div><div class="v">${fmt1(a.avgPutts)}</div><div class="sub">라운드당</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">숏게임 세이브</div>
+        <div class="save-grid">
+          <div class="save-row"><span class="lbl">벙커 세이브율</span><span class="v">${fmtRate(a.bkSaveNum, a.bkSaveDen)}</span></div>
+          <div class="save-row"><span class="lbl">칩 세이브율</span><span class="v">${fmtRate(a.cpSaveNum, a.cpSaveDen)}</span></div>
+          <div class="save-row"><span class="lbl">파 세이브율</span><span class="v">${fmtRate(a.parSaveNum, a.parSaveDen)}</span></div>
+          <div class="save-row"><span class="lbl">칩인</span><span class="v">${fmtRate(a.chipInNum, a.chipInDen)}</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">스코어 추이 (총타 − 파)</div>
+        <div class="chart-wrap" id="trendChart"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">라운드당 평균 스코어 분포</div>
+        <div id="distChart"></div>
+      </div>
+
+      <div class="hint" style="margin-top:2px;">총 ${a.count}라운드 기록됨</div>
+    `;
+    renderTrendChart(a.trend);
+    renderDistChart(a.bucketCounts, a.totalHoles);
+  }
+
+  function renderDistChart(bucketCounts, totalHoles) {
+    const el = document.getElementById("distChart");
+    const max = Math.max(...BUCKET_META.map(b => bucketCounts[b.key]), 1);
+    el.innerHTML = BUCKET_META.map(b => {
+      const v = bucketCounts[b.key];
+      const pct = Math.max((v / max) * 100, v > 0 ? 3 : 0);
+      return `<div class="dist-row">
+        <span class="lbl" style="color:${b.color}">${b.label}</span>
+        <div class="dist-track"><div class="dist-fill" style="width:${pct}%; background:${b.color}"></div></div>
+        <span class="cnt">${fmtPer18(v, totalHoles)}</span>
+      </div>`;
+    }).join("");
+  }
+
+  function renderTrendChart(trend) {
+    const wrap = document.getElementById("trendChart");
+    if (trend.length < 2) {
+      wrap.innerHTML = `<div class="hint" style="padding:10px 0;">추이를 보려면 라운드가 2개 이상 필요해요</div>`;
+      return;
+    }
+    const W = 320, H = 140, PAD = 22;
+    const vals = trend.map(t => t.diff);
+    const yMin = Math.min(...vals, 0), yMax = Math.max(...vals, 0);
+    const yRange = (yMax - yMin) || 1;
+    const x = i => PAD + (i / (trend.length - 1)) * (W - PAD * 2);
+    const y = v => H - PAD - ((v - yMin) / yRange) * (H - PAD * 2);
+    const zeroY = y(0);
+
+    const pts = trend.map((t, i) => [x(i), y(t.diff)]);
+    const path = pts.map((p, i) => (i === 0 ? "M" : "L") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+    const areaPath = path + ` L${pts[pts.length-1][0].toFixed(1)},${zeroY} L${pts[0][0].toFixed(1)},${zeroY} Z`;
+
+    const circles = pts.map((p, i) =>
+      `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--turf)" data-i="${i}" class="dot" style="cursor:pointer"></circle>`
+    ).join("");
+
+    wrap.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet">
+        <line x1="${PAD}" y1="${zeroY.toFixed(1)}" x2="${W - PAD}" y2="${zeroY.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="${W - PAD}" y="${zeroY - 4}" text-anchor="end" font-size="9" fill="var(--muted)">파(0)</text>
+        <path d="${areaPath}" fill="var(--turf)" opacity="0.10"></path>
+        <path d="${path}" fill="none" stroke="var(--turf)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        ${circles}
+        <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="4.5" fill="var(--flag)"></circle>
+      </svg>
+      <div class="tooltip" id="trendTip"></div>
+    `;
+    const svg = wrap.querySelector("svg");
+    const tip = document.getElementById("trendTip");
+    svg.querySelectorAll(".dot").forEach(dot => {
+      const show = () => {
+        const i = +dot.dataset.i;
+        const t = trend[i];
+        const d = t.diff === 0 ? "E" : (t.diff > 0 ? `+${t.diff}` : `${t.diff}`);
+        tip.innerHTML = `<div class="t-date">${t.date}</div>${d}`;
+        const rect = svg.getBoundingClientRect();
+        const wrapRect = wrap.getBoundingClientRect();
+        const cx = (dot.cx.baseVal.value / W) * rect.width;
+        const cy = (dot.cy.baseVal.value / H) * rect.height;
+        tip.style.left = cx + "px";
+        tip.style.top = cy + "px";
+        tip.classList.add("show");
+      };
+      dot.addEventListener("mouseenter", show);
+      dot.addEventListener("touchstart", e => { show(); }, { passive: true });
+      dot.addEventListener("mouseleave", () => tip.classList.remove("show"));
+    });
+  }
+
+  // ── history panel ─────────────────────────────────────
+  function renderHistory() {
+    const el = document.getElementById("panel-history");
+    if (!rounds.length) {
+      el.innerHTML = `<div class="card"><div class="empty"><div class="big">🗒️</div>아직 기록이 없어요.</div></div>`;
+      return;
+    }
+    const sorted = [...rounds].map((r, idx) => ({ r, idx })).sort((a, b) => new Date(b.r.date) - new Date(a.r.date));
+    el.innerHTML = sorted.map(({ r, idx }) => {
+      const m = roundMetrics(r);
+      const chipClass = m.diff < 0 ? "under" : (m.diff === 0 ? "even" : "over");
+      const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
+      const holeCells = r.holes.map((h, i) => {
+        const d = h.score;
+        let bg = "transparent", fg = "var(--ink)";
+        if (d <= -1) { bg = "var(--turf-wash)"; fg = "var(--turf-deep)"; }
+        else if (d >= 2) { bg = "var(--flag-wash)"; fg = "var(--flag)"; }
+        return `<div class="r-hole"><div class="hn">${i + 1}</div><div class="hs" style="background:${bg};color:${fg}">${h.score + h.par}</div></div>`;
+      });
+      return `
+      <details class="round-row">
+        <summary>
+          <div class="r-left">
+            <div class="r-date">${r.date}</div>
+            <div class="r-course">${r.course}</div>
+          </div>
+          <div class="r-right">
+            <span class="score-chip ${chipClass}">${m.totalScore} (${diffStr})</span>
+            <span class="chevron">▾</span>
+          </div>
+        </summary>
+        <div class="r-detail">
+          <div class="r-mini-grid">${holeCells.slice(0, 9).join("")}</div>
+          <div class="r-mini-grid">${holeCells.slice(9, 18).join("")}</div>
+          <div class="r-extra">
+            <span>페어웨이 <b>${r.fairways}</b></span>
+            <span>온그린 <b>${r.greens}</b></span>
+            <span>퍼팅 <b>${r.putts}</b></span>
+            <span>OB <b>${r.obCount ?? 0}</b></span>
+            <span>해저드 <b>${r.paCount ?? 0}</b></span>
+            <span>AP <b>${r.apTotal ?? 0}</b></span>
+            <span>벙커 <b>${r.bkTotal ?? 0}</b></span>
+            <span>칩 <b>${r.cpTotal ?? 0}</b></span>
+          </div>
+          <button class="del-btn" data-idx="${idx}">이 라운드 삭제</button>
+        </div>
+      </details>`;
+    }).join("");
+
+    el.querySelectorAll(".del-btn").forEach(btn => {
+      btn.addEventListener("click", e => {
+        e.preventDefault();
+        const idx = +btn.dataset.idx;
+        if (btn.dataset.confirming === "1") {
+          rounds.splice(idx, 1);
+          saveRounds(rounds);
+          renderHistory(); renderAnalysis(); renderHeaderHcp();
+          return;
+        }
+        btn.dataset.confirming = "1";
+        btn.classList.add("confirming");
+        btn.textContent = "정말 삭제할까요? (다시 탭)";
+        setTimeout(() => {
+          if (btn.isConnected && btn.dataset.confirming === "1") {
+            btn.dataset.confirming = "0";
+            btn.classList.remove("confirming");
+            btn.textContent = "이 라운드 삭제";
+          }
+        }, 3000);
+      });
+    });
+  }
+
+  // ── tabs ──────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+    document.querySelectorAll("section.panel").forEach(p => p.classList.toggle("active", p.id === `panel-${name}`));
+  }
+  document.querySelectorAll("nav.tabs button").forEach(btn => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
+
+  renderAnalysis();
+  renderHistory();
+  renderHeaderHcp();
+})();
+</script>
