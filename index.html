@@ -685,6 +685,8 @@
     const bkSaveNum = allHoles.filter(h => h.lastBK && h.putt === 1 && h.approachBunker <= 1).length;
     const cpSaveDen = allHoles.filter(h => h.approachChip >= 1).length;
     const cpSaveNum = allHoles.filter(h => h.approachChip >= 1 && h.putt <= 1).length;
+    const pitchSaveDen = allHoles.filter(h => h.approachPitching >= 1).length;
+    const pitchSaveNum = allHoles.filter(h => h.approachPitching >= 1 && h.putt <= 1).length;
     const chipInDen = allHoles.filter(h => h.approachChip >= 1).length;
     const chipInNum = allHoles.filter(h => h.approachChip >= 1 && h.putt === 0).length;
     const parSaveDen = allHoles.filter(h => !h.gir).length;
@@ -708,15 +710,19 @@
 
     // ── play-balance radar (0-100 scale on every axis) ──
     const radar = [
-      { label: "Tee shot", value: fairwayRate },
-      { label: "2nd shot", value: girRate },
-      { label: "Approach", value: parSaveDen ? (parSaveNum / parSaveDen * 100) : 0 },
-      { label: "Putt",     value: totalHoles ? (1 - threePuttTotal / totalHoles) * 100 : 0 },
+      { label: "Tee shot",       value: fairwayRate },
+      { label: "2nd shot",       value: girRate },
+      { label: "Rough shot",     value: roughParSaveDen ? (roughParSaveNum / roughParSaveDen * 100) : 0 },
+      { label: "FW 벙커샷",       value: fwBkParSaveDen ? (fwBkParSaveNum / fwBkParSaveDen * 100) : 0 },
+      { label: "Pitching",       value: pitchSaveDen ? (pitchSaveNum / pitchSaveDen * 100) : 0 },
+      { label: "그린사이드 벙커샷", value: bkSaveDen ? (bkSaveNum / bkSaveDen * 100) : 0 },
+      { label: "Chip shot",      value: cpSaveDen ? (cpSaveNum / cpSaveDen * 100) : 0 },
+      { label: "Putt",           value: totalHoles ? (1 - threePuttTotal / totalHoles) * 100 : 0 },
     ];
 
     return {
       handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: rounds.length,
-      bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
+      bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, pitchSaveNum, pitchSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
       fwBkParSaveNum, fwBkParSaveDen, roughParSaveNum, roughParSaveDen,
       roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar,
     };
@@ -753,6 +759,7 @@
         <div class="card-title">숏게임 세이브</div>
         <div class="save-grid">
           <div class="save-row"><span class="lbl">벙커 세이브율</span><span class="v">${fmtRate(a.bkSaveNum, a.bkSaveDen)}</span></div>
+          <div class="save-row"><span class="lbl">피칭 세이브율</span><span class="v">${fmtRate(a.pitchSaveNum, a.pitchSaveDen)}</span></div>
           <div class="save-row"><span class="lbl">칩 세이브율</span><span class="v">${fmtRate(a.cpSaveNum, a.cpSaveDen)}</span></div>
           <div class="save-row"><span class="lbl">파 세이브율</span><span class="v">${fmtRate(a.parSaveNum, a.parSaveDen)}</span></div>
           <div class="save-row"><span class="lbl">칩인</span><span class="v">${fmtRate(a.chipInNum, a.chipInDen)}</span></div>
@@ -800,7 +807,7 @@
   function renderRadarChart(metrics) {
     const el = document.getElementById("radarChart");
     const N = metrics.length;
-    const W = 300, H = 300, cx = W / 2, cy = 150, R = 86;
+    const W = 380, H = 380, cx = W / 2, cy = H / 2, R = 100;
     const angleFor = i => (-90 + i * (360 / N)) * Math.PI / 180;
     const ringLevels = [0.25, 0.5, 0.75, 1];
 
@@ -827,10 +834,10 @@
 
     const labels = metrics.map((m, i) => {
       const a = angleFor(i);
-      const lx = cx + (R + 34) * Math.cos(a), ly = cy + (R + 34) * Math.sin(a);
+      const lx = cx + (R + 40) * Math.cos(a), ly = cy + (R + 40) * Math.sin(a);
       const anchor = Math.abs(Math.cos(a)) < 0.3 ? "middle" : (Math.cos(a) > 0 ? "start" : "end");
-      return `<text x="${lx}" y="${ly - 3}" text-anchor="${anchor}" font-size="12" font-weight="700" fill="var(--ink-2)">${m.label}</text>
-              <text x="${lx}" y="${ly + 12}" text-anchor="${anchor}" font-size="12" fill="var(--muted)">${fmt1(m.value)}%</text>`;
+      return `<text x="${lx}" y="${ly - 3}" text-anchor="${anchor}" font-size="11" font-weight="700" fill="var(--ink-2)">${m.label}</text>
+              <text x="${lx}" y="${ly + 11}" text-anchor="${anchor}" font-size="11" fill="var(--muted)">${fmt1(m.value)}%</text>`;
     }).join("");
 
     el.innerHTML = `
