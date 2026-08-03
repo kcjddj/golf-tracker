@@ -535,7 +535,8 @@
           h.rowValues[r] = val;
           if (r === 3 && val === "GR") h.approach = { pitching: null, bunker: null, chip: null };
         } else if (kind === "approach") {
-          h.approach[btn.dataset.sub] = +val;
+          const sub = btn.dataset.sub;
+          h.approach[sub] = (h.approach[sub] === +val) ? null : +val;
         } else if (kind === "putt") {
           h.putt = +val;
         }
