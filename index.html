@@ -691,6 +691,8 @@
     const parSaveNum = allHoles.filter(h => !h.gir && h.score <= 0).length;
     const fwBkParSaveDen = allHoles.filter(h => h.bk >= 1).length;
     const fwBkParSaveNum = allHoles.filter(h => h.bk >= 1 && h.score <= 0).length;
+    const roughParSaveDen = allHoles.filter(h => h.rf >= 1).length;
+    const roughParSaveNum = allHoles.filter(h => h.rf >= 1 && h.score <= 0).length;
 
     // ── extra stats ──
     const roughTotal = sum(rounds.map(r => r.roughCount || 0));
@@ -715,7 +717,7 @@
     return {
       handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: rounds.length,
       bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
-      fwBkParSaveNum, fwBkParSaveDen,
+      fwBkParSaveNum, fwBkParSaveDen, roughParSaveNum, roughParSaveDen,
       roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar,
     };
   }
@@ -754,6 +756,8 @@
           <div class="save-row"><span class="lbl">칩 세이브율</span><span class="v">${fmtRate(a.cpSaveNum, a.cpSaveDen)}</span></div>
           <div class="save-row"><span class="lbl">파 세이브율</span><span class="v">${fmtRate(a.parSaveNum, a.parSaveDen)}</span></div>
           <div class="save-row"><span class="lbl">칩인</span><span class="v">${fmtRate(a.chipInNum, a.chipInDen)}</span></div>
+          <div class="save-row"><span class="lbl">쓰리퍼트</span><span class="v">${fmtPer18(a.threePuttTotal, a.totalHoles)}</span></div>
+          <div class="save-row"><span class="lbl">한 라운드 최다 쓰리퍼트</span><span class="v">${a.maxThreePutt}</span></div>
         </div>
       </div>
 
@@ -761,8 +765,7 @@
         <div class="card-title">라운드 디테일</div>
         <div class="save-grid">
           <div class="save-row"><span class="lbl">러프</span><span class="v">${fmtPer18(a.roughTotal, a.totalHoles)}</span></div>
-          <div class="save-row"><span class="lbl">쓰리퍼트</span><span class="v">${fmtPer18(a.threePuttTotal, a.totalHoles)}</span></div>
-          <div class="save-row"><span class="lbl">한 라운드 최다 쓰리퍼트</span><span class="v">${a.maxThreePutt}</span></div>
+          <div class="save-row"><span class="lbl">러프 파세이브율</span><span class="v">${fmtRate(a.roughParSaveNum, a.roughParSaveDen)}</span></div>
           <div class="save-row"><span class="lbl">벙커(샷)</span><span class="v">${fmtPer18(a.bkShotTotal, a.totalHoles)}</span></div>
           <div class="save-row"><span class="lbl">페어웨이 벙커 파세이브율</span><span class="v">${fmtRate(a.fwBkParSaveNum, a.fwBkParSaveDen)}</span></div>
         </div>
