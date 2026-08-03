@@ -689,6 +689,8 @@
     const chipInNum = allHoles.filter(h => h.approachChip >= 1 && h.putt === 0).length;
     const parSaveDen = allHoles.filter(h => !h.gir).length;
     const parSaveNum = allHoles.filter(h => !h.gir && h.score <= 0).length;
+    const fwBkParSaveDen = allHoles.filter(h => h.bk >= 1).length;
+    const fwBkParSaveNum = allHoles.filter(h => h.bk >= 1 && h.score <= 0).length;
 
     // ── extra stats ──
     const roughTotal = sum(rounds.map(r => r.roughCount || 0));
@@ -702,10 +704,19 @@
     const avgPar4 = par4Strokes.length ? mean(par4Strokes) : null;
     const avgPar5 = par5Strokes.length ? mean(par5Strokes) : null;
 
+    // ── play-balance radar (0-100 scale on every axis) ──
+    const radar = [
+      { label: "Tee shot", value: fairwayRate },
+      { label: "2nd shot", value: girRate },
+      { label: "Approach", value: parSaveDen ? (parSaveNum / parSaveDen * 100) : 0 },
+      { label: "Putt",     value: totalHoles ? (1 - threePuttTotal / totalHoles) * 100 : 0 },
+    ];
+
     return {
       handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: rounds.length,
       bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
-      roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5,
+      fwBkParSaveNum, fwBkParSaveDen,
+      roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar,
     };
   }
 
@@ -732,6 +743,11 @@
       </div>
 
       <div class="card">
+        <div class="card-title">플레이 밸런스</div>
+        <div id="radarChart"></div>
+      </div>
+
+      <div class="card">
         <div class="card-title">숏게임 세이브</div>
         <div class="save-grid">
           <div class="save-row"><span class="lbl">벙커 세이브율</span><span class="v">${fmtRate(a.bkSaveNum, a.bkSaveDen)}</span></div>
@@ -748,6 +764,7 @@
           <div class="save-row"><span class="lbl">쓰리퍼트</span><span class="v">${fmtPer18(a.threePuttTotal, a.totalHoles)}</span></div>
           <div class="save-row"><span class="lbl">한 라운드 최다 쓰리퍼트</span><span class="v">${a.maxThreePutt}</span></div>
           <div class="save-row"><span class="lbl">벙커(샷)</span><span class="v">${fmtPer18(a.bkShotTotal, a.totalHoles)}</span></div>
+          <div class="save-row"><span class="lbl">페어웨이 벙커 파세이브율</span><span class="v">${fmtRate(a.fwBkParSaveNum, a.fwBkParSaveDen)}</span></div>
         </div>
       </div>
 
@@ -774,6 +791,53 @@
     `;
     renderTrendChart(a.trend);
     renderDistChart(a.bucketCounts, a.totalHoles);
+    renderRadarChart(a.radar);
+  }
+
+  function renderRadarChart(metrics) {
+    const el = document.getElementById("radarChart");
+    const N = metrics.length;
+    const W = 300, H = 300, cx = W / 2, cy = 150, R = 86;
+    const angleFor = i => (-90 + i * (360 / N)) * Math.PI / 180;
+    const ringLevels = [0.25, 0.5, 0.75, 1];
+
+    const rings = ringLevels.map(lv => {
+      const pts = metrics.map((_, i) => {
+        const a = angleFor(i);
+        return `${cx + lv * R * Math.cos(a)},${cy + lv * R * Math.sin(a)}`;
+      });
+      return `<polygon points="${pts.join(" ")}" fill="none" stroke="var(--line)" stroke-width="1"/>`;
+    }).join("");
+
+    const axisLines = metrics.map((_, i) => {
+      const a = angleFor(i);
+      return `<line x1="${cx}" y1="${cy}" x2="${cx + R * Math.cos(a)}" y2="${cy + R * Math.sin(a)}" stroke="var(--line)" stroke-width="1"/>`;
+    }).join("");
+
+    const dataPts = metrics.map((m, i) => {
+      const a = angleFor(i);
+      const r = Math.max(0, Math.min(100, m.value)) / 100 * R;
+      return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    });
+    const dataPoly = dataPts.map(p => p.join(",")).join(" ");
+    const dots = dataPts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--turf)"/>`).join("");
+
+    const labels = metrics.map((m, i) => {
+      const a = angleFor(i);
+      const lx = cx + (R + 34) * Math.cos(a), ly = cy + (R + 34) * Math.sin(a);
+      const anchor = Math.abs(Math.cos(a)) < 0.3 ? "middle" : (Math.cos(a) > 0 ? "start" : "end");
+      return `<text x="${lx}" y="${ly - 3}" text-anchor="${anchor}" font-size="12" font-weight="700" fill="var(--ink-2)">${m.label}</text>
+              <text x="${lx}" y="${ly + 12}" text-anchor="${anchor}" font-size="12" fill="var(--muted)">${fmt1(m.value)}%</text>`;
+    }).join("");
+
+    el.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet">
+        ${rings}
+        ${axisLines}
+        <polygon points="${dataPoly}" fill="var(--turf)" opacity="0.18" stroke="var(--turf)" stroke-width="2" stroke-linejoin="round"/>
+        ${dots}
+        ${labels}
+      </svg>`;
   }
 
   function renderDistChart(bucketCounts, totalHoles) {
