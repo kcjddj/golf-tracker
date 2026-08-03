@@ -194,9 +194,14 @@
   }
   .score-row { display: flex; justify-content: center; margin-top: 8px; }
   .bottom-row .save-btn { width: auto; padding: 11px 15px; white-space: nowrap; }
-  .next-row { display: flex; justify-content: center; margin-top: 3px; }
+  .next-row { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 3px; }
   .next-btn { border: none; background: var(--turf); color: #fff; padding: 12px 30px; border-radius: 11px; font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .next-btn:disabled { background: var(--muted); opacity: 0.5; cursor: not-allowed; }
+  .prev-btn {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+    padding: 12px 22px; border-radius: 11px; font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .prev-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
   .finish-page { text-align: center; padding: 60px 20px; }
   .finish-title { font-size: 15px; color: var(--ink-2); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
@@ -509,6 +514,7 @@
           <span class="bottom-score">score ${h.saved ? fmtDiff(h.result.score) : "-"}</span>
         </div>
         <div class="next-row">
+          <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전홀로 이동</button>
           <button class="next-btn" id="holeNextBtn" ${h.saved ? "" : "disabled"}>${isLast ? "라운드 종료" : "다음홀로 이동"}</button>
         </div>
       </div>
@@ -567,6 +573,14 @@
         persistLive();
         renderAddPanel();
       }
+      window.scrollTo(0, 0);
+    });
+
+    document.getElementById("holePrevBtn").addEventListener("click", () => {
+      if (idx === 0) return;
+      live.currentHole = idx - 1;
+      persistLive();
+      renderAddPanel();
       window.scrollTo(0, 0);
     });
   }
