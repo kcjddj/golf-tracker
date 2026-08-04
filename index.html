@@ -172,12 +172,17 @@
   .live-score-v { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 30px; font-weight: 700; line-height: 1.05; }
   .live-score-sub { font-size: 30px; font-weight: 400; color: var(--muted); }
 
-  .hole-title-row { display: flex; align-items: center; justify-content: space-between; margin: 5px 0 4px; gap: 10px; }
-  .hole-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 22px; font-weight: 700; color: var(--turf); }
+  .hole-title-row { display: flex; align-items: center; margin: 5px 0 4px; gap: 8px; flex-wrap: wrap; }
+  .hole-title { flex: 0 0 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 22px; font-weight: 700; color: var(--turf); white-space: nowrap; }
   .hole-title .hole-word { font-size: 0.667em; }
   .hole-title .hole-num { font-size: 30px; }
   .hole-title .hd-par { font-size: 13px; font-weight: 400; color: var(--ink-2); margin-left: 6px; }
-  .par-picker { display: flex; align-items: center; gap: 6px; }
+  .nine-course-input {
+    flex: 1 1 90px; min-width: 70px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 7px; padding: 6px 9px; font-size: 13px; font-family: inherit;
+  }
+  .nine-course-label { flex: 1 1 70px; min-width: 40px; font-size: 12.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .par-picker { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 6px; }
   .par-picker .lbl { font-size: 13px; font-weight: 700; color: var(--ink-2); }
 
   .cat-group { margin-bottom: 5px; }
@@ -199,6 +204,28 @@
   .pill-btn.sel { color: #fff; border-color: transparent; }
   .pill-btn:disabled { opacity: 0.32; cursor: not-allowed; }
   .cat-group.readonly .pill-btn { pointer-events: none; cursor: default; }
+
+  /* ── Hole detail pager (swipe right for distance/club) ──── */
+  .hole-pager {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .hole-pager::-webkit-scrollbar { display: none; }
+  .hole-page { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
+  .hole-page-detail { padding-left: 4px; }
+  .page-hint { text-align: center; font-size: 12px; color: var(--muted); margin: 4px 0 6px; }
+  .detail-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+  .detail-row + .detail-row { border-top: 1px solid var(--line); }
+  .detail-fields { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+  .detail-field { display: flex; align-items: center; gap: 3px; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+  .detail-field input {
+    width: 44px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 6px; padding: 6px 3px; font-size: 14px; text-align: center; font-family: inherit;
+  }
+  .club-select {
+    flex: 1 1 auto; min-width: 56px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 6px; padding: 6px 4px; font-size: 13px; font-family: inherit;
+  }
 
   .bottom-bar { margin-top: 16px; }
   .bottom-row { display: flex; justify-content: flex-end; }
@@ -481,6 +508,15 @@
   const pillColor = v => v === "OB" ? "var(--critical)" : v === "PA" ? "var(--serious)"
     : (v === "BK" || v === "RF") ? "var(--warn)" : "var(--turf)";
 
+  const freshShotDetail = () => ({ dist: null, remain: null, club: null });
+  const freshDetail = () => ({
+    shot: [freshShotDetail(), freshShotDetail(), freshShotDetail(), freshShotDetail()],
+    approach: {
+      pitching: freshShotDetail(), bunker: freshShotDetail(),
+      chip: freshShotDetail(), penalty: freshShotDetail(),
+    },
+    putt: { dist: null, remain: null },
+  });
   function freshHole() {
     return {
       par: 4,
@@ -489,16 +525,20 @@
       putt: 2,
       saved: false,
       result: null,
+      detail: freshDetail(),
     };
   }
   function freshLiveState() {
-    return { course: "", date: todayISO(), currentHole: 0, holes: Array.from({ length: 18 }, freshHole) };
+    return { course: "", courseFront: "", courseBack: "", date: todayISO(), currentHole: 0, holes: Array.from({ length: 18 }, freshHole) };
   }
   function loadLive() {
     try {
       const raw = JSON.parse(localStorage.getItem(LIVE_KEY));
       if (raw && Array.isArray(raw.holes) && raw.holes.length === 18) {
         if (!raw.date) raw.date = todayISO();
+        if (raw.courseFront == null) raw.courseFront = "";
+        if (raw.courseBack == null) raw.courseBack = "";
+        raw.holes.forEach(h => { if (!h.detail) h.detail = freshDetail(); });
         return raw;
       }
     } catch {}
@@ -572,6 +612,33 @@
     </div>`;
   }
 
+  // ── hole detail page: distance / remaining / club per shot ──
+  const CLUB_GROUPS = [
+    { label: "우드", clubs: ["D", "DW", "3W", "5W", "7W", "9W"] },
+    { label: "유틸리티", clubs: ["2U", "3U", "4U", "5U", "6U", "7U"] },
+    { label: "아이언", clubs: ["DI", "2I", "3I", "4I", "5I", "6I", "7I", "8I", "9I", "PW"] },
+    { label: "웨지", clubs: ["46", "48", "50", "52", "54", "56", "58", "60", "62", "64"] },
+  ];
+  function clubSelectHTML(kind, sub, selected) {
+    const groupsHTML = CLUB_GROUPS.map(g => `<optgroup label="${g.label}">${
+      g.clubs.map(c => `<option value="${c}"${c === selected ? " selected" : ""}>${c}</option>`).join("")
+    }</optgroup>`).join("");
+    return `<select class="club-select" data-kind="${kind}" data-sub="${sub}">
+      <option value="">클럽</option>${groupsHTML}
+    </select>`;
+  }
+  function detailRowHTML(label, kind, sub, detail, includeClub) {
+    const dataAttrs = `data-kind="${kind}" data-sub="${sub}"`;
+    return `<div class="detail-row">
+      <span class="cat-sub-label">${label}</span>
+      <div class="detail-fields">
+        <span class="detail-field"><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${detail.dist ?? ""}" placeholder="0">m</span>
+        <span class="detail-field"><input type="number" inputmode="numeric" class="remain-input" ${dataAttrs} value="${detail.remain ?? ""}" placeholder="0">m</span>
+        ${includeClub ? clubSelectHTML(kind, sub, detail.club) : ""}
+      </div>
+    </div>`;
+  }
+
   function renderAddPanel() {
     if (live.currentHole >= 18) renderSummaryPage();
     else renderHolePage(live.currentHole);
@@ -581,6 +648,8 @@
     const h = live.holes[idx];
     const nine = idx < 9 ? "전반" : "후반";
     const holeNum = idx < 9 ? idx + 1 : idx - 9 + 1;
+    const nineKey = idx < 9 ? "courseFront" : "courseBack";
+    const isNineFirst = idx === 0 || idx === 9;
 
     const savedHoles = live.holes.filter(x => x.saved);
     const total = sum(savedHoles.map(x => x.result.score));
@@ -593,6 +662,19 @@
     const isLast = idx === 17;
     const liveResult = computeHoleResult(h);
 
+    const nineCourseField = isNineFirst
+      ? `<input type="text" id="nineCourseInput" class="nine-course-input" placeholder="코스명" lang="ko" inputmode="text" value="${esc(live[nineKey])}">`
+      : (live[nineKey] ? `<span class="nine-course-label">${esc(live[nineKey])}</span>` : "");
+
+    const start = activeStartRow(h.par);
+    let detailShotRows = "";
+    for (let r = start; r < 4; r++) {
+      detailShotRows += detailRowHTML(shotRowLabel(h.par, r), "shot", r, h.detail.shot[r], true);
+    }
+    const detailApproachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"], ["penalty", "벌타"]]
+      .map(([k, l]) => detailRowHTML(l, "approach", k, h.detail.approach[k], true)).join("");
+    const detailPuttRow = detailRowHTML("퍼팅", "putt", "putt", h.detail.putt, false);
+
     document.getElementById("panel-add").innerHTML = `
       <div class="live-header">
         <input type="text" id="liveCourse" class="live-course-input" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">
@@ -604,23 +686,36 @@
 
       <div class="hole-title-row">
         <div class="hole-title">${nine} <span class="hole-word">Hole</span> <span class="hole-num">${holeNum}</span></div>
+        ${nineCourseField}
         <div class="par-picker">
           <span class="lbl">Par</span>
           ${renderBtnRow([3, 4, 5, 6], h.par, false, { kind: "par" }, true)}
         </div>
       </div>
 
-      <div class="cat-group">${shotRows}</div>
+      <div class="hole-pager" id="holePager">
+        <div class="hole-page">
+          <div class="cat-group">${shotRows}</div>
 
-      <div class="cat-group">${approachRows}</div>
+          <div class="cat-group">${approachRows}</div>
 
-      <div class="cat-group">${puttRowHTML(h)}</div>
+          <div class="cat-group">${puttRowHTML(h)}</div>
 
-      <div class="bottom-bar">
-        <div class="next-row">
-          <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전 홀</button>
-          <span class="bottom-score">score<span class="num">${fmtDiff(liveResult.score)}</span></span>
-          <button class="next-btn" id="holeNextBtn">${isLast ? "라운드 종료" : "다음 홀"}</button>
+          <div class="page-hint">비거리·클럽 입력 → 오른쪽으로 스와이프</div>
+
+          <div class="bottom-bar">
+            <div class="next-row">
+              <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전 홀</button>
+              <span class="bottom-score">score<span class="num">${fmtDiff(liveResult.score)}</span></span>
+              <button class="next-btn" id="holeNextBtn">${isLast ? "라운드 종료" : "다음 홀"}</button>
+            </div>
+          </div>
+        </div>
+        <div class="hole-page hole-page-detail">
+          <div class="page-hint">← 스와이프해서 돌아가기</div>
+          <div class="cat-group">${detailShotRows}</div>
+          <div class="cat-group">${detailApproachRows}</div>
+          <div class="cat-group">${detailPuttRow}</div>
         </div>
       </div>
     `;
@@ -634,6 +729,39 @@
     document.getElementById("liveCourse").addEventListener("input", e => {
       live.course = e.target.value;
       persistLive();
+    });
+
+    const nineCourseInput = document.getElementById("nineCourseInput");
+    if (nineCourseInput) {
+      const nineKey = idx < 9 ? "courseFront" : "courseBack";
+      nineCourseInput.addEventListener("input", e => {
+        live[nineKey] = e.target.value;
+        persistLive();
+      });
+    }
+
+    const detailTarget = (kind, sub) => {
+      if (kind === "shot") return h.detail.shot[+sub];
+      if (kind === "approach") return h.detail.approach[sub];
+      return h.detail.putt;
+    };
+    panel.querySelectorAll(".dist-input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : +inp.value;
+        persistLive();
+      });
+    });
+    panel.querySelectorAll(".remain-input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        detailTarget(inp.dataset.kind, inp.dataset.sub).remain = inp.value === "" ? null : +inp.value;
+        persistLive();
+      });
+    });
+    panel.querySelectorAll(".club-select").forEach(sel => {
+      sel.addEventListener("change", () => {
+        detailTarget(sel.dataset.kind, sel.dataset.sub).club = sel.value || null;
+        persistLive();
+      });
     });
 
     panel.querySelectorAll(".pill-btn").forEach(btn => {
@@ -712,6 +840,7 @@
         approachPenalty: h.approach.penalty || 0, approachChip: h.approach.chip || 0,
         putt: result.puttVal,
         rowValues: h.rowValues.slice(),
+        detail: h.detail,
       };
     });
     const round = {
