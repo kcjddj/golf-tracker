@@ -685,11 +685,17 @@
       : (live[nineKey] ? `<span class="nine-course-label">${esc(live[nineKey])}</span>` : "");
 
     const start = activeStartRow(h.par);
+    let detailGrRow = -1;
+    for (let rr = start; rr <= 3; rr++) {
+      if (h.rowValues[rr] === "GR") { detailGrRow = rr; break; }
+    }
+    const detailLastRow = detailGrRow !== -1 ? detailGrRow : 3;
     let detailShotRows = "";
-    for (let r = start; r < 4; r++) {
+    for (let r = start; r <= detailLastRow; r++) {
       detailShotRows += detailRowHTML(shotRowLabel(h.par, r), "shot", r, h.detail.shot[r], true);
     }
-    const detailApproachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"], ["penalty", "벌타"]]
+    const detailApproachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"]]
+      .filter(([k]) => h.approach[k] != null)
       .map(([k, l]) => detailRowHTML(l, "approach", k, h.detail.approach[k], true)).join("");
     const detailPuttRow = detailRowHTML("퍼팅", "putt", "putt", h.detail.putt, false, true);
 
@@ -731,8 +737,8 @@
         </div>
         <div class="hole-page hole-page-detail">
           <div class="page-hint">← 스와이프해서 돌아가기</div>
-          <div class="cat-group">${detailShotRows}</div>
-          <div class="cat-group">${detailApproachRows}</div>
+          ${detailShotRows ? `<div class="cat-group">${detailShotRows}</div>` : ""}
+          ${detailApproachRows ? `<div class="cat-group">${detailApproachRows}</div>` : ""}
           <div class="cat-group">${detailPuttRow}</div>
         </div>
       </div>
