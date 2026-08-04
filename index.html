@@ -173,8 +173,9 @@
   .live-score-sub { font-size: 30px; font-weight: 400; color: var(--muted); }
 
   .hole-title-row { display: flex; align-items: center; justify-content: space-between; margin: 5px 0 4px; gap: 10px; }
-  .hole-title { font-family: ui-serif, Georgia, serif; font-size: 22px; font-weight: 700; }
+  .hole-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 22px; font-weight: 700; color: var(--turf); }
   .hole-title .hole-word { font-size: 0.667em; }
+  .hole-title .hole-num { font-size: 30px; }
   .hole-title .hd-par { font-size: 13px; font-weight: 400; color: var(--ink-2); margin-left: 6px; }
   .par-picker { display: flex; align-items: center; gap: 6px; }
   .par-picker .lbl { font-size: 13px; font-weight: 700; color: var(--ink-2); }
@@ -343,7 +344,8 @@
     padding: 8px 10px; box-shadow: var(--shadow); margin-bottom: 7px;
   }
   .hd-card .hole-title-row { margin: 0 0 3px; }
-  .hd-card .hole-title { font-size: 14px; }
+  .hd-card .hole-title { font-family: ui-serif, Georgia, serif; font-size: 14px; color: var(--ink); }
+  .hd-card .hole-title .hole-num { font-size: 1em; }
   .hd-card .cat-group { margin-bottom: 2px; }
   .hd-card .cat-sub-row { padding: 1px 0; gap: 5px; }
   .hd-card .cat-sub-label { flex: 0 0 40px; font-size: 10px; }
@@ -594,7 +596,7 @@
       </div>
 
       <div class="hole-title-row">
-        <div class="hole-title">${nine} <span class="hole-word">Hole</span> ${holeNum}</div>
+        <div class="hole-title">${nine} <span class="hole-word">Hole</span> <span class="hole-num">${holeNum}</span></div>
         <div class="par-picker">
           <span class="lbl">Par</span>
           ${renderBtnRow([3, 4, 5, 6], h.par, false, { kind: "par" }, true)}
@@ -609,9 +611,9 @@
 
       <div class="bottom-bar">
         <div class="next-row">
-          <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전홀</button>
+          <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전 홀</button>
           <span class="bottom-score">score<span class="num">${fmtDiff(liveResult.score)}</span></span>
-          <button class="next-btn" id="holeNextBtn">${isLast ? "라운드 종료" : "다음홀"}</button>
+          <button class="next-btn" id="holeNextBtn">${isLast ? "라운드 종료" : "다음 홀"}</button>
         </div>
       </div>
     `;
