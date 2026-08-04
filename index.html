@@ -227,6 +227,11 @@
     border-radius: 8px; padding: 9px 11px; font-size: 14.5px; resize: vertical;
     margin-top: 10px; font-family: inherit;
   }
+  .course-edit-input {
+    width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 8px; padding: 9px 11px; font-size: 15px; font-weight: 700;
+    margin-top: 10px; font-family: inherit;
+  }
 
   .save-btn {
     width: 100%; border: none; background: var(--turf); color: #fff;
@@ -354,7 +359,12 @@
   .log-row:last-child { border-bottom: none; padding-bottom: 0; }
   .log-top { display: flex; align-items: baseline; gap: 10px; }
   .log-date { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
-  .log-course { font-size: 15.5px; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .log-course-input {
+    font-size: 15.5px; font-weight: 700; flex: 1; min-width: 0; font-family: inherit;
+    border: 1px solid transparent; background: transparent; color: var(--ink);
+    border-radius: 6px; padding: 3px 6px; margin: -3px -6px;
+  }
+  .log-course-input:hover, .log-course-input:focus { border-color: var(--line); background: var(--paper); }
   .log-score { font-family: ui-serif, Georgia, serif; font-size: 16px; font-weight: 700; color: var(--flag); white-space: nowrap; }
   .log-memo-input {
     width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
@@ -450,6 +460,7 @@
   let rounds = loadRounds();
 
   const fmtDiff = d => d === 0 ? "E" : (d > 0 ? `+${d}` : `${d}`);
+  const fmtDiffZ = d => d === 0 ? "0" : fmtDiff(d);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -569,7 +580,7 @@
     const back  = sum(live.holes.slice(9, 18).filter(x => x.saved).map(x => x.result.score));
 
     const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r)).join("");
-    const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["penalty", "벌타"], ["chip", "칩샷"]]
+    const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"], ["penalty", "벌타"]]
       .map(([k, l]) => approachRowHTML(h, k, l, true)).join("");
     const isLast = idx === 17;
 
@@ -1065,7 +1076,7 @@
         ${renderBtnRow(rowOptions(r), v, false, {}, false, vv => shotButtonLabel(r, vv))}
       </div>`;
     }
-    const approachRows = [["피칭", h.approachPitching], ["벙커", h.approachBunker], ["벌타", h.approachPenalty], ["칩샷", h.approachChip]]
+    const approachRows = [["피칭", h.approachPitching], ["벙커", h.approachBunker], ["칩샷", h.approachChip], ["벌타", h.approachPenalty]]
       .filter(([, v]) => v)
       .map(([l, v]) => `<div class="cat-sub-row">
         <span class="cat-sub-label">${l}</span>
@@ -1082,7 +1093,7 @@
       ${shotRows ? `<div class="cat-group readonly">${shotRows}</div>` : ""}
       ${approachRows ? `<div class="cat-group readonly">${approachRows}</div>` : ""}
       <div class="cat-group readonly">${puttRow}</div>
-      <div class="score-row"><span class="bottom-score">score<span class="num">${fmtDiff(h.score)}</span></span></div>
+      <div class="score-row"><span class="bottom-score">score<span class="num">${fmtDiffZ(h.score)}</span></span></div>
     </div>`;
   }
 
@@ -1120,7 +1131,7 @@
         let bg = "transparent", fg = "var(--ink)";
         if (d <= -1) { bg = "var(--turf-wash)"; fg = "var(--turf-deep)"; }
         else if (d >= 2) { bg = "var(--flag-wash)"; fg = "var(--flag)"; }
-        return `<div class="r-hole" data-hole="${i}"><div class="hn">${i + 1}<span class="hp">(${h.par})</span></div><div class="hs" style="background:${bg};color:${fg}">${fmtDiff(h.score)}</div></div>`;
+        return `<div class="r-hole" data-hole="${i}"><div class="hn">${i + 1}<span class="hp">(${h.par})</span></div><div class="hs" style="background:${bg};color:${fg}">${fmtDiffZ(h.score)}</div></div>`;
       });
       return `
       <details class="round-row" data-ridx="${idx}">
@@ -1147,6 +1158,7 @@
             <span>벙커(샷) <b>${r.bkShotCount ?? 0}</b></span>
             <span>쓰리퍼트 <b>${r.threePuttCount ?? 0}</b></span>
           </div>
+          <input type="text" class="course-edit-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
           <textarea class="memo-box" data-idx="${idx}" rows="3" placeholder="메모 (예: 그린 스피드, 바람, 컨디션...)">${esc(r.memo || "")}</textarea>
           <div class="r-actions">
             <button class="del-btn" data-idx="${idx}">이 라운드 삭제</button>
@@ -1160,6 +1172,19 @@
       cell.addEventListener("click", () => {
         const ridx = +cell.closest(".round-row").dataset.ridx;
         openHoleDetail(ridx);
+      });
+    });
+
+    el.querySelectorAll(".course-edit-input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        const idx = +inp.dataset.idx;
+        const val = inp.value.trim() || "이름 없는 골프장";
+        rounds[idx].course = val;
+        inp.value = val;
+        saveRounds(rounds);
+        const summaryCourse = inp.closest(".round-row").querySelector(".r-course");
+        if (summaryCourse) summaryCourse.textContent = val;
+        renderRoundLog();
       });
     });
 
@@ -1209,13 +1234,23 @@
         return `<div class="log-row">
           <div class="log-top">
             <span class="log-date">${r.date}</span>
-            <span class="log-course">${esc(r.course)}</span>
+            <input type="text" class="log-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
             <span class="log-score">${m.totalScore} (${diffStr})</span>
           </div>
           <input type="text" class="log-memo-input" data-idx="${idx}" placeholder="메모" value="${esc(r.memo || "")}">
         </div>`;
       }).join("")
     }</div>`;
+    el.querySelectorAll(".log-course-input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        const idx = +inp.dataset.idx;
+        const val = inp.value.trim() || "이름 없는 골프장";
+        rounds[idx].course = val;
+        inp.value = val;
+        saveRounds(rounds);
+        renderHistory();
+      });
+    });
     el.querySelectorAll(".log-memo-input").forEach(inp => {
       inp.addEventListener("change", () => {
         rounds[+inp.dataset.idx].memo = inp.value;
