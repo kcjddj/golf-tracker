@@ -123,14 +123,14 @@
   .theme-toggle svg { width: 18px; height: 18px; }
 
   nav.tabs {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 6px; margin-top: 5px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 5px; margin-top: 5px;
     background: var(--paper-alt); border-radius: 11px; padding: 4px;
   }
   nav.tabs button {
     border: none; background: transparent; color: var(--ink-2);
-    padding: 9px 4px; border-radius: 8px; font-size: 20px; font-weight: 600;
-    cursor: pointer; transition: background 0.15s, color 0.15s;
+    padding: 9px 2px; border-radius: 8px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap;
   }
   nav.tabs button.active { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
 
@@ -166,6 +166,8 @@
 
   .hole-title-row { display: flex; align-items: center; justify-content: space-between; margin: 5px 0 4px; gap: 10px; }
   .hole-title { font-family: ui-serif, Georgia, serif; font-size: 19px; font-weight: 700; }
+  .hole-title .hole-word { font-size: 0.667em; }
+  .hole-title .hd-par { font-size: 13px; font-weight: 400; color: var(--ink-2); margin-left: 6px; }
   .par-picker { display: flex; align-items: center; gap: 6px; }
   .par-picker .lbl { font-size: 13px; font-weight: 700; color: var(--ink-2); }
 
@@ -185,6 +187,8 @@
   }
   .btn-row.compact .pill-btn { flex: 0 0 44px; }
   .pill-btn.sel { color: #fff; border-color: transparent; }
+  .pill-btn:disabled { opacity: 0.32; cursor: not-allowed; }
+  .cat-group.readonly .pill-btn { pointer-events: none; cursor: default; }
 
   .bottom-bar { margin-top: 6px; }
   .bottom-row { display: flex; justify-content: flex-end; }
@@ -250,14 +254,29 @@
   .tooltip.show { opacity: 1; }
   .tooltip .t-date { color: var(--ink-2); font-size: 10.5px; }
 
-  .dist-row { display: grid; grid-template-columns: 68px 1fr 140px; align-items: center; gap: 8px; padding: 5px 0; }
-  .dist-row .lbl { font-size: 12.5px; font-weight: 700; }
-  .dist-track { height: 16px; background: var(--paper-alt); border-radius: 4px; overflow: hidden; position: relative; }
-  .dist-fill { height: 100%; border-radius: 4px; min-width: 2px; }
+  .dist-row { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; gap: 4px; padding: 2px 0; }
+  .dist-row .lbl { font-size: 8.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dist-track { height: 8px; background: var(--paper-alt); border-radius: 3px; overflow: hidden; position: relative; }
+  .dist-fill { height: 100%; border-radius: 3px; min-width: 2px; }
   .dist-row .cnt {
-    display: flex; align-items: baseline; justify-content: flex-end; gap: 12px;
-    font-size: 15px; font-variant-numeric: tabular-nums; color: var(--ink-2);
+    text-align: right; font-size: 9px; font-variant-numeric: tabular-nums; color: var(--ink-2);
   }
+
+  /* ── Analysis: two-period comparison grid ────────────────── */
+  .cmp-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 8px; box-shadow: var(--shadow); }
+  .cmp-row { display: grid; grid-template-columns: 60px 1fr 1fr; align-items: center; gap: 4px; padding: 6px 2px; border-bottom: 1px solid var(--line); }
+  .cmp-row:last-child { border-bottom: none; }
+  .cmp-cell { font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; min-width: 0; }
+  .cmp-label { text-align: left; font-size: 11px; font-weight: 700; color: var(--ink-2); line-height: 1.25; }
+  .cmp-head-row { align-items: start; padding-bottom: 10px; }
+  .cmp-period-name { font-size: 12.5px; font-weight: 700; text-align: center; margin-bottom: 5px; }
+  .cmp-dates { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+  .cmp-dates input[type="date"] {
+    width: 100%; max-width: 122px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 6px; padding: 3px 3px; font-size: 10px;
+  }
+  .cmp-chart-row { align-items: start; padding: 8px 2px; }
+  .cmp-chart { width: 100%; }
 
   /* ── History ──────────────────────────────────────────── */
   .round-row {
@@ -280,14 +299,44 @@
   .chevron { color: var(--muted); transition: transform 0.15s; }
   .round-row[open] .chevron { transform: rotate(180deg); }
   .r-detail { padding: 0 14px 14px; border-top: 1px solid var(--line); }
-  .r-mini-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; margin: 10px 0 4px; }
-  .r-hole { text-align: center; font-size: 10.5px; }
-  .r-hole .hn { color: var(--muted); }
-  .r-hole .hs { font-weight: 700; font-variant-numeric: tabular-nums; border-radius: 5px; padding: 2px 0; margin-top: 1px; }
+  .r-mini-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin: 10px 0 4px; }
+  .r-hole { text-align: center; font-size: 18px; cursor: pointer; }
+  .r-hole .hn { color: var(--muted); font-size: 0.68em; }
+  .r-hole .hn .hp { font-size: 0.82em; margin-left: 1px; }
+  .r-hole .hs { font-weight: 700; font-variant-numeric: tabular-nums; border-radius: 6px; padding: 3px 0; margin-top: 2px; }
   .r-extra { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--ink-2); margin: 10px 0; }
   .r-extra b { color: var(--ink); }
   .del-btn { border: 1px solid var(--flag); color: var(--flag); background: transparent; border-radius: 8px; padding: 9px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .del-btn.confirming { background: var(--flag); color: #fff; }
+
+  /* ── Hole detail overlay (tap a scorecard cell) ──────────── */
+  .hole-detail-overlay {
+    position: fixed; inset: 0; z-index: 60;
+    background: var(--paper); display: flex; flex-direction: column;
+  }
+  .hd-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--card);
+  }
+  .hd-title { font-size: 15px; font-weight: 700; }
+  .hd-close {
+    border: none; background: var(--paper-alt); color: var(--ink-2);
+    width: 32px; height: 32px; border-radius: 999px; font-size: 16px; cursor: pointer; flex: 0 0 auto;
+  }
+  .hd-scroll { flex: 1; overflow-y: auto; padding: 12px 12px 30px; scroll-snap-type: y proximity; }
+  .hd-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; scroll-snap-align: start;
+  }
+
+  /* ── 라운드기록 ───────────────────────────────────────── */
+  .log-row { display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .log-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .log-top { display: flex; align-items: baseline; gap: 10px; }
+  .log-date { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  .log-course { font-size: 15.5px; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .log-score { font-family: ui-serif, Georgia, serif; font-size: 16px; font-weight: 700; color: var(--flag); white-space: nowrap; }
+  .log-memo { font-size: 13px; color: var(--ink-2); }
 
   ::selection { background: var(--turf-wash); }
 </style>
@@ -303,7 +352,8 @@
   <nav class="tabs">
     <button data-tab="add" class="active">기록 추가</button>
     <button data-tab="analysis">분석</button>
-    <button data-tab="history">기록 보기</button>
+    <button data-tab="history">스코어카드</button>
+    <button data-tab="roundlog">라운드기록</button>
   </nav>
 </header>
 
@@ -314,8 +364,11 @@
   <!-- ── 분석 ─────────────────────────────────────────── -->
   <section class="panel" id="panel-analysis"></section>
 
-  <!-- ── 기록 보기 ─────────────────────────────────────── -->
+  <!-- ── 스코어카드 ───────────────────────────────────── -->
   <section class="panel" id="panel-history"></section>
+
+  <!-- ── 라운드기록 ───────────────────────────────────── -->
+  <section class="panel" id="panel-roundlog"></section>
 </main>
 
 <script>
@@ -392,7 +445,7 @@
     return {
       par: 4,
       rowValues: ["FW", "FW", "FW", "GR"],
-      approach: { pitching: null, bunker: null, chip: null },
+      approach: { pitching: null, bunker: null, penalty: null, chip: null },
       putt: 2,
       saved: false,
       result: null,
@@ -426,21 +479,23 @@
     }
     const approachEnabled = !gir;
     const approachSum = approachEnabled
-      ? (h.approach.pitching || 0) + (h.approach.bunker || 0) + (h.approach.chip || 0)
+      ? (h.approach.pitching || 0) + (h.approach.bunker || 0) + (h.approach.penalty || 0) + (h.approach.chip || 0)
       : 0;
     const puttVal = h.putt || 0;
     const rawStrokes = shotSum + approachSum + puttVal;
     return { rawStrokes, score: rawStrokes - h.par, fir, gir, ob, pa, bk, rf, lastBK, puttVal };
   }
 
-  function renderBtnRow(options, selected, disabled, dataset, compact, labelFn) {
+  function renderBtnRow(options, selected, disabled, dataset, compact, labelFn, disabledOptions) {
     const attrs = Object.entries(dataset).map(([k, v]) => `data-${k}="${v}"`).join(" ");
     const cls = "btn-row" + (disabled ? " disabled" : "") + (compact ? " compact" : "");
+    const dis = disabledOptions || [];
     return `<div class="${cls}">${options.map(o => {
       const isSel = String(o) === String(selected);
+      const isOptDisabled = dis.includes(o);
       const style = isSel ? ` style="background:${pillColor(o)};"` : "";
       const label = labelFn ? labelFn(o) : o;
-      return `<button type="button" class="pill-btn${isSel ? " sel" : ""}" data-val="${o}" ${attrs}${style}>${label}</button>`;
+      return `<button type="button" class="pill-btn${isSel ? " sel" : ""}" data-val="${o}" ${attrs}${style}${isOptDisabled ? " disabled" : ""}>${label}</button>`;
     }).join("")}</div>`;
   }
 
@@ -448,9 +503,14 @@
 
   function shotRowHTML(h, r) {
     if (!isRowActive(h.par, r)) return "";
+    const start = activeStartRow(h.par);
+    let grDisabled = false;
+    for (let rr = start; rr < r; rr++) {
+      if (h.rowValues[rr] === "GR") { grDisabled = true; break; }
+    }
     return `<div class="cat-sub-row">
       <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
-      ${renderBtnRow(rowOptions(r), h.rowValues[r], false, { kind: "shot", row: r }, false, v => shotButtonLabel(r, v))}
+      ${renderBtnRow(rowOptions(r), h.rowValues[r], false, { kind: "shot", row: r }, false, v => shotButtonLabel(r, v), grDisabled ? ["GR"] : [])}
     </div>`;
   }
   function approachRowHTML(h, key, label, enabled) {
@@ -483,7 +543,7 @@
     const back  = sum(live.holes.slice(9, 18).filter(x => x.saved).map(x => x.result.score));
 
     const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r)).join("");
-    const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"]]
+    const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["penalty", "벌타"], ["chip", "칩샷"]]
       .map(([k, l]) => approachRowHTML(h, k, l, approachEnabled)).join("");
     const isLast = idx === 17;
 
@@ -497,7 +557,7 @@
       </div>
 
       <div class="hole-title-row">
-        <div class="hole-title">${nine} Hole ${holeNum}</div>
+        <div class="hole-title">${nine} <span class="hole-word">Hole</span> ${holeNum}</div>
         <div class="par-picker">
           <span class="lbl">Par</span>
           ${renderBtnRow([3, 4, 5, 6], h.par, false, { kind: "par" }, true)}
@@ -543,7 +603,7 @@
         } else if (kind === "shot") {
           const r = +btn.dataset.row;
           h.rowValues[r] = val;
-          if (r === 3 && val === "GR") h.approach = { pitching: null, bunker: null, chip: null };
+          if (r === 3 && val === "GR") h.approach = { pitching: null, bunker: null, penalty: null, chip: null };
         } else if (kind === "approach") {
           const sub = btn.dataset.sub;
           h.approach[sub] = (h.approach[sub] === +val) ? null : +val;
@@ -571,7 +631,7 @@
         live.currentHole = 18;
         persistLive();
         renderAddPanel();
-        renderAnalysis(); renderHistory(); renderHeaderHcp();
+        renderAnalysis(); renderHistory(); renderRoundLog(); renderHeaderHcp();
       } else {
         live.currentHole = idx + 1;
         persistLive();
@@ -611,8 +671,10 @@
     const holesOut = live.holes.map(h => ({
       par: h.par, score: h.result.score, gir: h.result.gir, fir: h.result.fir,
       ob: h.result.ob, pa: h.result.pa, bk: h.result.bk, rf: h.result.rf, lastBK: h.result.lastBK,
-      approachPitching: h.approach.pitching || 0, approachBunker: h.approach.bunker || 0, approachChip: h.approach.chip || 0,
+      approachPitching: h.approach.pitching || 0, approachBunker: h.approach.bunker || 0,
+      approachPenalty: h.approach.penalty || 0, approachChip: h.approach.chip || 0,
       putt: h.result.puttVal,
+      rowValues: h.rowValues.slice(),
     }));
     const round = {
       id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
@@ -654,33 +716,34 @@
     return { totalScore, totalPar, diff: totalDiff, par45Count, buckets };
   }
 
-  function analyze() {
-    if (!rounds.length) return null;
-    const byDateDesc = [...rounds].sort((a, b) => new Date(b.date) - new Date(a.date));
+  function analyze(list) {
+    list = list || rounds;
+    if (!list.length) return null;
+    const byDateDesc = [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
     const metrics = byDateDesc.map(roundMetrics);
 
     const last20 = metrics.slice(0, 20).map(m => m.diff);
     const nBest = Math.min(8, last20.length);
     const handicap = mean([...last20].sort((a, b) => a - b).slice(0, nBest));
 
-    const fwHit = sum(rounds.map(r => r.fairways));
+    const fwHit = sum(list.map(r => r.fairways));
     const fwApplicable = sum(metrics.map(m => m.par45Count));
     const fairwayRate = fwApplicable ? (fwHit / fwApplicable) * 100 : 0;
 
-    const girHit = sum(rounds.map(r => r.greens));
-    const girRate = (girHit / (rounds.length * 18)) * 100;
+    const girHit = sum(list.map(r => r.greens));
+    const girRate = (girHit / (list.length * 18)) * 100;
 
-    const avgPutts = mean(rounds.map(r => r.putts));
+    const avgPutts = mean(list.map(r => r.putts));
 
     const bucketCounts = {};
     BUCKET_META.forEach(b => bucketCounts[b.key] = sum(metrics.map(m => m.buckets[b.key])));
-    const totalHoles = rounds.length * 18;
+    const totalHoles = list.length * 18;
 
-    const trend = [...rounds].sort((a, b) => new Date(a.date) - new Date(b.date))
+    const trend = [...list].sort((a, b) => new Date(a.date) - new Date(b.date))
       .map(r => ({ date: r.date, diff: roundMetrics(r).diff }));
 
-    // ── short-game saves (hole-level, across all rounds) ──
-    const allHoles = rounds.flatMap(r => r.holes);
+    // ── short-game saves (hole-level, across all rounds in list) ──
+    const allHoles = list.flatMap(r => r.holes);
     const bkSaveDen = allHoles.filter(h => h.lastBK).length;
     const bkSaveNum = allHoles.filter(h => h.lastBK && h.putt === 1 && h.approachBunker <= 1).length;
     const cpSaveDen = allHoles.filter(h => h.approachChip >= 1).length;
@@ -697,10 +760,10 @@
     const roughParSaveNum = allHoles.filter(h => h.rf >= 1 && h.score <= 0).length;
 
     // ── extra stats ──
-    const roughTotal = sum(rounds.map(r => r.roughCount || 0));
-    const bkShotTotal = sum(rounds.map(r => r.bkShotCount || 0));
-    const threePuttTotal = sum(rounds.map(r => r.threePuttCount || 0));
-    const maxThreePutt = Math.max(0, ...rounds.map(r => r.threePuttCount || 0));
+    const roughTotal = sum(list.map(r => r.roughCount || 0));
+    const bkShotTotal = sum(list.map(r => r.bkShotCount || 0));
+    const threePuttTotal = sum(list.map(r => r.threePuttCount || 0));
+    const maxThreePutt = Math.max(0, ...list.map(r => r.threePuttCount || 0));
     const par3Strokes = allHoles.filter(h => h.par === 3).map(h => h.score + h.par);
     const par4Strokes = allHoles.filter(h => h.par === 4).map(h => h.score + h.par);
     const par5Strokes = allHoles.filter(h => h.par === 5).map(h => h.score + h.par);
@@ -721,93 +784,135 @@
     ];
 
     return {
-      handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: rounds.length,
+      handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: list.length,
       bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, pitchSaveNum, pitchSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
       fwBkParSaveNum, fwBkParSaveDen, roughParSaveNum, roughParSaveDen,
       roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar,
     };
   }
 
+  // ── period comparison state (분석 tab: two date-ranged periods) ──
+  const PERIOD_KEY = "golf-tracker-periods";
+  function loadPeriods() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(PERIOD_KEY));
+      if (raw) return raw;
+    } catch {}
+    return { aFrom: "", aTo: "", bFrom: "", bTo: "" };
+  }
+  function savePeriods() { localStorage.setItem(PERIOD_KEY, JSON.stringify(periodState)); }
+  let periodState = loadPeriods();
+  function roundsInRange(from, to) {
+    return rounds.filter(r => (!from || r.date >= from) && (!to || r.date <= to));
+  }
+
+  const CMP_METRIC_ROWS = [
+    { label: "간이 핸디캡", get: a => a.handicap > 0 ? `+${fmt1(a.handicap)}` : fmt1(a.handicap) },
+    { label: "페어웨이 키핑률", get: a => `${fmt1(a.fairwayRate)}%` },
+    { label: "온그린율", get: a => `${fmt1(a.girRate)}%` },
+    { label: "평균 퍼팅수", get: a => fmt1(a.avgPutts) },
+    { label: "벙커 세이브율", get: a => fmtRate(a.bkSaveNum, a.bkSaveDen) },
+    { label: "피칭 세이브율", get: a => fmtRate(a.pitchSaveNum, a.pitchSaveDen) },
+    { label: "칩 세이브율", get: a => fmtRate(a.cpSaveNum, a.cpSaveDen) },
+    { label: "파 세이브율", get: a => fmtRate(a.parSaveNum, a.parSaveDen) },
+    { label: "칩인", get: a => fmtRate(a.chipInNum, a.chipInDen) },
+    { label: "쓰리퍼트", get: a => fmtPer18(a.threePuttTotal, a.totalHoles) },
+    { label: "최다 쓰리퍼트", get: a => `${a.maxThreePutt}` },
+    { label: "러프", get: a => fmtPer18(a.roughTotal, a.totalHoles) },
+    { label: "러프 파세이브율", get: a => fmtRate(a.roughParSaveNum, a.roughParSaveDen) },
+    { label: "벙커(샷)", get: a => fmtPer18(a.bkShotTotal, a.totalHoles) },
+    { label: "FW벙커 파세이브율", get: a => fmtRate(a.fwBkParSaveNum, a.fwBkParSaveDen) },
+    { label: "Par 3 평균", get: a => a.avgPar3 != null ? fmt1(a.avgPar3) : "—" },
+    { label: "Par 4 평균", get: a => a.avgPar4 != null ? fmt1(a.avgPar4) : "—" },
+    { label: "Par 5 평균", get: a => a.avgPar5 != null ? fmt1(a.avgPar5) : "—" },
+    { label: "라운드 수", get: a => `${a.count}` },
+  ];
+
   function renderHeaderHcp() {
     const a = analyze();
     document.getElementById("hdrHcp").textContent = a ? (a.handicap > 0 ? `+${fmt1(a.handicap)}` : fmt1(a.handicap)) : "—";
   }
 
-  // ── analysis panel ───────────────────────────────────
+  // ── analysis panel: two-period side-by-side comparison ─
   function renderAnalysis() {
     const el = document.getElementById("panel-analysis");
-    const a = analyze();
-    if (!a) {
+    if (!rounds.length) {
       el.innerHTML = `<div class="card"><div class="empty"><div class="big">⛳️</div>기록된 라운드가 없어요.<br>‘기록 추가’ 탭에서 첫 라운드를 입력해보세요.</div></div>`;
       return;
     }
-    const hcpStr = a.handicap > 0 ? `+${fmt1(a.handicap)}` : fmt1(a.handicap);
+    const aData = analyze(roundsInRange(periodState.aFrom, periodState.aTo));
+    const bData = analyze(roundsInRange(periodState.bFrom, periodState.bTo));
+
+    const statRows = CMP_METRIC_ROWS.map(m => `
+      <div class="cmp-row">
+        <div class="cmp-cell cmp-label">${m.label}</div>
+        <div class="cmp-cell">${aData ? m.get(aData) : "—"}</div>
+        <div class="cmp-cell">${bData ? m.get(bData) : "—"}</div>
+      </div>`).join("");
+
     el.innerHTML = `
-      <div class="stat-grid">
-        <div class="stat-tile"><div class="lbl">간이 핸디캡</div><div class="v accent">${hcpStr}</div><div class="sub">최근 ${a.nBest}개 최소 차이 평균</div></div>
-        <div class="stat-tile"><div class="lbl">페어웨이 키핑률</div><div class="v">${fmt1(a.fairwayRate)}%</div><div class="sub">파4·5 홀 기준</div></div>
-        <div class="stat-tile"><div class="lbl">온그린율</div><div class="v">${fmt1(a.girRate)}%</div><div class="sub">18홀 기준</div></div>
-        <div class="stat-tile"><div class="lbl">평균 퍼팅수</div><div class="v">${fmt1(a.avgPutts)}</div><div class="sub">라운드당</div></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">플레이 밸런스</div>
-        <div id="radarChart"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">숏게임 세이브</div>
-        <div class="save-grid">
-          <div class="save-row"><span class="lbl">벙커 세이브율</span><span class="v">${fmtRate(a.bkSaveNum, a.bkSaveDen)}</span></div>
-          <div class="save-row"><span class="lbl">피칭 세이브율</span><span class="v">${fmtRate(a.pitchSaveNum, a.pitchSaveDen)}</span></div>
-          <div class="save-row"><span class="lbl">칩 세이브율</span><span class="v">${fmtRate(a.cpSaveNum, a.cpSaveDen)}</span></div>
-          <div class="save-row"><span class="lbl">파 세이브율</span><span class="v">${fmtRate(a.parSaveNum, a.parSaveDen)}</span></div>
-          <div class="save-row"><span class="lbl">칩인</span><span class="v">${fmtRate(a.chipInNum, a.chipInDen)}</span></div>
-          <div class="save-row"><span class="lbl">쓰리퍼트</span><span class="v">${fmtPer18(a.threePuttTotal, a.totalHoles)}</span></div>
-          <div class="save-row"><span class="lbl">한 라운드 최다 쓰리퍼트</span><span class="v">${a.maxThreePutt}</span></div>
+      <div class="cmp-card">
+        <div class="cmp-row cmp-head-row">
+          <div class="cmp-cell cmp-label"></div>
+          <div class="cmp-cell cmp-period">
+            <div class="cmp-period-name">기간 A</div>
+            <div class="cmp-dates">
+              <input type="date" id="periodAFrom" value="${periodState.aFrom}">
+              <input type="date" id="periodATo" value="${periodState.aTo}">
+            </div>
+          </div>
+          <div class="cmp-cell cmp-period">
+            <div class="cmp-period-name">기간 B</div>
+            <div class="cmp-dates">
+              <input type="date" id="periodBFrom" value="${periodState.bFrom}">
+              <input type="date" id="periodBTo" value="${periodState.bTo}">
+            </div>
+          </div>
+        </div>
+        ${statRows}
+        <div class="cmp-row cmp-chart-row">
+          <div class="cmp-cell cmp-label">스코어<br>추이</div>
+          <div class="cmp-cell"><div id="trendChartA" class="cmp-chart"></div></div>
+          <div class="cmp-cell"><div id="trendChartB" class="cmp-chart"></div></div>
+        </div>
+        <div class="cmp-row cmp-chart-row">
+          <div class="cmp-cell cmp-label">스코어<br>분포</div>
+          <div class="cmp-cell"><div id="distChartA" class="cmp-chart"></div></div>
+          <div class="cmp-cell"><div id="distChartB" class="cmp-chart"></div></div>
+        </div>
+        <div class="cmp-row cmp-chart-row">
+          <div class="cmp-cell cmp-label">플레이<br>밸런스</div>
+          <div class="cmp-cell"><div id="radarChartA" class="cmp-chart"></div></div>
+          <div class="cmp-cell"><div id="radarChartB" class="cmp-chart"></div></div>
         </div>
       </div>
-
-      <div class="card">
-        <div class="card-title">라운드 디테일</div>
-        <div class="save-grid">
-          <div class="save-row"><span class="lbl">러프</span><span class="v">${fmtPer18(a.roughTotal, a.totalHoles)}</span></div>
-          <div class="save-row"><span class="lbl">러프 파세이브율</span><span class="v">${fmtRate(a.roughParSaveNum, a.roughParSaveDen)}</span></div>
-          <div class="save-row"><span class="lbl">벙커(샷)</span><span class="v">${fmtPer18(a.bkShotTotal, a.totalHoles)}</span></div>
-          <div class="save-row"><span class="lbl">페어웨이 벙커 파세이브율</span><span class="v">${fmtRate(a.fwBkParSaveNum, a.fwBkParSaveDen)}</span></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">파별 평균 타수</div>
-        <div class="save-grid">
-          <div class="save-row"><span class="lbl">Par 3</span><span class="v">${a.avgPar3 != null ? fmt1(a.avgPar3) : "—"}</span></div>
-          <div class="save-row"><span class="lbl">Par 4</span><span class="v">${a.avgPar4 != null ? fmt1(a.avgPar4) : "—"}</span></div>
-          <div class="save-row"><span class="lbl">Par 5</span><span class="v">${a.avgPar5 != null ? fmt1(a.avgPar5) : "—"}</span></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">스코어 추이 (총타 − 파)</div>
-        <div class="chart-wrap" id="trendChart"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">라운드당 평균 스코어 분포</div>
-        <div id="distChart"></div>
-      </div>
-
-      <div class="hint" style="margin-top:2px;">총 ${a.count}라운드 기록됨</div>
     `;
-    renderTrendChart(a.trend);
-    renderDistChart(a.bucketCounts, a.totalHoles);
-    renderRadarChart(a.radar);
+
+    [["periodAFrom", "aFrom"], ["periodATo", "aTo"], ["periodBFrom", "bFrom"], ["periodBTo", "bTo"]].forEach(([id, key]) => {
+      document.getElementById(id).addEventListener("change", e => {
+        periodState[key] = e.target.value;
+        savePeriods();
+        renderAnalysis();
+      });
+    });
+
+    [["A", aData], ["B", bData]].forEach(([suffix, data]) => {
+      if (data) {
+        renderTrendChart(data.trend, "trendChart" + suffix);
+        renderDistChart(data.bucketCounts, data.totalHoles, "distChart" + suffix);
+        renderRadarChart(data.radar, "radarChart" + suffix);
+      } else {
+        ["trendChart", "distChart", "radarChart"].forEach(prefix => {
+          document.getElementById(prefix + suffix).innerHTML = `<div class="hint" style="padding:14px 0;">데이터 없음</div>`;
+        });
+      }
+    });
   }
 
-  function renderRadarChart(metrics) {
-    const el = document.getElementById("radarChart");
+  function renderRadarChart(metrics, elId) {
+    const el = document.getElementById(elId || "radarChart");
     const N = metrics.length;
-    const W = 380, H = 380, cx = W / 2, cy = H / 2, R = 100;
+    const W = 280, H = 280, cx = W / 2, cy = H / 2, R = 76;
     const angleFor = i => (-90 + i * (360 / N)) * Math.PI / 180;
     const ringLevels = [0.25, 0.5, 0.75, 1];
 
@@ -834,14 +939,14 @@
 
     const labels = metrics.map((m, i) => {
       const a = angleFor(i);
-      const lx = cx + (R + 40) * Math.cos(a), ly = cy + (R + 40) * Math.sin(a);
+      const lx = cx + (R + 22) * Math.cos(a), ly = cy + (R + 22) * Math.sin(a);
       const anchor = Math.abs(Math.cos(a)) < 0.3 ? "middle" : (Math.cos(a) > 0 ? "start" : "end");
-      return `<text x="${lx}" y="${ly - 3}" text-anchor="${anchor}" font-size="11" font-weight="700" fill="var(--ink-2)">${m.label}</text>
-              <text x="${lx}" y="${ly + 11}" text-anchor="${anchor}" font-size="11" fill="var(--muted)">${fmt1(m.value)}%</text>`;
+      return `<text x="${lx}" y="${ly - 2}" text-anchor="${anchor}" font-size="8" font-weight="700" fill="var(--ink-2)">${m.label}</text>
+              <text x="${lx}" y="${ly + 8}" text-anchor="${anchor}" font-size="8" fill="var(--muted)">${fmt1(m.value)}%</text>`;
     }).join("");
 
     el.innerHTML = `
-      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" preserveAspectRatio="xMidYMid meet">
         ${rings}
         ${axisLines}
         <polygon points="${dataPoly}" fill="var(--turf)" opacity="0.18" stroke="var(--turf)" stroke-width="2" stroke-linejoin="round"/>
@@ -850,8 +955,8 @@
       </svg>`;
   }
 
-  function renderDistChart(bucketCounts, totalHoles) {
-    const el = document.getElementById("distChart");
+  function renderDistChart(bucketCounts, totalHoles, elId) {
+    const el = document.getElementById(elId || "distChart");
     const max = Math.max(...BUCKET_META.map(b => bucketCounts[b.key]), 1);
     el.innerHTML = BUCKET_META.map(b => {
       const v = bucketCounts[b.key];
@@ -859,18 +964,19 @@
       return `<div class="dist-row">
         <span class="lbl" style="color:${b.color}">${b.label}</span>
         <div class="dist-track"><div class="dist-fill" style="width:${pct}%; background:${b.color}"></div></div>
-        <span class="cnt"><span>${v}/${totalHoles}</span><span>${totalHoles ? `(${fmt1(v / totalHoles * 18)}/18)` : "(—)"}</span></span>
+        <span class="cnt">${v}/${totalHoles}</span>
       </div>`;
     }).join("");
   }
 
-  function renderTrendChart(trend) {
-    const wrap = document.getElementById("trendChart");
+  function renderTrendChart(trend, elId) {
+    const wrap = document.getElementById(elId || "trendChart");
+    const tipId = (elId || "trendChart") + "Tip";
     if (trend.length < 2) {
-      wrap.innerHTML = `<div class="hint" style="padding:10px 0;">추이를 보려면 라운드가 2개 이상 필요해요</div>`;
+      wrap.innerHTML = `<div class="hint" style="padding:10px 0;">라운드 2개 이상 필요</div>`;
       return;
     }
-    const W = 320, H = 140, PAD = 22;
+    const W = 240, H = 100, PAD = 16;
     const vals = trend.map(t => t.diff);
     const yMin = Math.min(...vals, 0), yMax = Math.max(...vals, 0);
     const yRange = (yMax - yMin) || 1;
@@ -887,18 +993,18 @@
     ).join("");
 
     wrap.innerHTML = `
-      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" preserveAspectRatio="xMidYMid meet">
         <line x1="${PAD}" y1="${zeroY.toFixed(1)}" x2="${W - PAD}" y2="${zeroY.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
-        <text x="${W - PAD}" y="${zeroY - 4}" text-anchor="end" font-size="9" fill="var(--muted)">파(0)</text>
+        <text x="${W - PAD}" y="${zeroY - 4}" text-anchor="end" font-size="7" fill="var(--muted)">파(0)</text>
         <path d="${areaPath}" fill="var(--turf)" opacity="0.10"></path>
         <path d="${path}" fill="none" stroke="var(--turf)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
         ${circles}
         <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="4.5" fill="var(--flag)"></circle>
       </svg>
-      <div class="tooltip" id="trendTip"></div>
+      <div class="tooltip" id="${tipId}"></div>
     `;
     const svg = wrap.querySelector("svg");
-    const tip = document.getElementById("trendTip");
+    const tip = document.getElementById(tipId);
     svg.querySelectorAll(".dot").forEach(dot => {
       const show = () => {
         const i = +dot.dataset.i;
@@ -919,6 +1025,64 @@
     });
   }
 
+  // ── hole detail overlay (read-only recap of one hole's entry) ──
+  function renderHoleDetailCard(h, i) {
+    const nine = i < 9 ? "전반" : "후반";
+    const holeNum = i < 9 ? i + 1 : i - 9 + 1;
+    const approachEnabled = !h.gir;
+    const start = activeStartRow(h.par);
+    const rv = h.rowValues || [];
+    let shotRows = "";
+    for (let r = start; r < 4; r++) {
+      const v = rv[r];
+      if (v == null) continue;
+      shotRows += `<div class="cat-sub-row">
+        <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
+        ${renderBtnRow(rowOptions(r), v, false, {}, false, vv => shotButtonLabel(r, vv))}
+      </div>`;
+    }
+    let approachRows = "";
+    if (approachEnabled) {
+      approachRows = [["피칭", h.approachPitching], ["벙커", h.approachBunker], ["벌타", h.approachPenalty], ["칩샷", h.approachChip]]
+        .map(([l, v]) => `<div class="cat-sub-row">
+          <span class="cat-sub-label">${l}</span>
+          ${renderBtnRow([1, 2, 3, 4], v || null, false, {})}
+        </div>`).join("");
+    }
+    const puttRow = `<div class="cat-sub-row">
+      <span class="cat-sub-label">퍼팅수</span>
+      ${renderBtnRow([0, 1, 2, 3, 4], h.putt, false, {})}
+    </div>`;
+    return `<div class="hd-card" data-hole="${i}">
+      <div class="hole-title-row">
+        <div class="hole-title">${nine} <span class="hole-word">Hole</span> ${holeNum}<span class="hd-par">(Par ${h.par})</span></div>
+      </div>
+      ${shotRows ? `<div class="cat-group readonly">${shotRows}</div>` : ""}
+      ${approachRows ? `<div class="cat-group readonly">${approachRows}</div>` : ""}
+      <div class="cat-group readonly">${puttRow}</div>
+      <div class="score-row"><span class="bottom-score">score<span class="num">${fmtDiff(h.score)}</span></span></div>
+    </div>`;
+  }
+
+  function openHoleDetail(roundIdx, holeIdx) {
+    const r = rounds[roundIdx];
+    if (!r) return;
+    const overlay = document.createElement("div");
+    overlay.className = "hole-detail-overlay";
+    overlay.innerHTML = `
+      <div class="hd-header">
+        <span class="hd-title">${esc(r.course)} · ${r.date}</span>
+        <button type="button" class="hd-close" id="hdCloseBtn">✕</button>
+      </div>
+      <div class="hd-scroll" id="hdScroll">
+        ${r.holes.map((h, i) => renderHoleDetailCard(h, i)).join("")}
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#hdCloseBtn").addEventListener("click", () => overlay.remove());
+    const target = overlay.querySelector(`.hd-card[data-hole="${holeIdx}"]`);
+    if (target) target.scrollIntoView({ block: "start" });
+  }
+
   // ── history panel ─────────────────────────────────────
   function renderHistory() {
     const el = document.getElementById("panel-history");
@@ -936,10 +1100,10 @@
         let bg = "transparent", fg = "var(--ink)";
         if (d <= -1) { bg = "var(--turf-wash)"; fg = "var(--turf-deep)"; }
         else if (d >= 2) { bg = "var(--flag-wash)"; fg = "var(--flag)"; }
-        return `<div class="r-hole"><div class="hn">${i + 1}</div><div class="hs" style="background:${bg};color:${fg}">${h.score + h.par}</div></div>`;
+        return `<div class="r-hole" data-hole="${i}"><div class="hn">${i + 1}<span class="hp">(${h.par})</span></div><div class="hs" style="background:${bg};color:${fg}">${h.score + h.par}</div></div>`;
       });
       return `
-      <details class="round-row">
+      <details class="round-row" data-ridx="${idx}">
         <summary>
           <div class="r-left">
             <div class="r-date">${r.date}</div>
@@ -969,6 +1133,14 @@
       </details>`;
     }).join("");
 
+    el.querySelectorAll(".r-hole").forEach(cell => {
+      cell.addEventListener("click", () => {
+        const ridx = +cell.closest(".round-row").dataset.ridx;
+        const hidx = +cell.dataset.hole;
+        openHoleDetail(ridx, hidx);
+      });
+    });
+
     el.querySelectorAll(".memo-box").forEach(box => {
       box.addEventListener("change", () => {
         rounds[+box.dataset.idx].memo = box.value;
@@ -983,7 +1155,7 @@
         if (btn.dataset.confirming === "1") {
           rounds.splice(idx, 1);
           saveRounds(rounds);
-          renderHistory(); renderAnalysis(); renderHeaderHcp();
+          renderHistory(); renderRoundLog(); renderAnalysis(); renderHeaderHcp();
           return;
         }
         btn.dataset.confirming = "1";
@@ -998,6 +1170,30 @@
         }, 3000);
       });
     });
+  }
+
+  // ── 라운드기록 panel (one line per round: date/course/score/memo) ──
+  function renderRoundLog() {
+    const el = document.getElementById("panel-roundlog");
+    if (!rounds.length) {
+      el.innerHTML = `<div class="card"><div class="empty"><div class="big">📋</div>아직 라운드 기록이 없어요.</div></div>`;
+      return;
+    }
+    const sorted = [...rounds].sort((a, b) => new Date(b.date) - new Date(a.date));
+    el.innerHTML = `<div class="card"><div class="card-title">라운드 기록</div>${
+      sorted.map(r => {
+        const m = roundMetrics(r);
+        const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
+        return `<div class="log-row">
+          <div class="log-top">
+            <span class="log-date">${r.date}</span>
+            <span class="log-course">${esc(r.course)}</span>
+            <span class="log-score">${m.totalScore} (${diffStr})</span>
+          </div>
+          ${r.memo ? `<div class="log-memo">${esc(r.memo)}</div>` : ""}
+        </div>`;
+      }).join("")
+    }</div>`;
   }
 
   // ── tabs ──────────────────────────────────────────────
@@ -1019,6 +1215,7 @@
   renderAddPanel();
   renderAnalysis();
   renderHistory();
+  renderRoundLog();
   renderHeaderHcp();
   syncHeaderHeight();
 })();
