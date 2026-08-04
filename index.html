@@ -102,11 +102,14 @@
     border-bottom: 1px solid var(--line);
     padding: 6px 14px 5px;
   }
-  .brand { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .brand-name { font-family: ui-serif, Georgia, serif; font-size: 27px; font-weight: 600; letter-spacing: 0.2px; text-align: center; }
+  .brand { display: flex; align-items: center; gap: 6px; }
+  .brand-left { display: flex; align-items: center; gap: 6px; flex: 1 1 0; min-width: 0; }
+  .brand-name { flex: 0 0 auto; font-family: ui-serif, Georgia, serif; font-size: 27px; font-weight: 600; letter-spacing: 0.2px; text-align: center; white-space: nowrap; }
   .brand-name .accent { color: var(--turf); }
   .hcp-chip {
-    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    flex: 1 1 0; display: flex; align-items: baseline; justify-content: flex-end; gap: 5px;
+  }
+  .hcp-chip-inner {
     display: flex; align-items: baseline; gap: 5px;
     background: var(--flag-wash); border-radius: 999px;
     padding: 4px 12px 4px 10px;
@@ -115,16 +118,14 @@
   .hcp-chip .val { font-size: 23px; font-weight: 600; color: var(--flag); }
 
   .theme-toggle {
-    position: absolute; left: 0; top: 50%; transform: translateY(-50%);
     display: flex; align-items: center; justify-content: center;
-    width: 34px; height: 34px; border: none; border-radius: 999px;
+    width: 34px; height: 34px; border: none; border-radius: 999px; flex: 0 0 auto;
     background: var(--paper-alt); color: var(--ink-2); cursor: pointer; padding: 0;
   }
   .theme-toggle svg { width: 18px; height: 18px; }
   .hdr-date-input {
-    position: absolute; left: 42px; top: 50%; transform: translateY(-50%);
     border: 1px solid var(--line); background: var(--paper-alt); color: var(--ink-2);
-    border-radius: 7px; padding: 5px 6px; font-size: 12px; width: 112px;
+    border-radius: 7px; padding: 5px 6px; font-size: 12px; width: 100%; max-width: 112px; min-width: 0;
     display: none;
   }
   .hdr-date-input.show { display: block; }
@@ -316,7 +317,7 @@
   .del-btn { border: 1px solid var(--flag); color: var(--flag); background: transparent; border-radius: 8px; padding: 9px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .del-btn.confirming { background: var(--flag); color: #fff; }
   .r-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-  .tap-hint { font-size: 12.5px; color: var(--muted); }
+  .tap-hint { font-size: 17px; font-weight: 700; color: var(--turf); }
 
   /* ── Hole detail overlay (tap a scorecard cell) ──────────── */
   .hole-detail-overlay {
@@ -367,10 +368,12 @@
 
 <header>
   <div class="brand">
-    <button type="button" class="theme-toggle" id="themeToggle" aria-label="다크모드 전환"></button>
-    <input type="date" class="hdr-date-input show" id="hdrDate">
-    <div class="brand-name">스코어<span class="accent">카드</span></div>
-    <div class="hcp-chip"><span class="lbl">HCP</span><span class="val" id="hdrHcp">—</span></div>
+    <div class="brand-left">
+      <button type="button" class="theme-toggle" id="themeToggle" aria-label="다크모드 전환"></button>
+      <input type="date" class="hdr-date-input show" id="hdrDate">
+    </div>
+    <div class="brand-name">스코어</div>
+    <div class="hcp-chip"><div class="hcp-chip-inner"><span class="lbl">HCP</span><span class="val" id="hdrHcp">—</span></div></div>
   </div>
   <nav class="tabs">
     <button data-tab="add" class="active">기록 추가</button>
@@ -576,7 +579,7 @@
 
     document.getElementById("panel-add").innerHTML = `
       <div class="live-header">
-        <input type="text" id="liveCourse" class="live-course-input" placeholder="골프장명" value="${esc(live.course)}">
+        <input type="text" id="liveCourse" class="live-course-input" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">
         <div class="live-score-wrap">
           <span class="live-score-v">${fmtDiff(total)}</span>
           <span class="live-score-sub">(전반${fmtDiff(front)}/후반${fmtDiff(back)})</span>
@@ -1062,8 +1065,7 @@
     const rv = h.rowValues || [];
     let shotRows = "";
     for (let r = start; r < 4; r++) {
-      const v = rv[r];
-      if (v == null) continue;
+      const v = rv[r] != null ? rv[r] : (r === 3 ? "GR" : "FW");
       shotRows += `<div class="cat-sub-row">
         <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
         ${renderBtnRow(rowOptions(r), v, false, {}, false, vv => shotButtonLabel(r, vv))}
@@ -1072,9 +1074,10 @@
     let approachRows = "";
     if (approachEnabled) {
       approachRows = [["피칭", h.approachPitching], ["벙커", h.approachBunker], ["벌타", h.approachPenalty], ["칩샷", h.approachChip]]
+        .filter(([, v]) => v)
         .map(([l, v]) => `<div class="cat-sub-row">
           <span class="cat-sub-label">${l}</span>
-          ${renderBtnRow([1, 2, 3, 4], v || null, false, {})}
+          ${renderBtnRow([1, 2, 3, 4], v, false, {})}
         </div>`).join("");
     }
     const puttRow = `<div class="cat-sub-row">
@@ -1092,7 +1095,7 @@
     </div>`;
   }
 
-  function openHoleDetail(roundIdx, holeIdx) {
+  function openHoleDetail(roundIdx) {
     const r = rounds[roundIdx];
     if (!r) return;
     const overlay = document.createElement("div");
@@ -1107,12 +1110,6 @@
       </div>`;
     document.body.appendChild(overlay);
     overlay.querySelector("#hdCloseBtn").addEventListener("click", () => overlay.remove());
-    const scrollEl = overlay.querySelector("#hdScroll");
-    const target = overlay.querySelector(`.hd-card[data-hole="${holeIdx}"]`);
-    if (target) requestAnimationFrame(() => {
-      const dTop = target.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top + scrollEl.scrollTop;
-      scrollEl.scrollTop = dTop;
-    });
   }
 
   // ── history panel ─────────────────────────────────────
@@ -1162,7 +1159,7 @@
           <textarea class="memo-box" data-idx="${idx}" rows="3" placeholder="메모 (예: 그린 스피드, 바람, 컨디션...)">${esc(r.memo || "")}</textarea>
           <div class="r-actions">
             <button class="del-btn" data-idx="${idx}">이 라운드 삭제</button>
-            <span class="tap-hint">복기하려면 스코어카드를 탭 하세요</span>
+            <span class="tap-hint">복기 하려면 스코어카드를 터치 하세요</span>
           </div>
         </div>
       </details>`;
@@ -1171,8 +1168,7 @@
     el.querySelectorAll(".r-hole").forEach(cell => {
       cell.addEventListener("click", () => {
         const ridx = +cell.closest(".round-row").dataset.ridx;
-        const hidx = +cell.dataset.hole;
-        openHoleDetail(ridx, hidx);
+        openHoleDetail(ridx);
       });
     });
 
