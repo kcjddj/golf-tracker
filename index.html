@@ -213,18 +213,20 @@
   .hole-pager::-webkit-scrollbar { display: none; }
   .hole-page { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
   .hole-page-detail { padding-left: 4px; }
-  .page-hint { text-align: center; font-size: 12px; color: var(--muted); margin: 4px 0 6px; }
-  .detail-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+  .page-hint { text-align: center; font-size: 17px; font-weight: 700; color: var(--turf); margin: 8px 0 10px; }
+  .detail-row { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; }
   .detail-row + .detail-row { border-top: 1px solid var(--line); }
-  .detail-fields { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
-  .detail-field { display: flex; align-items: center; gap: 3px; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+  .detail-row-label { font-size: 19px; font-weight: 800; color: var(--ink); }
+  .detail-fields { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .detail-field { display: flex; align-items: center; gap: 6px; font-size: 18px; color: var(--ink-2); white-space: nowrap; }
+  .detail-field .field-label { font-size: 15px; color: var(--ink-2); }
   .detail-field input {
-    width: 44px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 6px; padding: 6px 3px; font-size: 14px; text-align: center; font-family: inherit;
+    width: 58px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 7px; padding: 8px 4px; font-size: 18px; text-align: center; font-family: inherit;
   }
   .club-select {
-    flex: 1 1 auto; min-width: 56px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 6px; padding: 6px 4px; font-size: 13px; font-family: inherit;
+    flex: 0 0 auto; width: auto; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 7px; padding: 8px 22px 8px 8px; font-size: 16px; font-family: inherit;
   }
 
   .bottom-bar { margin-top: 16px; }
@@ -332,6 +334,9 @@
     border-radius: 6px; padding: 2px 5px; margin: -2px -5px;
   }
   .round-row .r-course-input:hover, .round-row .r-course-input:focus { border-color: var(--line); background: var(--paper); }
+  .r-course-line { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .nine-course-tags { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .log-tags-row { font-size: 11.5px; color: var(--muted); margin-top: -1px; }
   .round-row .r-right { display: flex; align-items: center; gap: 8px; }
   .score-chip { font-family: ui-serif, Georgia, serif; font-size: 18px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
   .score-chip.under { background: var(--turf-wash); color: var(--turf-deep); }
@@ -492,13 +497,19 @@
   const fmtDiffZ = d => d === 0 ? "0" : fmtDiff(d);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const todayISO = () => new Date().toISOString().slice(0, 10);
+  function nineCourseTagsHTML(r) {
+    const parts = [];
+    if (r.courseFront) parts.push(`전반 ${esc(r.courseFront)}`);
+    if (r.courseBack) parts.push(`후반 ${esc(r.courseBack)}`);
+    return parts.length ? `<span class="nine-course-tags">${parts.join(" · ")}</span>` : "";
+  }
 
   // ── live round entry (paginated hole-by-hole flow) ────
   // Row positions 0..3 are fixed (top→bottom); which ones are active depends on par.
   // Row 3 (bottom) is always active and has no FW option — it's the shot that decides GIR.
   const activeStartRow = par => 6 - par;                          // par3→3, par4→2, par5→1, par6→0
   const isRowActive    = (par, r) => r >= activeStartRow(par);
-  const rowOptions     = r => r === 3 ? ["OB", "PA", "BK", "RF", "GR"] : ["OB", "PA", "BK", "RF", "FW", "GR"];
+  const rowOptions     = () => ["OB", "PA", "BK", "RF", "FW", "GR"];
   const shotRowLabel   = (par, r) => {
     if (!isRowActive(par, r)) return ["1st shot", "2nd shot", "3rd shot", "4th shot"][r];
     const i = r - activeStartRow(par);
@@ -555,7 +566,7 @@
     }
     const gir = grRow !== -1;
     const lastCountedRow = gir ? grRow : 3;
-    let shotSum = 0, ob = 0, pa = 0, bk = 0, rf = 0, fir = null, lastBK = false;
+    let shotSum = 0, ob = 0, pa = 0, bk = 0, rf = 0, fir = null, lastBK = false, lastRF = false, lastFW = false;
     for (let r = start; r <= lastCountedRow; r++) {
       const v = h.rowValues[r];
       shotSum += shotPoint(v);
@@ -564,11 +575,12 @@
       if (v === "BK") { if (r === 3) lastBK = true; else bk++; }
       if (v === "RF") rf++;
       if (r === start && r !== 3) fir = (v === "FW");
+      if (r === 3) { lastRF = (v === "RF"); lastFW = (v === "FW"); }
     }
     const approachSum = (h.approach.pitching || 0) + (h.approach.bunker || 0) + (h.approach.penalty || 0) + (h.approach.chip || 0);
     const puttVal = h.putt || 0;
     const rawStrokes = shotSum + approachSum + puttVal;
-    return { rawStrokes, score: rawStrokes - h.par, fir, gir, ob, pa, bk, rf, lastBK, puttVal };
+    return { rawStrokes, score: rawStrokes - h.par, fir, gir, ob, pa, bk, rf, lastBK, lastRF, lastFW, puttVal };
   }
 
   function renderBtnRow(options, selected, disabled, dataset, compact, labelFn, disabledOptions) {
@@ -584,8 +596,6 @@
     }).join("")}</div>`;
   }
 
-  const shotButtonLabel = (r, v) => (r === 3 && v === "RF") ? "Miss" : v;
-
   function shotRowHTML(h, r) {
     if (!isRowActive(h.par, r)) return "";
     const start = activeStartRow(h.par);
@@ -596,7 +606,7 @@
     const isPastGR = grRow !== -1 && r > grRow;
     return `<div class="cat-sub-row${isPastGR ? " disabled" : ""}">
       <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
-      ${renderBtnRow(rowOptions(r), isPastGR ? null : h.rowValues[r], false, { kind: "shot", row: r }, false, v => shotButtonLabel(r, v))}
+      ${renderBtnRow(rowOptions(r), isPastGR ? null : h.rowValues[r], false, { kind: "shot", row: r }, false)}
     </div>`;
   }
   function approachRowHTML(h, key, label, enabled) {
@@ -627,13 +637,21 @@
       <option value="">클럽</option>${groupsHTML}
     </select>`;
   }
-  function detailRowHTML(label, kind, sub, detail, includeClub) {
+  function detailRowHTML(label, kind, sub, detail, includeClub, singleField) {
     const dataAttrs = `data-kind="${kind}" data-sub="${sub}"`;
+    if (singleField) {
+      return `<div class="detail-row">
+        <div class="detail-row-label">${label}</div>
+        <div class="detail-fields">
+          <span class="detail-field"><span class="field-label">거리</span><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${detail.dist ?? ""}" placeholder="0">m</span>
+        </div>
+      </div>`;
+    }
     return `<div class="detail-row">
-      <span class="cat-sub-label">${label}</span>
+      <div class="detail-row-label">${label}</div>
       <div class="detail-fields">
-        <span class="detail-field"><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${detail.dist ?? ""}" placeholder="0">m</span>
-        <span class="detail-field"><input type="number" inputmode="numeric" class="remain-input" ${dataAttrs} value="${detail.remain ?? ""}" placeholder="0">m</span>
+        <span class="detail-field"><span class="field-label">비거리</span><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${detail.dist ?? ""}" placeholder="0">m</span>
+        <span class="detail-field"><span class="field-label">남은거리</span><input type="number" inputmode="numeric" class="remain-input" ${dataAttrs} value="${detail.remain ?? ""}" placeholder="0">m</span>
         ${includeClub ? clubSelectHTML(kind, sub, detail.club) : ""}
       </div>
     </div>`;
@@ -673,7 +691,7 @@
     }
     const detailApproachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"], ["penalty", "벌타"]]
       .map(([k, l]) => detailRowHTML(l, "approach", k, h.detail.approach[k], true)).join("");
-    const detailPuttRow = detailRowHTML("퍼팅", "putt", "putt", h.detail.putt, false);
+    const detailPuttRow = detailRowHTML("퍼팅", "putt", "putt", h.detail.putt, false, true);
 
     document.getElementById("panel-add").innerHTML = `
       <div class="live-header">
@@ -772,8 +790,9 @@
         } else if (kind === "shot") {
           const r = +btn.dataset.row;
           h.rowValues[r] = val;
-          if (r === 3 && val === "BK") { h.approach.bunker = 1; h.approach.chip = null; }
-          if (r === 3 && val === "RF") { h.approach.chip = 1; h.approach.bunker = null; }
+          if (r === 3 && val === "BK") { h.approach.bunker = 1; h.approach.pitching = null; h.approach.chip = null; }
+          if (r === 3 && val === "RF") { h.approach.pitching = 1; h.approach.bunker = null; h.approach.chip = null; }
+          if (r === 3 && val === "FW") { h.approach.chip = 1; h.approach.bunker = null; h.approach.pitching = null; }
         } else if (kind === "approach") {
           const sub = btn.dataset.sub;
           h.approach[sub] = (h.approach[sub] === +val) ? null : +val;
@@ -835,7 +854,8 @@
       const result = h.result || computeHoleResult(h);
       return {
         par: h.par, score: result.score, gir: result.gir, fir: result.fir,
-        ob: result.ob, pa: result.pa, bk: result.bk, rf: result.rf, lastBK: result.lastBK,
+        ob: result.ob, pa: result.pa, bk: result.bk, rf: result.rf,
+        lastBK: result.lastBK, lastRF: result.lastRF, lastFW: result.lastFW,
         approachPitching: h.approach.pitching || 0, approachBunker: h.approach.bunker || 0,
         approachPenalty: h.approach.penalty || 0, approachChip: h.approach.chip || 0,
         putt: result.puttVal,
@@ -847,6 +867,8 @@
       id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
       date: live.date || todayISO(),
       course: (live.course || "").trim() || "이름 없는 골프장",
+      courseFront: (live.courseFront || "").trim(),
+      courseBack: (live.courseBack || "").trim(),
       holes: holesOut,
       fairways: holesOut.filter(h => h.par >= 4 && h.fir).length,
       greens:   holesOut.filter(h => h.gir).length,
@@ -917,6 +939,14 @@
     const cpSaveNum = allHoles.filter(h => h.approachChip >= 1 && h.putt <= 1).length;
     const pitchSaveDen = allHoles.filter(h => h.approachPitching >= 1).length;
     const pitchSaveNum = allHoles.filter(h => h.approachPitching >= 1 && h.putt <= 1).length;
+    const pitchSaveRFDen = allHoles.filter(h => h.lastRF && h.approachPitching >= 1).length;
+    const pitchSaveRFNum = allHoles.filter(h => h.lastRF && h.approachPitching >= 1 && h.putt <= 1).length;
+    const pitchSaveFWDen = allHoles.filter(h => h.lastFW && h.approachPitching >= 1).length;
+    const pitchSaveFWNum = allHoles.filter(h => h.lastFW && h.approachPitching >= 1 && h.putt <= 1).length;
+    const cpSaveRFDen = allHoles.filter(h => h.lastRF && h.approachChip >= 1).length;
+    const cpSaveRFNum = allHoles.filter(h => h.lastRF && h.approachChip >= 1 && h.putt <= 1).length;
+    const cpSaveFWDen = allHoles.filter(h => h.lastFW && h.approachChip >= 1).length;
+    const cpSaveFWNum = allHoles.filter(h => h.lastFW && h.approachChip >= 1 && h.putt <= 1).length;
     const chipInDen = allHoles.filter(h => h.approachChip >= 1).length;
     const chipInNum = allHoles.filter(h => h.approachChip >= 1 && h.putt === 0).length;
     const parSaveDen = allHoles.filter(h => !h.gir).length;
@@ -953,6 +983,7 @@
     return {
       handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: list.length,
       bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, pitchSaveNum, pitchSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
+      pitchSaveRFNum, pitchSaveRFDen, pitchSaveFWNum, pitchSaveFWDen, cpSaveRFNum, cpSaveRFDen, cpSaveFWNum, cpSaveFWDen,
       fwBkParSaveNum, fwBkParSaveDen, roughParSaveNum, roughParSaveDen,
       roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar,
     };
@@ -980,7 +1011,11 @@
     { label: "평균 퍼팅수", get: a => fmt1(a.avgPutts) },
     { label: "벙커 세이브율", get: a => fmtRate(a.bkSaveNum, a.bkSaveDen) },
     { label: "피칭 세이브율", get: a => fmtRate(a.pitchSaveNum, a.pitchSaveDen) },
+    { label: "RF 피칭 세이브율", get: a => fmtRate(a.pitchSaveRFNum, a.pitchSaveRFDen) },
+    { label: "FW 피칭 세이브율", get: a => fmtRate(a.pitchSaveFWNum, a.pitchSaveFWDen) },
     { label: "칩 세이브율", get: a => fmtRate(a.cpSaveNum, a.cpSaveDen) },
+    { label: "RF 칩 세이브율", get: a => fmtRate(a.cpSaveRFNum, a.cpSaveRFDen) },
+    { label: "FW 칩 세이브율", get: a => fmtRate(a.cpSaveFWNum, a.cpSaveFWDen) },
     { label: "파 세이브율", get: a => fmtRate(a.parSaveNum, a.parSaveDen) },
     { label: "칩인", get: a => fmtRate(a.chipInNum, a.chipInDen) },
     { label: "쓰리퍼트", get: a => fmtPer18(a.threePuttTotal, a.totalHoles) },
@@ -1208,7 +1243,7 @@
       const v = rv[r] != null ? rv[r] : (r === 3 ? "GR" : "FW");
       shotRows += `<div class="cat-sub-row">
         <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
-        ${renderBtnRow(rowOptions(r), v, false, {}, false, vv => shotButtonLabel(r, vv))}
+        ${renderBtnRow(rowOptions(r), v, false, {}, false)}
       </div>`;
     }
     const approachRows = [["피칭", h.approachPitching], ["벙커", h.approachBunker], ["칩샷", h.approachChip], ["벌타", h.approachPenalty]]
@@ -1274,7 +1309,10 @@
         <summary>
           <div class="r-left">
             <div class="r-date">${r.date}</div>
-            <input type="text" class="r-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
+            <div class="r-course-line">
+              <input type="text" class="r-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
+              ${nineCourseTagsHTML(r)}
+            </div>
           </div>
           <div class="r-right">
             <span class="score-chip ${chipClass}">${m.totalScore} (${diffStr})</span>
@@ -1365,12 +1403,14 @@
       sorted.map(({ r, idx }) => {
         const m = roundMetrics(r);
         const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
+        const tagsHTML = nineCourseTagsHTML(r);
         return `<div class="log-row">
           <div class="log-top">
             <span class="log-date">${r.date}</span>
             <input type="text" class="log-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
             <span class="log-score">${m.totalScore} (${diffStr})</span>
           </div>
+          ${tagsHTML ? `<div class="log-tags-row">${tagsHTML}</div>` : ""}
           <input type="text" class="log-memo-input" data-idx="${idx}" placeholder="메모" value="${esc(r.memo || "")}">
         </div>`;
       }).join("")
