@@ -173,7 +173,7 @@
   .live-score-sub { font-size: 30px; font-weight: 400; color: var(--muted); }
 
   .hole-title-row { display: flex; align-items: center; justify-content: space-between; margin: 5px 0 4px; gap: 10px; }
-  .hole-title { font-family: ui-serif, Georgia, serif; font-size: 19px; font-weight: 700; }
+  .hole-title { font-family: ui-serif, Georgia, serif; font-size: 22px; font-weight: 700; }
   .hole-title .hole-word { font-size: 0.667em; }
   .hole-title .hd-par { font-size: 13px; font-weight: 400; color: var(--ink-2); margin-left: 6px; }
   .par-picker { display: flex; align-items: center; gap: 6px; }
@@ -198,15 +198,15 @@
   .pill-btn:disabled { opacity: 0.32; cursor: not-allowed; }
   .cat-group.readonly .pill-btn { pointer-events: none; cursor: default; }
 
-  .bottom-bar { margin-top: 6px; }
+  .bottom-bar { margin-top: 16px; }
   .bottom-row { display: flex; justify-content: flex-end; }
   .bottom-score {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    font-size: 22px; font-weight: 700;
+    font-size: 22px; font-weight: 700; white-space: nowrap;
   }
-  .bottom-score .num { margin-left: 12px; }
+  .bottom-score .num { margin-left: 10px; }
   .score-row { display: flex; justify-content: center; margin-top: 6px; }
-  .next-row { display: flex; justify-content: center; align-items: center; gap: 48px; margin-top: 3px; }
+  .next-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .next-btn { border: none; background: var(--turf); color: #fff; padding: 12px 30px; border-radius: 11px; font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .next-btn:disabled { background: var(--muted); opacity: 0.5; cursor: not-allowed; }
   .prev-btn {
@@ -558,7 +558,7 @@
   }
   function puttRowHTML(h) {
     return `<div class="cat-sub-row">
-      <span class="cat-sub-label">퍼팅수</span>
+      <span class="cat-sub-label">퍼팅</span>
       ${renderBtnRow([0, 1, 2, 3, 4], h.putt, false, { kind: "putt" })}
     </div>`;
   }
@@ -609,11 +609,9 @@
 
       <div class="bottom-bar">
         <div class="next-row">
-          <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전홀로 이동</button>
-          <button class="next-btn" id="holeNextBtn">${isLast ? "라운드 종료" : "다음홀로 이동"}</button>
-        </div>
-        <div class="score-row">
+          <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전홀</button>
           <span class="bottom-score">score<span class="num">${fmtDiff(liveResult.score)}</span></span>
+          <button class="next-btn" id="holeNextBtn">${isLast ? "라운드 종료" : "다음홀"}</button>
         </div>
       </div>
     `;
@@ -1075,7 +1073,7 @@
         ${renderBtnRow([1, 2, 3, 4], v, false, {})}
       </div>`).join("");
     const puttRow = `<div class="cat-sub-row">
-      <span class="cat-sub-label">퍼팅수</span>
+      <span class="cat-sub-label">퍼팅</span>
       ${renderBtnRow([0, 1, 2, 3, 4], h.putt, false, {})}
     </div>`;
     return `<div class="hd-card" data-hole="${i}">
