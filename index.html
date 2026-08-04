@@ -507,10 +507,7 @@
       if (r === start && r !== 3) fir = (v === "FW");
       if (r === 3) gir = (v === "GR");
     }
-    const approachEnabled = !gir;
-    const approachSum = approachEnabled
-      ? (h.approach.pitching || 0) + (h.approach.bunker || 0) + (h.approach.penalty || 0) + (h.approach.chip || 0)
-      : 0;
+    const approachSum = (h.approach.pitching || 0) + (h.approach.bunker || 0) + (h.approach.penalty || 0) + (h.approach.chip || 0);
     const puttVal = h.putt || 0;
     const rawStrokes = shotSum + approachSum + puttVal;
     return { rawStrokes, score: rawStrokes - h.par, fir, gir, ob, pa, bk, rf, lastBK, puttVal };
@@ -563,7 +560,6 @@
 
   function renderHolePage(idx) {
     const h = live.holes[idx];
-    const approachEnabled = h.rowValues[3] !== "GR";
     const nine = idx < 9 ? "전반" : "후반";
     const holeNum = idx < 9 ? idx + 1 : idx - 9 + 1;
 
@@ -574,7 +570,7 @@
 
     const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r)).join("");
     const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["penalty", "벌타"], ["chip", "칩샷"]]
-      .map(([k, l]) => approachRowHTML(h, k, l, approachEnabled)).join("");
+      .map(([k, l]) => approachRowHTML(h, k, l, true)).join("");
     const isLast = idx === 17;
 
     document.getElementById("panel-add").innerHTML = `
@@ -596,7 +592,7 @@
 
       <div class="cat-group">${shotRows}</div>
 
-      <div class="cat-group ${approachEnabled ? "" : "disabled"}">${approachRows}</div>
+      <div class="cat-group">${approachRows}</div>
 
       <div class="cat-group">${puttRowHTML(h)}</div>
 
@@ -633,7 +629,6 @@
         } else if (kind === "shot") {
           const r = +btn.dataset.row;
           h.rowValues[r] = val;
-          if (r === 3 && val === "GR") h.approach = { pitching: null, bunker: null, penalty: null, chip: null };
         } else if (kind === "approach") {
           const sub = btn.dataset.sub;
           h.approach[sub] = (h.approach[sub] === +val) ? null : +val;
@@ -1060,7 +1055,6 @@
   function renderHoleDetailCard(h, i) {
     const nine = i < 9 ? "전반" : "후반";
     const holeNum = i < 9 ? i + 1 : i - 9 + 1;
-    const approachEnabled = !h.gir;
     const start = activeStartRow(h.par);
     const rv = h.rowValues || [];
     let shotRows = "";
@@ -1071,15 +1065,12 @@
         ${renderBtnRow(rowOptions(r), v, false, {}, false, vv => shotButtonLabel(r, vv))}
       </div>`;
     }
-    let approachRows = "";
-    if (approachEnabled) {
-      approachRows = [["피칭", h.approachPitching], ["벙커", h.approachBunker], ["벌타", h.approachPenalty], ["칩샷", h.approachChip]]
-        .filter(([, v]) => v)
-        .map(([l, v]) => `<div class="cat-sub-row">
-          <span class="cat-sub-label">${l}</span>
-          ${renderBtnRow([1, 2, 3, 4], v, false, {})}
-        </div>`).join("");
-    }
+    const approachRows = [["피칭", h.approachPitching], ["벙커", h.approachBunker], ["벌타", h.approachPenalty], ["칩샷", h.approachChip]]
+      .filter(([, v]) => v)
+      .map(([l, v]) => `<div class="cat-sub-row">
+        <span class="cat-sub-label">${l}</span>
+        ${renderBtnRow([1, 2, 3, 4], v, false, {})}
+      </div>`).join("");
     const puttRow = `<div class="cat-sub-row">
       <span class="cat-sub-label">퍼팅수</span>
       ${renderBtnRow([0, 1, 2, 3, 4], h.putt, false, {})}
@@ -1129,7 +1120,7 @@
         let bg = "transparent", fg = "var(--ink)";
         if (d <= -1) { bg = "var(--turf-wash)"; fg = "var(--turf-deep)"; }
         else if (d >= 2) { bg = "var(--flag-wash)"; fg = "var(--flag)"; }
-        return `<div class="r-hole" data-hole="${i}"><div class="hn">${i + 1}<span class="hp">(${h.par})</span></div><div class="hs" style="background:${bg};color:${fg}">${h.score + h.par}</div></div>`;
+        return `<div class="r-hole" data-hole="${i}"><div class="hn">${i + 1}<span class="hp">(${h.par})</span></div><div class="hs" style="background:${bg};color:${fg}">${fmtDiff(h.score)}</div></div>`;
       });
       return `
       <details class="round-row" data-ridx="${idx}">
