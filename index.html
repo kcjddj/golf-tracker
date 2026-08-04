@@ -644,6 +644,8 @@
         } else if (kind === "shot") {
           const r = +btn.dataset.row;
           h.rowValues[r] = val;
+          if (r === 3 && val === "BK") h.approach.bunker = 1;
+          if (r === 3 && val === "RF") h.approach.chip = 1;
         } else if (kind === "approach") {
           const sub = btn.dataset.sub;
           h.approach[sub] = (h.approach[sub] === +val) ? null : +val;
