@@ -184,6 +184,7 @@
   .cat-group.disabled { opacity: 0.45; }
   .cat-sub-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
   .cat-sub-row + .cat-sub-row { border-top: 1px solid var(--line); }
+  .cat-sub-row.disabled { opacity: 0.4; pointer-events: none; }
   .cat-sub-label { flex: 0 0 92px; font-size: 18px; font-weight: 800; color: var(--ink); white-space: nowrap; }
 
   .btn-row { display: flex; gap: 4px; flex: 1; }
@@ -508,8 +509,14 @@
 
   function computeHoleResult(h) {
     const start = activeStartRow(h.par);
-    let shotSum = 0, ob = 0, pa = 0, bk = 0, rf = 0, fir = null, gir = false, lastBK = false;
-    for (let r = start; r < 4; r++) {
+    let grRow = -1;
+    for (let rr = start; rr <= 3; rr++) {
+      if (h.rowValues[rr] === "GR") { grRow = rr; break; }
+    }
+    const gir = grRow !== -1;
+    const lastCountedRow = gir ? grRow : 3;
+    let shotSum = 0, ob = 0, pa = 0, bk = 0, rf = 0, fir = null, lastBK = false;
+    for (let r = start; r <= lastCountedRow; r++) {
       const v = h.rowValues[r];
       shotSum += shotPoint(v);
       if (v === "OB") ob++;
@@ -517,7 +524,6 @@
       if (v === "BK") { if (r === 3) lastBK = true; else bk++; }
       if (v === "RF") rf++;
       if (r === start && r !== 3) fir = (v === "FW");
-      if (r === 3) gir = (v === "GR");
     }
     const approachSum = (h.approach.pitching || 0) + (h.approach.bunker || 0) + (h.approach.penalty || 0) + (h.approach.chip || 0);
     const puttVal = h.putt || 0;
@@ -543,13 +549,14 @@
   function shotRowHTML(h, r) {
     if (!isRowActive(h.par, r)) return "";
     const start = activeStartRow(h.par);
-    let grDisabled = false;
-    for (let rr = start; rr < r; rr++) {
-      if (h.rowValues[rr] === "GR") { grDisabled = true; break; }
+    let grRow = -1;
+    for (let rr = start; rr <= 3; rr++) {
+      if (h.rowValues[rr] === "GR") { grRow = rr; break; }
     }
-    return `<div class="cat-sub-row">
+    const isPastGR = grRow !== -1 && r > grRow;
+    return `<div class="cat-sub-row${isPastGR ? " disabled" : ""}">
       <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
-      ${renderBtnRow(rowOptions(r), h.rowValues[r], false, { kind: "shot", row: r }, false, v => shotButtonLabel(r, v), grDisabled ? ["GR"] : [])}
+      ${renderBtnRow(rowOptions(r), isPastGR ? null : h.rowValues[r], false, { kind: "shot", row: r }, false, v => shotButtonLabel(r, v))}
     </div>`;
   }
   function approachRowHTML(h, key, label, enabled) {
@@ -1060,8 +1067,13 @@
     const holeNum = i < 9 ? i + 1 : i - 9 + 1;
     const start = activeStartRow(h.par);
     const rv = h.rowValues || [];
+    let grRow = -1;
+    for (let rr = start; rr <= 3; rr++) {
+      const v = rv[rr] != null ? rv[rr] : (rr === 3 ? "GR" : "FW");
+      if (v === "GR") { grRow = rr; break; }
+    }
     let shotRows = "";
-    for (let r = start; r < 4; r++) {
+    for (let r = start; r <= (grRow !== -1 ? grRow : 3); r++) {
       const v = rv[r] != null ? rv[r] : (r === 3 ? "GR" : "FW");
       shotRows += `<div class="cat-sub-row">
         <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
