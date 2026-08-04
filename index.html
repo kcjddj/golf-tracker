@@ -121,6 +121,13 @@
     background: var(--paper-alt); color: var(--ink-2); cursor: pointer; padding: 0;
   }
   .theme-toggle svg { width: 18px; height: 18px; }
+  .hdr-date-input {
+    position: absolute; left: 42px; top: 50%; transform: translateY(-50%);
+    border: 1px solid var(--line); background: var(--paper-alt); color: var(--ink-2);
+    border-radius: 7px; padding: 5px 6px; font-size: 12px; width: 112px;
+    display: none;
+  }
+  .hdr-date-input.show { display: block; }
 
   nav.tabs {
     display: grid; grid-template-columns: repeat(4, 1fr);
@@ -254,26 +261,26 @@
   .tooltip.show { opacity: 1; }
   .tooltip .t-date { color: var(--ink-2); font-size: 10.5px; }
 
-  .dist-row { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; gap: 4px; padding: 2px 0; }
-  .dist-row .lbl { font-size: 8.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .dist-track { height: 8px; background: var(--paper-alt); border-radius: 3px; overflow: hidden; position: relative; }
+  .dist-row { display: grid; grid-template-columns: 50px 1fr 46px; align-items: center; gap: 5px; padding: 3px 0; }
+  .dist-row .lbl { font-size: 11.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dist-track { height: 9px; background: var(--paper-alt); border-radius: 3px; overflow: hidden; position: relative; }
   .dist-fill { height: 100%; border-radius: 3px; min-width: 2px; }
   .dist-row .cnt {
-    text-align: right; font-size: 9px; font-variant-numeric: tabular-nums; color: var(--ink-2);
+    text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-2);
   }
 
   /* ── Analysis: two-period comparison grid ────────────────── */
-  .cmp-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 8px; box-shadow: var(--shadow); }
-  .cmp-row { display: grid; grid-template-columns: 60px 1fr 1fr; align-items: center; gap: 4px; padding: 6px 2px; border-bottom: 1px solid var(--line); }
+  .cmp-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 6px; box-shadow: var(--shadow); }
+  .cmp-row { display: grid; grid-template-columns: 76px 1fr 1fr; align-items: center; gap: 3px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
   .cmp-row:last-child { border-bottom: none; }
-  .cmp-cell { font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; min-width: 0; }
-  .cmp-label { text-align: left; font-size: 11px; font-weight: 700; color: var(--ink-2); line-height: 1.25; }
+  .cmp-cell { font-size: 17px; font-variant-numeric: tabular-nums; text-align: center; min-width: 0; }
+  .cmp-label { text-align: left; font-size: 14.5px; font-weight: 700; color: var(--ink-2); line-height: 1.25; }
   .cmp-head-row { align-items: start; padding-bottom: 10px; }
-  .cmp-period-name { font-size: 12.5px; font-weight: 700; text-align: center; margin-bottom: 5px; }
-  .cmp-dates { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+  .cmp-period-name { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .cmp-dates { display: flex; flex-direction: column; gap: 4px; align-items: center; }
   .cmp-dates input[type="date"] {
-    width: 100%; max-width: 122px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 6px; padding: 3px 3px; font-size: 10px;
+    width: 100%; max-width: 130px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 6px; padding: 4px 3px; font-size: 13px;
   }
   .cmp-chart-row { align-items: start; padding: 8px 2px; }
   .cmp-chart { width: 100%; }
@@ -301,13 +308,15 @@
   .r-detail { padding: 0 14px 14px; border-top: 1px solid var(--line); }
   .r-mini-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin: 10px 0 4px; }
   .r-hole { text-align: center; font-size: 18px; cursor: pointer; }
-  .r-hole .hn { color: var(--muted); font-size: 0.68em; }
+  .r-hole .hn { color: var(--ink-2); font-size: 1.02em; }
   .r-hole .hn .hp { font-size: 0.82em; margin-left: 1px; }
   .r-hole .hs { font-weight: 700; font-variant-numeric: tabular-nums; border-radius: 6px; padding: 3px 0; margin-top: 2px; }
   .r-extra { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--ink-2); margin: 10px 0; }
   .r-extra b { color: var(--ink); }
   .del-btn { border: 1px solid var(--flag); color: var(--flag); background: transparent; border-radius: 8px; padding: 9px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .del-btn.confirming { background: var(--flag); color: #fff; }
+  .r-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .tap-hint { font-size: 12.5px; color: var(--muted); }
 
   /* ── Hole detail overlay (tap a scorecard cell) ──────────── */
   .hole-detail-overlay {
@@ -323,11 +332,21 @@
     border: none; background: var(--paper-alt); color: var(--ink-2);
     width: 32px; height: 32px; border-radius: 999px; font-size: 16px; cursor: pointer; flex: 0 0 auto;
   }
-  .hd-scroll { flex: 1; overflow-y: auto; padding: 12px 12px 30px; scroll-snap-type: y proximity; }
+  .hd-scroll { flex: 1; overflow-y: auto; padding: 10px 10px 24px; }
   .hd-card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-    padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; scroll-snap-align: start;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 8px 10px; box-shadow: var(--shadow); margin-bottom: 7px;
   }
+  .hd-card .hole-title-row { margin: 0 0 3px; }
+  .hd-card .hole-title { font-size: 14px; }
+  .hd-card .cat-group { margin-bottom: 2px; }
+  .hd-card .cat-sub-row { padding: 1px 0; gap: 5px; }
+  .hd-card .cat-sub-label { flex: 0 0 40px; font-size: 10px; }
+  .hd-card .btn-row { gap: 3px; }
+  .hd-card .pill-btn { padding: 5px 0; font-size: 10.5px; border-radius: 6px; }
+  .hd-card .score-row { margin-top: 3px; }
+  .hd-card .bottom-score { font-size: 13px; }
+  .hd-card .bottom-score .num { margin-left: 6px; }
 
   /* ── 라운드기록 ───────────────────────────────────────── */
   .log-row { display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid var(--line); }
@@ -336,7 +355,10 @@
   .log-date { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
   .log-course { font-size: 15.5px; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .log-score { font-family: ui-serif, Georgia, serif; font-size: 16px; font-weight: 700; color: var(--flag); white-space: nowrap; }
-  .log-memo { font-size: 13px; color: var(--ink-2); }
+  .log-memo-input {
+    width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 7px; padding: 6px 9px; font-size: 13.5px; font-family: inherit;
+  }
 
   ::selection { background: var(--turf-wash); }
 </style>
@@ -346,6 +368,7 @@
 <header>
   <div class="brand">
     <button type="button" class="theme-toggle" id="themeToggle" aria-label="다크모드 전환"></button>
+    <input type="date" class="hdr-date-input show" id="hdrDate">
     <div class="brand-name">스코어<span class="accent">카드</span></div>
     <div class="hcp-chip"><span class="lbl">HCP</span><span class="val" id="hdrHcp">—</span></div>
   </div>
@@ -425,6 +448,7 @@
 
   const fmtDiff = d => d === 0 ? "E" : (d > 0 ? `+${d}` : `${d}`);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const todayISO = () => new Date().toISOString().slice(0, 10);
 
   // ── live round entry (paginated hole-by-hole flow) ────
   // Row positions 0..3 are fixed (top→bottom); which ones are active depends on par.
@@ -452,12 +476,15 @@
     };
   }
   function freshLiveState() {
-    return { course: "", currentHole: 0, holes: Array.from({ length: 18 }, freshHole) };
+    return { course: "", date: todayISO(), currentHole: 0, holes: Array.from({ length: 18 }, freshHole) };
   }
   function loadLive() {
     try {
       const raw = JSON.parse(localStorage.getItem(LIVE_KEY));
-      if (raw && Array.isArray(raw.holes) && raw.holes.length === 18) return raw;
+      if (raw && Array.isArray(raw.holes) && raw.holes.length === 18) {
+        if (!raw.date) raw.date = todayISO();
+        return raw;
+      }
     } catch {}
     return freshLiveState();
   }
@@ -662,6 +689,7 @@
     document.getElementById("appEndBtn").addEventListener("click", () => {
       localStorage.removeItem(LIVE_KEY);
       live = freshLiveState();
+      renderHeaderDate();
       switchTab("history");
       renderAddPanel();
     });
@@ -678,7 +706,7 @@
     }));
     const round = {
       id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
-      date: new Date().toISOString().slice(0, 10),
+      date: live.date || todayISO(),
       course: (live.course || "").trim() || "이름 없는 골프장",
       holes: holesOut,
       fairways: holesOut.filter(h => h.par >= 4 && h.fir).length,
@@ -912,7 +940,7 @@
   function renderRadarChart(metrics, elId) {
     const el = document.getElementById(elId || "radarChart");
     const N = metrics.length;
-    const W = 280, H = 280, cx = W / 2, cy = H / 2, R = 76;
+    const W = 340, H = 340, cx = W / 2, cy = H / 2, R = 88;
     const angleFor = i => (-90 + i * (360 / N)) * Math.PI / 180;
     const ringLevels = [0.25, 0.5, 0.75, 1];
 
@@ -939,10 +967,10 @@
 
     const labels = metrics.map((m, i) => {
       const a = angleFor(i);
-      const lx = cx + (R + 22) * Math.cos(a), ly = cy + (R + 22) * Math.sin(a);
+      const lx = cx + (R + 30) * Math.cos(a), ly = cy + (R + 30) * Math.sin(a);
       const anchor = Math.abs(Math.cos(a)) < 0.3 ? "middle" : (Math.cos(a) > 0 ? "start" : "end");
-      return `<text x="${lx}" y="${ly - 2}" text-anchor="${anchor}" font-size="8" font-weight="700" fill="var(--ink-2)">${m.label}</text>
-              <text x="${lx}" y="${ly + 8}" text-anchor="${anchor}" font-size="8" fill="var(--muted)">${fmt1(m.value)}%</text>`;
+      return `<text x="${lx}" y="${ly - 3}" text-anchor="${anchor}" font-size="12" font-weight="700" fill="var(--ink-2)">${m.label}</text>
+              <text x="${lx}" y="${ly + 11}" text-anchor="${anchor}" font-size="12" fill="var(--muted)">${fmt1(m.value)}%</text>`;
     }).join("");
 
     el.innerHTML = `
@@ -995,7 +1023,7 @@
     wrap.innerHTML = `
       <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" preserveAspectRatio="xMidYMid meet">
         <line x1="${PAD}" y1="${zeroY.toFixed(1)}" x2="${W - PAD}" y2="${zeroY.toFixed(1)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
-        <text x="${W - PAD}" y="${zeroY - 4}" text-anchor="end" font-size="7" fill="var(--muted)">파(0)</text>
+        <text x="${W - PAD}" y="${zeroY - 4}" text-anchor="end" font-size="10" fill="var(--muted)">파(0)</text>
         <path d="${areaPath}" fill="var(--turf)" opacity="0.10"></path>
         <path d="${path}" fill="none" stroke="var(--turf)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
         ${circles}
@@ -1079,8 +1107,12 @@
       </div>`;
     document.body.appendChild(overlay);
     overlay.querySelector("#hdCloseBtn").addEventListener("click", () => overlay.remove());
+    const scrollEl = overlay.querySelector("#hdScroll");
     const target = overlay.querySelector(`.hd-card[data-hole="${holeIdx}"]`);
-    if (target) target.scrollIntoView({ block: "start" });
+    if (target) requestAnimationFrame(() => {
+      const dTop = target.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top + scrollEl.scrollTop;
+      scrollEl.scrollTop = dTop;
+    });
   }
 
   // ── history panel ─────────────────────────────────────
@@ -1128,7 +1160,10 @@
             <span>쓰리퍼트 <b>${r.threePuttCount ?? 0}</b></span>
           </div>
           <textarea class="memo-box" data-idx="${idx}" rows="3" placeholder="메모 (예: 그린 스피드, 바람, 컨디션...)">${esc(r.memo || "")}</textarea>
-          <button class="del-btn" data-idx="${idx}" style="margin-top:8px;">이 라운드 삭제</button>
+          <div class="r-actions">
+            <button class="del-btn" data-idx="${idx}">이 라운드 삭제</button>
+            <span class="tap-hint">복기하려면 스코어카드를 탭 하세요</span>
+          </div>
         </div>
       </details>`;
     }).join("");
@@ -1179,9 +1214,9 @@
       el.innerHTML = `<div class="card"><div class="empty"><div class="big">📋</div>아직 라운드 기록이 없어요.</div></div>`;
       return;
     }
-    const sorted = [...rounds].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = [...rounds].map((r, idx) => ({ r, idx })).sort((a, b) => new Date(b.r.date) - new Date(a.r.date));
     el.innerHTML = `<div class="card"><div class="card-title">라운드 기록</div>${
-      sorted.map(r => {
+      sorted.map(({ r, idx }) => {
         const m = roundMetrics(r);
         const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
         return `<div class="log-row">
@@ -1190,19 +1225,36 @@
             <span class="log-course">${esc(r.course)}</span>
             <span class="log-score">${m.totalScore} (${diffStr})</span>
           </div>
-          ${r.memo ? `<div class="log-memo">${esc(r.memo)}</div>` : ""}
+          <input type="text" class="log-memo-input" data-idx="${idx}" placeholder="메모" value="${esc(r.memo || "")}">
         </div>`;
       }).join("")
     }</div>`;
+    el.querySelectorAll(".log-memo-input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        rounds[+inp.dataset.idx].memo = inp.value;
+        saveRounds(rounds);
+        renderHistory();
+      });
+    });
   }
 
   // ── tabs ──────────────────────────────────────────────
   function switchTab(name) {
     document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll("section.panel").forEach(p => p.classList.toggle("active", p.id === `panel-${name}`));
+    document.getElementById("hdrDate").classList.toggle("show", name === "add");
   }
   document.querySelectorAll("nav.tabs button").forEach(btn => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
+
+  // ── header round-date field (기록 추가 탭에서만 노출) ──
+  function renderHeaderDate() {
+    document.getElementById("hdrDate").value = live.date || todayISO();
+  }
+  document.getElementById("hdrDate").addEventListener("change", e => {
+    live.date = e.target.value || todayISO();
+    persistLive();
   });
 
   // ── sticky header height sync ─────────────────────────
@@ -1217,6 +1269,7 @@
   renderHistory();
   renderRoundLog();
   renderHeaderHcp();
+  renderHeaderDate();
   syncHeaderHeight();
 })();
 </script>
