@@ -1072,6 +1072,36 @@
     return { totalScore, totalPar, diff: totalDiff, par45Count, buckets };
   }
 
+  // ── club-by-club carry distance (shot rows only, computed the same way as the detail page's 비거리) ──
+  function holeShotClubDistances(hole) {
+    const start = activeStartRow(hole.par);
+    let grRow = -1;
+    for (let rr = start; rr <= 3; rr++) {
+      if (hole.rowValues[rr] === "GR") { grRow = rr; break; }
+    }
+    const lastRow = grRow !== -1 ? grRow : 3;
+    const entries = [];
+    for (let r = start; r <= lastRow; r++) {
+      const s = hole.detail?.shot?.[r];
+      entries.push({ kind: "shot", club: s?.club ?? null, dist: s?.dist ?? null });
+    }
+    [["pitching", "approachPitching"], ["bunker", "approachBunker"], ["chip", "approachChip"]].forEach(([key, countField]) => {
+      if (hole[countField] > 0) {
+        const a = hole.detail?.approach?.[key];
+        entries.push({ kind: "approach", club: a?.club ?? null, dist: a?.dist ?? null });
+      }
+    });
+    const puttDist = hole.detail?.putt?.dist ?? null;
+    const out = [];
+    entries.forEach((entry, i) => {
+      const nextDist = i + 1 < entries.length ? entries[i + 1].dist : puttDist;
+      if (entry.kind === "shot" && entry.club != null && entry.dist != null && nextDist != null) {
+        out.push({ club: entry.club, dist: entry.dist - nextDist });
+      }
+    });
+    return out;
+  }
+
   function analyze(list) {
     list = list || rounds;
     if (!list.length) return null;
@@ -1147,12 +1177,25 @@
       { label: "Putt",           value: totalHoles ? (1 - threePuttTotal / totalHoles) * 100 : 0 },
     ];
 
+    // ── club-by-club carry distance (shot rows only) ──
+    const clubDistLists = {};
+    allHoles.forEach(h => {
+      holeShotClubDistances(h).forEach(({ club, dist }) => {
+        if (!isFinite(dist)) return;
+        (clubDistLists[club] || (clubDistLists[club] = [])).push(dist);
+      });
+    });
+    const clubStats = {};
+    Object.entries(clubDistLists).forEach(([club, arr]) => {
+      clubStats[club] = { avg: mean(arr), max: Math.max(...arr), min: Math.min(...arr), count: arr.length };
+    });
+
     return {
       handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: list.length,
       bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, pitchSaveNum, pitchSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
       pitchSaveRFNum, pitchSaveRFDen, pitchSaveFWNum, pitchSaveFWDen, cpSaveRFNum, cpSaveRFDen, cpSaveFWNum, cpSaveFWDen,
       fwBkParSaveNum, fwBkParSaveDen, roughParSaveNum, roughParSaveDen,
-      roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar,
+      roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar, clubStats,
     };
   }
 
@@ -1219,6 +1262,22 @@
         <div class="cmp-cell">${bData ? m.get(bData) : "—"}</div>
       </div>`).join("");
 
+    const fmtClubStat = s => s ? `${Math.round(s.avg)}m (${Math.round(s.max)}/${Math.round(s.min)})` : "—";
+    const clubOrder = CLUB_GROUPS.flatMap(g => g.clubs);
+    const clubKeys = clubOrder.filter(c => (aData && aData.clubStats[c]) || (bData && bData.clubStats[c]));
+    const clubRows = clubKeys.length ? `
+      <div class="cmp-row">
+        <div class="cmp-cell cmp-label" style="font-weight:800;">클럽별 평균 비거리</div>
+        <div class="cmp-cell"></div>
+        <div class="cmp-cell"></div>
+      </div>
+      ${clubKeys.map(c => `
+        <div class="cmp-row">
+          <div class="cmp-cell cmp-label">${c}</div>
+          <div class="cmp-cell">${fmtClubStat(aData && aData.clubStats[c])}</div>
+          <div class="cmp-cell">${fmtClubStat(bData && bData.clubStats[c])}</div>
+        </div>`).join("")}` : "";
+
     el.innerHTML = `
       <div class="cmp-card">
         <div class="cmp-row cmp-head-row">
@@ -1239,6 +1298,7 @@
           </div>
         </div>
         ${statRows}
+        ${clubRows}
         <div class="cmp-row cmp-chart-row">
           <div class="cmp-cell cmp-label">스코어<br>추이</div>
           <div class="cmp-cell"><div id="trendChartA" class="cmp-chart"></div></div>
