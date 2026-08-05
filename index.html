@@ -213,20 +213,26 @@
   .hole-pager::-webkit-scrollbar { display: none; }
   .hole-page { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
   .hole-page-detail { padding-left: 4px; }
-  .page-hint { text-align: center; font-size: 17px; font-weight: 700; color: var(--turf); margin: 8px 0 10px; }
-  .detail-row { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; }
+  .hole-page-detail .page-hint { margin: 3px 0 5px; }
+  .detail-row { display: flex; flex-direction: column; gap: 4px; padding: 7px 0; }
   .detail-row + .detail-row { border-top: 1px solid var(--line); }
-  .detail-row-label { font-size: 19px; font-weight: 800; color: var(--ink); }
-  .detail-fields { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .detail-row-label { font-size: 17px; font-weight: 800; color: var(--ink); }
+  .page-hint { text-align: center; font-size: 17px; font-weight: 700; color: var(--turf); margin: 8px 0 10px; }
+  .detail-fields { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .detail-field { display: flex; align-items: center; gap: 6px; font-size: 18px; color: var(--ink-2); white-space: nowrap; }
   .detail-field .field-label { font-size: 15px; color: var(--ink-2); }
   .detail-field input {
     width: 58px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 7px; padding: 8px 4px; font-size: 18px; text-align: center; font-family: inherit;
+    border-radius: 7px; padding: 6px 4px; font-size: 18px; text-align: center; font-family: inherit;
+  }
+  .calc-dist {
+    display: inline-block; width: 58px; text-align: center; font-size: 18px;
+    border: 1px solid var(--line); background: var(--paper-alt); color: var(--ink-2);
+    border-radius: 7px; padding: 6px 4px;
   }
   .club-select {
     flex: 0 0 auto; width: auto; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 7px; padding: 8px 22px 8px 8px; font-size: 16px; font-family: inherit;
+    border-radius: 7px; padding: 6px 14px 6px 8px; font-size: 16px; font-family: inherit;
   }
 
   .bottom-bar { margin-top: 16px; }
@@ -629,30 +635,37 @@
     { label: "아이언", clubs: ["DI", "2I", "3I", "4I", "5I", "6I", "7I", "8I", "9I", "PW"] },
     { label: "웨지", clubs: ["46", "48", "50", "52", "54", "56", "58", "60", "62", "64"] },
   ];
-  function clubSelectHTML(kind, sub, selected) {
-    const groupsHTML = CLUB_GROUPS.map(g => `<optgroup label="${g.label}">${
+  function orderedClubGroups(priorityLabel) {
+    const idx = CLUB_GROUPS.findIndex(g => g.label === priorityLabel);
+    if (idx <= 0) return CLUB_GROUPS;
+    return [CLUB_GROUPS[idx], ...CLUB_GROUPS.slice(0, idx), ...CLUB_GROUPS.slice(idx + 1)];
+  }
+  function clubSelectHTML(kind, sub, selected, priorityLabel) {
+    const groupsHTML = orderedClubGroups(priorityLabel).map(g => `<optgroup label="${g.label}">${
       g.clubs.map(c => `<option value="${c}"${c === selected ? " selected" : ""}>${c}</option>`).join("")
     }</optgroup>`).join("");
     return `<select class="club-select" data-kind="${kind}" data-sub="${sub}">
       <option value="">클럽</option>${groupsHTML}
     </select>`;
   }
-  function detailRowHTML(label, kind, sub, detail, includeClub, singleField) {
+  function detailRowHTML(label, kind, sub, detail) {
     const dataAttrs = `data-kind="${kind}" data-sub="${sub}"`;
-    if (singleField) {
-      return `<div class="detail-row">
-        <div class="detail-row-label">${label}</div>
-        <div class="detail-fields">
-          <span class="detail-field"><span class="field-label">거리</span><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${detail.dist ?? ""}" placeholder="0">m</span>
-        </div>
-      </div>`;
-    }
     return `<div class="detail-row">
       <div class="detail-row-label">${label}</div>
       <div class="detail-fields">
-        <span class="detail-field"><span class="field-label">비거리</span><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${detail.dist ?? ""}" placeholder="0">m</span>
-        <span class="detail-field"><span class="field-label">남은거리</span><input type="number" inputmode="numeric" class="remain-input" ${dataAttrs} value="${detail.remain ?? ""}" placeholder="0">m</span>
-        ${includeClub ? clubSelectHTML(kind, sub, detail.club) : ""}
+        <span class="detail-field"><span class="field-label">거리</span><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${detail.dist ?? ""}" placeholder="0">m</span>
+      </div>
+    </div>`;
+  }
+  // shot/approach row: subtitle → 남은거리(or 홀 전장) input → club select → 비거리(계산값)
+  function detailEntryRowHTML(entry, calcDist) {
+    const dataAttrs = `data-kind="${entry.kind}" data-sub="${entry.sub}"`;
+    return `<div class="detail-row">
+      <div class="detail-row-label">${entry.label}</div>
+      <div class="detail-fields">
+        <span class="detail-field"><span class="field-label">${entry.fieldLabel}</span><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${entry.dist ?? ""}" placeholder="0">m</span>
+        ${clubSelectHTML(entry.kind, entry.sub, entry.club, entry.clubPriority)}
+        <span class="detail-field"><span class="field-label">비거리</span><span class="calc-dist">${calcDist != null ? calcDist : "—"}</span>m</span>
       </div>
     </div>`;
   }
@@ -690,14 +703,34 @@
       if (h.rowValues[rr] === "GR") { detailGrRow = rr; break; }
     }
     const detailLastRow = detailGrRow !== -1 ? detailGrRow : 3;
-    let detailShotRows = "";
+    const detailEntries = [];
     for (let r = start; r <= detailLastRow; r++) {
-      detailShotRows += detailRowHTML(shotRowLabel(h.par, r), "shot", r, h.detail.shot[r], true);
+      const shotIndex = r - start;
+      detailEntries.push({
+        kind: "shot", sub: r,
+        label: shotRowLabel(h.par, r),
+        fieldLabel: shotIndex === 0 ? "홀 전장" : "남은거리",
+        clubPriority: shotIndex === 0 ? "우드" : shotIndex === 1 ? "유틸리티" : "웨지",
+        dist: h.detail.shot[r].dist,
+        club: h.detail.shot[r].club,
+      });
     }
-    const detailApproachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"]]
+    [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"]]
       .filter(([k]) => h.approach[k] != null)
-      .map(([k, l]) => detailRowHTML(l, "approach", k, h.detail.approach[k], true)).join("");
-    const detailPuttRow = detailRowHTML("퍼팅", "putt", "putt", h.detail.putt, false, true);
+      .forEach(([k, l]) => {
+        detailEntries.push({
+          kind: "approach", sub: k,
+          label: l, fieldLabel: "남은거리", clubPriority: "웨지",
+          dist: h.detail.approach[k].dist, club: h.detail.approach[k].club,
+        });
+      });
+    const puttDist = h.detail.putt.dist;
+    const detailShotAndApproachRows = detailEntries.map((entry, i) => {
+      const nextDist = i + 1 < detailEntries.length ? detailEntries[i + 1].dist : puttDist;
+      const calcDist = (entry.dist != null && nextDist != null) ? (entry.dist - nextDist) : null;
+      return detailEntryRowHTML(entry, calcDist);
+    }).join("");
+    const detailPuttRow = detailRowHTML("퍼팅", "putt", "putt", h.detail.putt);
 
     document.getElementById("panel-add").innerHTML = `
       <div class="live-header">
@@ -737,9 +770,7 @@
         </div>
         <div class="hole-page hole-page-detail">
           <div class="page-hint">← 스와이프해서 돌아가기</div>
-          ${detailShotRows ? `<div class="cat-group">${detailShotRows}</div>` : ""}
-          ${detailApproachRows ? `<div class="cat-group">${detailApproachRows}</div>` : ""}
-          <div class="cat-group">${detailPuttRow}</div>
+          <div class="cat-group">${detailShotAndApproachRows}${detailPuttRow}</div>
         </div>
       </div>
     `;
@@ -773,12 +804,12 @@
       inp.addEventListener("change", () => {
         detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : +inp.value;
         persistLive();
-      });
-    });
-    panel.querySelectorAll(".remain-input").forEach(inp => {
-      inp.addEventListener("change", () => {
-        detailTarget(inp.dataset.kind, inp.dataset.sub).remain = inp.value === "" ? null : +inp.value;
-        persistLive();
+        // re-render to refresh computed 비거리 fields, but keep the swiped-to detail page in view
+        const pager = document.getElementById("holePager");
+        const scrollLeft = pager ? pager.scrollLeft : 0;
+        renderHolePage(idx);
+        const newPager = document.getElementById("holePager");
+        if (newPager) newPager.scrollLeft = scrollLeft;
       });
     });
     panel.querySelectorAll(".club-select").forEach(sel => {
