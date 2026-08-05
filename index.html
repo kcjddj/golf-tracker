@@ -443,6 +443,13 @@
     border-radius: 7px; padding: 6px 9px; font-size: 13.5px; font-family: inherit;
   }
 
+  .backup-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .backup-btn {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+    border-radius: 9px; padding: 8px 14px; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  }
+  .backup-status { font-size: 12.5px; color: var(--muted); }
+
   ::selection { background: var(--turf-wash); }
 </style>
 </head>
@@ -520,6 +527,23 @@
   const fmt1 = n => (Math.round(n * 10) / 10).toFixed(1);
   const fmtRate = (num, den) => den ? `${num}/${den} (${fmt1(num / den * 100)}%)` : `${num}/${den} (—)`;
   const fmtPer18 = (num, den) => den ? `${num}/${den} (${fmt1(num / den * 18)}/18)` : `${num}/${den} (—)`;
+
+  // ── distance-bucketed save rate for pitching / chip approach shots ──
+  const PITCH_SAVE_DISTANCES = [20, 30, 40, 50, 60, 70];
+  const CHIP_SAVE_DISTANCES = [5, 10, 15, 20, 25, 30];
+  function distanceSaveBuckets(allHoles, countField, distGetter, distances, step) {
+    const stats = {};
+    distances.forEach(d => {
+      const inBucket = allHoles.filter(h => {
+        if (!(h[countField] >= 1)) return false;
+        const raw = distGetter(h);
+        if (raw == null) return false;
+        return Math.round(raw / step) * step === d;
+      });
+      stats[d] = { num: inBucket.filter(h => h.putt <= 1).length, den: inBucket.length };
+    });
+    return stats;
+  }
 
   // ── storage ──────────────────────────────────────────
   function loadRounds() {
@@ -1136,6 +1160,8 @@
     const cpSaveNum = allHoles.filter(h => h.approachChip >= 1 && h.putt <= 1).length;
     const pitchSaveDen = allHoles.filter(h => h.approachPitching >= 1).length;
     const pitchSaveNum = allHoles.filter(h => h.approachPitching >= 1 && h.putt <= 1).length;
+    const pitchSaveByDist = distanceSaveBuckets(allHoles, "approachPitching", h => h.detail?.approach?.pitching?.dist ?? null, PITCH_SAVE_DISTANCES, 10);
+    const chipSaveByDist = distanceSaveBuckets(allHoles, "approachChip", h => h.detail?.approach?.chip?.dist ?? null, CHIP_SAVE_DISTANCES, 5);
     const pitchSaveRFDen = allHoles.filter(h => h.lastRF && h.approachPitching >= 1).length;
     const pitchSaveRFNum = allHoles.filter(h => h.lastRF && h.approachPitching >= 1 && h.putt <= 1).length;
     const pitchSaveFWDen = allHoles.filter(h => h.lastFW && h.approachPitching >= 1).length;
@@ -1196,6 +1222,7 @@
       pitchSaveRFNum, pitchSaveRFDen, pitchSaveFWNum, pitchSaveFWDen, cpSaveRFNum, cpSaveRFDen, cpSaveFWNum, cpSaveFWDen,
       fwBkParSaveNum, fwBkParSaveDen, roughParSaveNum, roughParSaveDen,
       roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar, clubStats,
+      pitchSaveByDist, chipSaveByDist,
     };
   }
 
@@ -1221,9 +1248,15 @@
     { label: "평균 퍼팅수", get: a => fmt1(a.avgPutts) },
     { label: "벙커 세이브율", get: a => fmtRate(a.bkSaveNum, a.bkSaveDen) },
     { label: "피칭 세이브율", get: a => fmtRate(a.pitchSaveNum, a.pitchSaveDen) },
+    ...PITCH_SAVE_DISTANCES.map(d => ({
+      label: `피칭 ${d}m 세이브율`, get: a => fmtRate(a.pitchSaveByDist[d].num, a.pitchSaveByDist[d].den),
+    })),
     { label: "RF 피칭 세이브율", get: a => fmtRate(a.pitchSaveRFNum, a.pitchSaveRFDen) },
     { label: "FW 피칭 세이브율", get: a => fmtRate(a.pitchSaveFWNum, a.pitchSaveFWDen) },
     { label: "칩 세이브율", get: a => fmtRate(a.cpSaveNum, a.cpSaveDen) },
+    ...CHIP_SAVE_DISTANCES.map(d => ({
+      label: `칩샷 ${d}m 세이브율`, get: a => fmtRate(a.chipSaveByDist[d].num, a.chipSaveByDist[d].den),
+    })),
     { label: "RF 칩 세이브율", get: a => fmtRate(a.cpSaveRFNum, a.cpSaveRFDen) },
     { label: "FW 칩 세이브율", get: a => fmtRate(a.cpSaveFWNum, a.cpSaveFWDen) },
     { label: "파 세이브율", get: a => fmtRate(a.parSaveNum, a.parSaveDen) },
@@ -1618,30 +1651,83 @@
     });
   }
 
+  // ── backup: export all rounds to a JSON file, import them back ──
+  function exportRounds() {
+    const payload = { app: "golf-tracker", version: 1, exportedAt: new Date().toISOString(), rounds };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `golf-tracker-backup-${todayISO()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  function importRoundsFromFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let incoming;
+      try {
+        const data = JSON.parse(reader.result);
+        incoming = Array.isArray(data) ? data : (Array.isArray(data.rounds) ? data.rounds : null);
+      } catch { incoming = null; }
+      if (!incoming) {
+        const statusEl = document.getElementById("backupStatus");
+        if (statusEl) statusEl.textContent = "올바른 백업 파일이 아니에요.";
+        return;
+      }
+      const existingIds = new Set(rounds.map(r => r.id));
+      const toAdd = incoming.filter(r => r && r.id && !existingIds.has(r.id));
+      rounds = rounds.concat(toAdd);
+      saveRounds(rounds);
+      const dupCount = incoming.length - toAdd.length;
+      renderAnalysis(); renderHistory(); renderRoundLog(); renderHeaderHcp();
+      const statusEl = document.getElementById("backupStatus");
+      if (statusEl) statusEl.textContent = `${toAdd.length}개 라운드를 가져왔어요.${dupCount > 0 ? ` (중복 ${dupCount}개 제외)` : ""}`;
+    };
+    reader.readAsText(file);
+  }
+
   // ── 라운드기록 panel (one line per round: date/course/score/memo) ──
   function renderRoundLog() {
     const el = document.getElementById("panel-roundlog");
+    const backupBarHTML = `
+      <div class="backup-bar">
+        <button type="button" class="backup-btn" id="exportBtn">데이터 내보내기</button>
+        <button type="button" class="backup-btn" id="importBtn">데이터 가져오기</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none">
+        <span class="backup-status" id="backupStatus"></span>
+      </div>`;
     if (!rounds.length) {
-      el.innerHTML = `<div class="card"><div class="empty"><div class="big">📋</div>아직 라운드 기록이 없어요.</div></div>`;
-      return;
+      el.innerHTML = backupBarHTML + `<div class="card"><div class="empty"><div class="big">📋</div>아직 라운드 기록이 없어요.</div></div>`;
+    } else {
+      const sorted = [...rounds].map((r, idx) => ({ r, idx })).sort((a, b) => new Date(b.r.date) - new Date(a.r.date));
+      el.innerHTML = backupBarHTML + `<div class="card"><div class="card-title">라운드 기록</div>${
+        sorted.map(({ r, idx }) => {
+          const m = roundMetrics(r);
+          const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
+          const tagsHTML = nineCourseTagsHTML(r);
+          return `<div class="log-row">
+            <div class="log-top">
+              <span class="log-date">${r.date}</span>
+              <input type="text" class="log-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
+              <span class="log-score">${m.totalScore} (${diffStr})</span>
+            </div>
+            ${tagsHTML ? `<div class="log-tags-row">${tagsHTML}</div>` : ""}
+            <input type="text" class="log-memo-input" data-idx="${idx}" placeholder="메모" value="${esc(r.memo || "")}">
+          </div>`;
+        }).join("")
+      }</div>`;
     }
-    const sorted = [...rounds].map((r, idx) => ({ r, idx })).sort((a, b) => new Date(b.r.date) - new Date(a.r.date));
-    el.innerHTML = `<div class="card"><div class="card-title">라운드 기록</div>${
-      sorted.map(({ r, idx }) => {
-        const m = roundMetrics(r);
-        const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
-        const tagsHTML = nineCourseTagsHTML(r);
-        return `<div class="log-row">
-          <div class="log-top">
-            <span class="log-date">${r.date}</span>
-            <input type="text" class="log-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
-            <span class="log-score">${m.totalScore} (${diffStr})</span>
-          </div>
-          ${tagsHTML ? `<div class="log-tags-row">${tagsHTML}</div>` : ""}
-          <input type="text" class="log-memo-input" data-idx="${idx}" placeholder="메모" value="${esc(r.memo || "")}">
-        </div>`;
-      }).join("")
-    }</div>`;
+    document.getElementById("exportBtn").addEventListener("click", exportRounds);
+    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("importFile").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (file) importRoundsFromFile(file);
+      e.target.value = "";
+    });
+    if (!rounds.length) return;
     el.querySelectorAll(".log-course-input").forEach(inp => {
       inp.addEventListener("change", () => {
         const idx = +inp.dataset.idx;
