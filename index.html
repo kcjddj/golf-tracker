@@ -230,10 +230,41 @@
     border: 1px solid var(--line); background: var(--paper-alt); color: var(--ink-2);
     border-radius: 7px; padding: 6px 4px;
   }
-  .club-select {
+  .club-select-btn {
     flex: 0 0 auto; width: auto; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 7px; padding: 6px 14px 6px 8px; font-size: 16px; font-family: inherit;
+    border-radius: 7px; padding: 6px 12px; font-size: 16px; font-family: inherit; cursor: pointer;
   }
+
+  /* ── club picker: infinite-loop scroll wheel ─────────────── */
+  .club-picker-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; }
+  .club-picker-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
+  .club-picker-sheet {
+    position: relative; width: 100%; max-width: 560px; background: var(--card);
+    border-radius: 16px 16px 0 0; padding: 10px 0 22px; box-shadow: var(--shadow);
+  }
+  .club-picker-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 16px 10px; border-bottom: 1px solid var(--line);
+  }
+  .club-picker-title { font-size: 15px; font-weight: 700; color: var(--ink-2); }
+  .club-picker-close { border: none; background: transparent; color: var(--turf); font-weight: 700; font-size: 16px; cursor: pointer; padding: 6px; }
+  .club-picker-wheel-wrap { position: relative; height: 220px; overflow: hidden; margin-top: 4px; }
+  .club-picker-highlight {
+    position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%);
+    height: 44px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    background: var(--turf-wash); pointer-events: none; z-index: 0;
+  }
+  .club-picker-wheel {
+    position: relative; z-index: 1;
+    height: 100%; overflow-y: auto; scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 88px 0;
+  }
+  .club-picker-wheel::-webkit-scrollbar { display: none; }
+  .club-picker-item {
+    height: 44px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--ink-2); scroll-snap-align: center;
+  }
+  .club-picker-item.center { color: var(--ink); font-weight: 800; font-size: 21px; }
 
   .bottom-bar { margin-top: 16px; }
   .bottom-row { display: flex; justify-content: flex-end; }
@@ -642,14 +673,89 @@
     const rest = CLUB_GROUPS.filter(g => !labels.includes(g.label));
     return [...picked, ...rest];
   }
-  function clubSelectHTML(kind, sub, selected, priorityLabel) {
-    const groupsHTML = orderedClubGroups(priorityLabel).map(g => `<optgroup label="${g.label}">${
-      g.clubs.map(c => `<option value="${c}"${c === selected ? " selected" : ""}>${c}</option>`).join("")
-    }</optgroup>`).join("");
-    return `<select class="club-select" data-kind="${kind}" data-sub="${sub}">
-      <option value="">클럽</option>${groupsHTML}
-    </select>`;
+  function flatClubList(priorityLabels) {
+    return orderedClubGroups(priorityLabels).flatMap(g => g.clubs);
   }
+  function shotClubDefault(shotIndex, par) {
+    if (shotIndex === 0) return par === 3 ? "7I" : "D";
+    if (shotIndex === 1) return (par === 5 || par === 6) ? "3W" : "7I";
+    if (shotIndex === 2) return par === 5 ? "PW" : "7I";
+    return "PW";
+  }
+  function shotClubPriority(shotIndex) {
+    if (shotIndex === 0) return "우드";
+    if (shotIndex === 1) return "유틸리티";
+    return ["아이언", "웨지"];
+  }
+  const APPROACH_CLUB_DEFAULT = "56";
+  const APPROACH_CLUB_PRIORITY = ["아이언", "웨지"];
+
+  // ── club picker: infinite-loop scroll wheel, opened from a club-select-btn ──
+  const CLUB_PICKER_ITEM_H = 44;
+  function openClubPicker(list, currentValue, onCommit, triggerBtn) {
+    const N = list.length;
+    const itemsHTML = [...list, ...list, ...list]
+      .map(c => `<div class="club-picker-item">${c}</div>`).join("");
+    const overlay = document.createElement("div");
+    overlay.className = "club-picker-overlay";
+    overlay.innerHTML = `
+      <div class="club-picker-backdrop"></div>
+      <div class="club-picker-sheet">
+        <div class="club-picker-header">
+          <span class="club-picker-title">클럽 선택</span>
+          <button type="button" class="club-picker-close">완료</button>
+        </div>
+        <div class="club-picker-wheel-wrap">
+          <div class="club-picker-highlight"></div>
+          <div class="club-picker-wheel">${itemsHTML}</div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const wheel = overlay.querySelector(".club-picker-wheel");
+    const startIdx = N + Math.max(0, list.indexOf(currentValue));
+    wheel.scrollTop = startIdx * CLUB_PICKER_ITEM_H;
+
+    const clamp = v => Math.min(Math.max(v, 0), N * 3 - 1);
+    let lastCenter = -1;
+    const updateHighlight = () => {
+      const idx = clamp(Math.round(wheel.scrollTop / CLUB_PICKER_ITEM_H));
+      if (idx !== lastCenter) {
+        if (lastCenter >= 0 && wheel.children[lastCenter]) wheel.children[lastCenter].classList.remove("center");
+        if (wheel.children[idx]) wheel.children[idx].classList.add("center");
+        lastCenter = idx;
+      }
+      return idx;
+    };
+    const commitAt = idx => {
+      const value = list[idx % N];
+      onCommit(value);
+      if (triggerBtn) triggerBtn.textContent = value;
+    };
+
+    updateHighlight();
+    commitAt(lastCenter);
+
+    let settleTimer = null;
+    wheel.addEventListener("scroll", () => {
+      const idx = updateHighlight();
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => {
+        commitAt(idx);
+        if (idx < N * 0.5) wheel.scrollTop += N * CLUB_PICKER_ITEM_H;
+        else if (idx >= N * 2.5) wheel.scrollTop -= N * CLUB_PICKER_ITEM_H;
+      }, 130);
+    }, { passive: true });
+
+    function close() {
+      if (settleTimer) clearTimeout(settleTimer);
+      commitAt(clamp(Math.round(wheel.scrollTop / CLUB_PICKER_ITEM_H)));
+      overlay.remove();
+    }
+    overlay.querySelector(".club-picker-close").addEventListener("click", close);
+    overlay.querySelector(".club-picker-backdrop").addEventListener("click", close);
+  }
+
   function detailRowHTML(label, kind, sub, detail) {
     const dataAttrs = `data-kind="${kind}" data-sub="${sub}"`;
     return `<div class="detail-row">
@@ -666,7 +772,7 @@
       <div class="detail-row-label">${entry.label}</div>
       <div class="detail-fields">
         <span class="detail-field"><span class="field-label">${entry.fieldLabel}</span><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${entry.dist ?? ""}" placeholder="0">m</span>
-        ${clubSelectHTML(entry.kind, entry.sub, entry.club, entry.clubPriority)}
+        <button type="button" class="club-select-btn" ${dataAttrs}>${entry.club ?? "클럽"}</button>
         <span class="detail-field"><span class="field-label">비거리</span><span class="calc-dist">${calcDist != null ? calcDist : "—"}</span>m</span>
       </div>
     </div>`;
@@ -712,9 +818,8 @@
         kind: "shot", sub: r,
         label: shotRowLabel(h.par, r),
         fieldLabel: shotIndex === 0 ? "홀 전장" : "남은거리",
-        clubPriority: shotIndex === 0 ? "우드" : shotIndex === 1 ? "유틸리티" : ["아이언", "웨지"],
         dist: h.detail.shot[r].dist,
-        club: h.detail.shot[r].club,
+        club: h.detail.shot[r].club ?? shotClubDefault(shotIndex, h.par),
       });
     }
     [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"]]
@@ -722,8 +827,8 @@
       .forEach(([k, l]) => {
         detailEntries.push({
           kind: "approach", sub: k,
-          label: l, fieldLabel: "남은거리", clubPriority: ["아이언", "웨지"],
-          dist: h.detail.approach[k].dist, club: h.detail.approach[k].club,
+          label: l, fieldLabel: "남은거리",
+          dist: h.detail.approach[k].dist, club: h.detail.approach[k].club ?? APPROACH_CLUB_DEFAULT,
         });
       });
     const puttDist = h.detail.putt.dist;
@@ -814,10 +919,18 @@
         if (newPager) newPager.scrollLeft = scrollLeft;
       });
     });
-    panel.querySelectorAll(".club-select").forEach(sel => {
-      sel.addEventListener("change", () => {
-        detailTarget(sel.dataset.kind, sel.dataset.sub).club = sel.value || null;
-        persistLive();
+    panel.querySelectorAll(".club-select-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const kind = btn.dataset.kind, sub = btn.dataset.sub;
+        const target = detailTarget(kind, sub);
+        const shotIndex = +sub - activeStartRow(h.par);
+        const priority = kind === "approach" ? APPROACH_CLUB_PRIORITY : shotClubPriority(shotIndex);
+        const defaultClub = kind === "approach" ? APPROACH_CLUB_DEFAULT : shotClubDefault(shotIndex, h.par);
+        const list = flatClubList(priority);
+        openClubPicker(list, target.club ?? defaultClub, value => {
+          target.club = value;
+          persistLive();
+        }, btn);
       });
     });
 
