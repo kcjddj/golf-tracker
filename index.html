@@ -131,13 +131,13 @@
   .hdr-date-input.show { display: block; }
 
   nav.tabs {
-    display: grid; grid-template-columns: repeat(4, 1fr);
+    display: grid; grid-template-columns: repeat(5, 1fr);
     gap: 5px; margin-top: 5px;
     background: var(--paper-alt); border-radius: 11px; padding: 4px;
   }
   nav.tabs button {
     border: none; background: transparent; color: var(--ink-2);
-    padding: 9px 2px; border-radius: 8px; font-size: 15px; font-weight: 600;
+    padding: 9px 2px; border-radius: 8px; font-size: 13px; font-weight: 600;
     cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap;
   }
   nav.tabs button.active { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
@@ -433,12 +433,12 @@
     border-radius: 7px; padding: 6px 9px; font-size: 13.5px; font-family: inherit;
   }
 
-  .backup-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .backup-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
   .backup-btn {
     border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
-    border-radius: 9px; padding: 8px 14px; font-size: 13.5px; font-weight: 700; cursor: pointer;
+    border-radius: 10px; padding: 14px 22px; font-size: 19px; font-weight: 700; cursor: pointer;
   }
-  .backup-status { font-size: 12.5px; color: var(--muted); }
+  .backup-status { display: block; margin-top: 4px; font-size: 16px; color: var(--muted); }
 
   ::selection { background: var(--turf-wash); }
 </style>
@@ -459,6 +459,7 @@
     <button data-tab="analysis">분석</button>
     <button data-tab="history">스코어카드</button>
     <button data-tab="roundlog">라운드기록</button>
+    <button data-tab="backup">백업</button>
   </nav>
 </header>
 
@@ -474,6 +475,9 @@
 
   <!-- ── 라운드기록 ───────────────────────────────────── -->
   <section class="panel" id="panel-roundlog"></section>
+
+  <!-- ── 백업 ─────────────────────────────────────────── -->
+  <section class="panel" id="panel-backup"></section>
 </main>
 
 <script>
@@ -1677,18 +1681,11 @@
   // ── 라운드기록 panel (one line per round: date/course/score/memo) ──
   function renderRoundLog() {
     const el = document.getElementById("panel-roundlog");
-    const backupBarHTML = `
-      <div class="backup-bar">
-        <button type="button" class="backup-btn" id="exportBtn">데이터 내보내기</button>
-        <button type="button" class="backup-btn" id="importBtn">데이터 가져오기</button>
-        <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" style="display:none">
-        <span class="backup-status" id="backupStatus"></span>
-      </div>`;
     if (!rounds.length) {
-      el.innerHTML = backupBarHTML + `<div class="card"><div class="empty"><div class="big">📋</div>아직 라운드 기록이 없어요.</div></div>`;
+      el.innerHTML = `<div class="card"><div class="empty"><div class="big">📋</div>아직 라운드 기록이 없어요.</div></div>`;
     } else {
       const sorted = [...rounds].map((r, idx) => ({ r, idx })).sort((a, b) => new Date(b.r.date) - new Date(a.r.date));
-      el.innerHTML = backupBarHTML + `<div class="card"><div class="card-title">라운드 기록</div>${
+      el.innerHTML = `<div class="card"><div class="card-title">라운드 기록</div>${
         sorted.map(({ r, idx }) => {
           const m = roundMetrics(r);
           const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
@@ -1708,13 +1705,6 @@
         }).join("")
       }</div>`;
     }
-    document.getElementById("exportBtn").addEventListener("click", exportRounds);
-    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
-    document.getElementById("importFile").addEventListener("change", e => {
-      const file = e.target.files[0];
-      if (file) importRoundsFromFile(file);
-      e.target.value = "";
-    });
     if (!rounds.length) return;
     el.querySelectorAll(".log-course-input").forEach(inp => {
       inp.addEventListener("change", () => {
@@ -1732,6 +1722,28 @@
         saveRounds(rounds);
         renderHistory();
       });
+    });
+  }
+
+  // ── 백업 panel (export/import buttons) ─────────────────
+  function renderBackup() {
+    const el = document.getElementById("panel-backup");
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title">백업</div>
+        <div class="backup-bar">
+          <button type="button" class="backup-btn" id="exportBtn">데이터 내보내기</button>
+          <button type="button" class="backup-btn" id="importBtn">데이터 가져오기</button>
+          <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" style="display:none">
+        </div>
+        <span class="backup-status" id="backupStatus"></span>
+      </div>`;
+    document.getElementById("exportBtn").addEventListener("click", exportRounds);
+    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("importFile").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (file) importRoundsFromFile(file);
+      e.target.value = "";
     });
   }
 
@@ -1765,6 +1777,7 @@
   renderAnalysis();
   renderHistory();
   renderRoundLog();
+  renderBackup();
   renderHeaderHcp();
   renderHeaderDate();
   syncHeaderHeight();
