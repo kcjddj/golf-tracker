@@ -374,7 +374,6 @@
   .round-row .r-course-input:hover, .round-row .r-course-input:focus { border-color: var(--line); background: var(--paper); }
   .r-course-line { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
   .nine-course-tags { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
-  .log-tags-row { font-size: 11.5px; color: var(--muted); margin-top: -1px; }
   .round-row .r-right { display: flex; align-items: center; gap: 8px; }
   .score-chip { font-family: ui-serif, Georgia, serif; font-size: 18px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
   .score-chip.under { background: var(--turf-wash); color: var(--turf-deep); }
@@ -428,6 +427,7 @@
   }
   .log-course-input:hover, .log-course-input:focus { border-color: var(--line); background: var(--paper); }
   .log-score { font-family: ui-serif, Georgia, serif; font-size: 16px; font-weight: 700; color: var(--flag); white-space: nowrap; }
+  .log-nine-tag { flex: 0 0 auto; font-size: 23px; color: var(--ink-2); white-space: nowrap; }
   .log-memo-input {
     width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
     border-radius: 7px; padding: 6px 9px; font-size: 13.5px; font-family: inherit;
@@ -1688,14 +1688,17 @@
         sorted.map(({ r, idx }) => {
           const m = roundMetrics(r);
           const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
-          const tagsHTML = nineCourseTagsHTML(r);
+          const compactParts = [];
+          if (r.courseFront) compactParts.push(esc(r.courseFront));
+          if (r.courseBack) compactParts.push(esc(r.courseBack));
+          const compactTag = compactParts.length ? `<span class="log-nine-tag">${compactParts.join("/")}</span>` : "";
           return `<div class="log-row">
             <div class="log-top">
               <span class="log-date">${r.date}</span>
               <input type="text" class="log-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
+              ${compactTag}
               <span class="log-score">${scoreNotation === "total" ? `${m.totalScore}` : diffStr}</span>
             </div>
-            ${tagsHTML ? `<div class="log-tags-row">${tagsHTML}</div>` : ""}
             <input type="text" class="log-memo-input" data-idx="${idx}" placeholder="메모" value="${esc(r.memo || "")}">
           </div>`;
         }).join("")
