@@ -1620,13 +1620,26 @@
   }
 
   // ── backup: export all rounds to a JSON file, import them back ──
-  function exportRounds() {
+  async function exportRounds() {
     const payload = { app: "golf-tracker", version: 1, exportedAt: new Date().toISOString(), rounds };
+    const filename = `golf-tracker-backup-${todayISO()}.json`;
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const file = new File([blob], filename, { type: "application/json" });
+
+    // Prefer the OS share sheet (lets the user pick Google Drive/카카오톡/이메일 등) when file sharing is supported.
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: filename });
+        return;
+      } catch (err) {
+        if (err && err.name === "AbortError") return; // user closed the share sheet without picking anything
+        // otherwise fall through to a plain download
+      }
+    }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `golf-tracker-backup-${todayISO()}.json`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
