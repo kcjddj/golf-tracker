@@ -353,6 +353,32 @@
   }
   .cmp-chart-row { align-items: start; padding: 8px 2px; }
   .cmp-chart { width: 100%; }
+  .cmp-detail-trigger { color: var(--turf); font-weight: 700; cursor: pointer; text-align: center; }
+
+  /* ── Analysis: distance-bucket / club stat detail popup ─── */
+  .detail-popup-overlay { position: fixed; inset: 0; z-index: 65; }
+  .detail-popup-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
+  .detail-popup-sheet {
+    position: fixed; left: 12px; right: 12px; top: 50%; transform: translateY(-50%);
+    max-width: 480px; margin: 0 auto; max-height: 78vh; overflow-y: auto;
+    background: var(--card); border-radius: 16px; padding: 12px 14px 16px; box-shadow: var(--shadow);
+  }
+  .detail-popup-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  }
+  .detail-popup-title { font-size: 16px; font-weight: 800; }
+  .detail-popup-close {
+    border: none; background: var(--paper-alt); color: var(--ink-2);
+    width: 30px; height: 30px; border-radius: 999px; font-size: 15px; cursor: pointer; flex: 0 0 auto;
+  }
+  .detail-popup-row {
+    display: grid; grid-template-columns: 84px 1fr 1fr; gap: 4px; align-items: center;
+    padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 14.5px; text-align: center;
+  }
+  .detail-popup-row:last-child { border-bottom: none; }
+  .detail-popup-headrow { font-weight: 700; color: var(--ink-2); font-size: 13px; }
+  .detail-popup-label { font-weight: 700; color: var(--ink-2); text-align: left; }
 
   /* ── History ──────────────────────────────────────────── */
   .round-row {
@@ -1256,37 +1282,89 @@
     { label: "간이 핸디캡", get: a => a.handicap > 0 ? `+${fmt1(a.handicap)}` : fmt1(a.handicap) },
     { label: "페어웨이 키핑률", get: a => `${fmt1(a.fairwayRate)}%` },
     { label: "온그린율", get: a => `${fmt1(a.girRate)}%` },
-    { label: "평균 퍼팅수", get: a => fmt1(a.avgPutts) },
-    ...PUTT_DISTANCES.map(d => ({
-      label: `${d}m 퍼팅성공률`, get: a => fmtRate(a.puttSaveByDist[d].num, a.puttSaveByDist[d].den),
-    })),
-    { label: "11m이상 퍼팅성공률", get: a => fmtRate(a.puttSaveFar.num, a.puttSaveFar.den) },
-    { label: "벙커 세이브율", get: a => fmtRate(a.bkSaveNum, a.bkSaveDen) },
-    { label: "피칭 세이브율", get: a => fmtRate(a.pitchSaveNum, a.pitchSaveDen) },
-    ...PITCH_SAVE_DISTANCES.map(d => ({
-      label: `피칭 ${d}m 세이브율`, get: a => fmtRate(a.pitchSaveByDist[d].num, a.pitchSaveByDist[d].den),
-    })),
-    { label: "RF 피칭 세이브율", get: a => fmtRate(a.pitchSaveRFNum, a.pitchSaveRFDen) },
-    { label: "FW 피칭 세이브율", get: a => fmtRate(a.pitchSaveFWNum, a.pitchSaveFWDen) },
-    { label: "칩 세이브율", get: a => fmtRate(a.cpSaveNum, a.cpSaveDen) },
-    ...CHIP_SAVE_DISTANCES.map(d => ({
-      label: `칩샷 ${d}m 세이브율`, get: a => fmtRate(a.chipSaveByDist[d].num, a.chipSaveByDist[d].den),
-    })),
-    { label: "RF 칩 세이브율", get: a => fmtRate(a.cpSaveRFNum, a.cpSaveRFDen) },
-    { label: "FW 칩 세이브율", get: a => fmtRate(a.cpSaveFWNum, a.cpSaveFWDen) },
     { label: "파 세이브율", get: a => fmtRate(a.parSaveNum, a.parSaveDen) },
-    { label: "칩인", get: a => fmtRate(a.chipInNum, a.chipInDen) },
+    { label: "평균 퍼팅수", get: a => fmt1(a.avgPutts) },
     { label: "쓰리퍼트", get: a => fmtPer18(a.threePuttTotal, a.totalHoles) },
     { label: "최다 쓰리퍼트", get: a => `${a.maxThreePutt}` },
+    { label: "퍼팅 성공율", trigger: "putt" },
     { label: "러프", get: a => fmtPer18(a.roughTotal, a.totalHoles) },
     { label: "러프 파세이브율", get: a => fmtRate(a.roughParSaveNum, a.roughParSaveDen) },
     { label: "페어웨이 벙커", get: a => fmtPer18(a.bkShotTotal, a.totalHoles) },
     { label: "FW벙커 파세이브율", get: a => fmtRate(a.fwBkParSaveNum, a.fwBkParSaveDen) },
+    { label: "그린사이드 벙커 세이브율", get: a => fmtRate(a.bkSaveNum, a.bkSaveDen) },
+    { label: "피칭 세이브율", get: a => fmtRate(a.pitchSaveNum, a.pitchSaveDen) },
+    { label: "상세 피칭 세이브율", trigger: "pitch" },
+    { label: "RF 피칭 세이브율", get: a => fmtRate(a.pitchSaveRFNum, a.pitchSaveRFDen) },
+    { label: "FW 피칭 세이브율", get: a => fmtRate(a.pitchSaveFWNum, a.pitchSaveFWDen) },
+    { label: "칩 세이브율", get: a => fmtRate(a.cpSaveNum, a.cpSaveDen) },
+    { label: "상세 칩 세이브율", trigger: "chip" },
+    { label: "RF 칩 세이브율", get: a => fmtRate(a.cpSaveRFNum, a.cpSaveRFDen) },
+    { label: "FW 칩 세이브율", get: a => fmtRate(a.cpSaveFWNum, a.cpSaveFWDen) },
+    { label: "칩인", get: a => fmtRate(a.chipInNum, a.chipInDen) },
     { label: "Par 3 평균", get: a => a.avgPar3 != null ? fmt1(a.avgPar3) : "—" },
     { label: "Par 4 평균", get: a => a.avgPar4 != null ? fmt1(a.avgPar4) : "—" },
     { label: "Par 5 평균", get: a => a.avgPar5 != null ? fmt1(a.avgPar5) : "—" },
     { label: "라운드 수", get: a => `${a.count}` },
   ];
+
+  // ── analysis panel: detail popup for distance-bucketed / club stat rows ──
+  function openDetailPopup(title, rows) {
+    const overlay = document.createElement("div");
+    overlay.className = "detail-popup-overlay";
+    overlay.innerHTML = `
+      <div class="detail-popup-backdrop"></div>
+      <div class="detail-popup-sheet">
+        <div class="detail-popup-header">
+          <span class="detail-popup-title">${title}</span>
+          <button type="button" class="detail-popup-close">✕</button>
+        </div>
+        <div class="detail-popup-body">
+          <div class="detail-popup-row detail-popup-headrow">
+            <span></span><span>기간 A</span><span>기간 B</span>
+          </div>
+          ${rows.map(r => `
+            <div class="detail-popup-row">
+              <span class="detail-popup-label">${r.label}</span>
+              <span>${r.aVal}</span>
+              <span>${r.bVal}</span>
+            </div>`).join("")}
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    overlay.querySelector(".detail-popup-close").addEventListener("click", close);
+    overlay.querySelector(".detail-popup-backdrop").addEventListener("click", close);
+  }
+  function openDetailFor(key, aData, bData) {
+    const buildRate = (distances, saveKey, labelFn) => distances.map(d => ({
+      label: labelFn(d),
+      aVal: aData ? fmtRate(aData[saveKey][d].num, aData[saveKey][d].den) : "—",
+      bVal: bData ? fmtRate(bData[saveKey][d].num, bData[saveKey][d].den) : "—",
+    }));
+    if (key === "putt") {
+      const rows = buildRate(PUTT_DISTANCES, "puttSaveByDist", d => `${d}m`);
+      rows.push({
+        label: "11m이상",
+        aVal: aData ? fmtRate(aData.puttSaveFar.num, aData.puttSaveFar.den) : "—",
+        bVal: bData ? fmtRate(bData.puttSaveFar.num, bData.puttSaveFar.den) : "—",
+      });
+      openDetailPopup("퍼팅 성공율", rows);
+    } else if (key === "pitch") {
+      openDetailPopup("상세 피칭 세이브율", buildRate(PITCH_SAVE_DISTANCES, "pitchSaveByDist", d => `피칭 ${d}m`));
+    } else if (key === "chip") {
+      openDetailPopup("상세 칩 세이브율", buildRate(CHIP_SAVE_DISTANCES, "chipSaveByDist", d => `칩샷 ${d}m`));
+    } else if (key === "club") {
+      const fmtClubStat = s => s ? `${Math.round(s.avg)}m (${Math.round(s.max)}/${Math.round(s.min)})` : "—";
+      const clubOrder = CLUB_GROUPS.flatMap(g => g.clubs);
+      const clubKeys = clubOrder.filter(c => (aData && aData.clubStats[c]) || (bData && bData.clubStats[c]));
+      const rows = clubKeys.map(c => ({
+        label: c,
+        aVal: fmtClubStat(aData && aData.clubStats[c]),
+        bVal: fmtClubStat(bData && bData.clubStats[c]),
+      }));
+      openDetailPopup("클럽별 평균 비거리", rows);
+    }
+  }
 
   function renderHeaderHcp() {
     const a = analyze();
@@ -1303,28 +1381,27 @@
     const aData = analyze(roundsInRange(periodState.aFrom, periodState.aTo));
     const bData = analyze(roundsInRange(periodState.bFrom, periodState.bTo));
 
-    const statRows = CMP_METRIC_ROWS.map(m => `
-      <div class="cmp-row">
+    const statRows = CMP_METRIC_ROWS.map(m => {
+      if (m.trigger) {
+        return `<div class="cmp-row">
+          <div class="cmp-cell cmp-label" style="font-weight:800;">${m.label}</div>
+          <div class="cmp-cell cmp-detail-trigger" data-detail="${m.trigger}" style="grid-column: span 2;">자세한 분석을 보려면 터치하세요</div>
+        </div>`;
+      }
+      return `<div class="cmp-row">
         <div class="cmp-cell cmp-label">${m.label}</div>
         <div class="cmp-cell">${aData ? m.get(aData) : "—"}</div>
         <div class="cmp-cell">${bData ? m.get(bData) : "—"}</div>
-      </div>`).join("");
+      </div>`;
+    }).join("");
 
-    const fmtClubStat = s => s ? `${Math.round(s.avg)}m (${Math.round(s.max)}/${Math.round(s.min)})` : "—";
     const clubOrder = CLUB_GROUPS.flatMap(g => g.clubs);
     const clubKeys = clubOrder.filter(c => (aData && aData.clubStats[c]) || (bData && bData.clubStats[c]));
     const clubRows = clubKeys.length ? `
       <div class="cmp-row">
         <div class="cmp-cell cmp-label" style="font-weight:800;">클럽별 평균 비거리</div>
-        <div class="cmp-cell"></div>
-        <div class="cmp-cell"></div>
-      </div>
-      ${clubKeys.map(c => `
-        <div class="cmp-row">
-          <div class="cmp-cell cmp-label">${c}</div>
-          <div class="cmp-cell">${fmtClubStat(aData && aData.clubStats[c])}</div>
-          <div class="cmp-cell">${fmtClubStat(bData && bData.clubStats[c])}</div>
-        </div>`).join("")}` : "";
+        <div class="cmp-cell cmp-detail-trigger" data-detail="club" style="grid-column: span 2;">자세한 분석을 보려면 터치하세요</div>
+      </div>` : "";
 
     el.innerHTML = `
       <div class="cmp-card">
@@ -1371,6 +1448,10 @@
         savePeriods();
         renderAnalysis();
       });
+    });
+
+    el.querySelectorAll(".cmp-detail-trigger").forEach(cell => {
+      cell.addEventListener("click", () => openDetailFor(cell.dataset.detail, aData, bData));
     });
 
     [["A", aData], ["B", bData]].forEach(([suffix, data]) => {
