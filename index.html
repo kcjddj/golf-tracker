@@ -555,8 +555,8 @@
   }
   let scoreNotation = loadScoreNotation();
   function saveScoreNotation() { localStorage.setItem(SCORE_NOTATION_KEY, scoreNotation); }
-  const fmtScore  = (total, diff) => scoreNotation === "total" ? `${total} (${fmtDiff(diff)})` : fmtDiff(diff);
-  const fmtScoreZ = (total, diff) => scoreNotation === "total" ? `${total} (${fmtDiffZ(diff)})` : fmtDiffZ(diff);
+  const fmtScore  = (total, diff) => scoreNotation === "total" ? `${total}` : fmtDiff(diff);
+  const fmtScoreZ = (total, diff) => scoreNotation === "total" ? `${total}` : fmtDiffZ(diff);
 
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -834,7 +834,7 @@
       <div class="live-header">
         <input type="text" id="liveCourse" class="live-course-input" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">
         <div class="live-score-wrap">
-          <button type="button" class="score-toggle" id="scoreNotationToggle" title="점수 표기 전환">${scoreNotation === "total" ? "73(+1)" : "E"}</button>
+          <button type="button" class="score-toggle" id="scoreNotationToggle" title="점수 표기 전환">${scoreNotation === "total" ? "73" : "E"}</button>
           <span class="live-score-v">${fmtScore(totalRaw, total)}</span>
           <span class="live-score-sub">(전반${fmtScore(frontRaw, front)}/후반${fmtScore(backRaw, back)})</span>
         </div>
@@ -1003,7 +1003,7 @@
     document.getElementById("panel-add").innerHTML = `
       <div class="finish-page">
         <div class="finish-title">오늘의 스코어</div>
-        <div class="finish-score">${scoreNotation === "total" ? `${total}<span class="diff">(${fmtDiff(total - totalPar)})</span>` : fmtDiff(total - totalPar)}</div>
+        <div class="finish-score">${scoreNotation === "total" ? `${total}` : fmtDiff(total - totalPar)}</div>
         <div class="finish-msg">수고하셨습니다!</div>
         <button class="save-btn" id="appEndBtn" style="max-width:220px;margin:0 auto;">앱 종료</button>
       </div>`;
@@ -1543,7 +1543,7 @@
             </div>
           </div>
           <div class="r-right">
-            <span class="score-chip ${chipClass}">${scoreNotation === "total" ? `${m.totalScore} (${diffStr})` : diffStr}</span>
+            <span class="score-chip ${chipClass}">${scoreNotation === "total" ? `${m.totalScore}` : diffStr}</span>
             <span class="chevron">▾</span>
           </div>
         </summary>
@@ -1680,7 +1680,7 @@
             <div class="log-top">
               <span class="log-date">${r.date}</span>
               <input type="text" class="log-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
-              <span class="log-score">${scoreNotation === "total" ? `${m.totalScore} (${diffStr})` : diffStr}</span>
+              <span class="log-score">${scoreNotation === "total" ? `${m.totalScore}` : diffStr}</span>
             </div>
             ${tagsHTML ? `<div class="log-tags-row">${tagsHTML}</div>` : ""}
             <input type="text" class="log-memo-input" data-idx="${idx}" placeholder="메모" value="${esc(r.memo || "")}">
