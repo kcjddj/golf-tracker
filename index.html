@@ -419,15 +419,15 @@
   .log-row { display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid var(--line); }
   .log-row:last-child { border-bottom: none; padding-bottom: 0; }
   .log-top { display: flex; align-items: baseline; gap: 10px; }
-  .log-date { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  .log-date { font-size: 15.5px; color: var(--muted); white-space: nowrap; }
   .log-course-input {
     font-size: 15.5px; font-weight: 700; flex: 1; min-width: 0; font-family: inherit;
     border: 1px solid transparent; background: transparent; color: var(--ink);
     border-radius: 6px; padding: 3px 6px; margin: -3px -6px;
   }
   .log-course-input:hover, .log-course-input:focus { border-color: var(--line); background: var(--paper); }
-  .log-score { font-family: ui-serif, Georgia, serif; font-size: 16px; font-weight: 700; color: var(--flag); white-space: nowrap; }
-  .log-nine-tag { flex: 0 0 auto; font-size: 23px; color: var(--ink-2); white-space: nowrap; }
+  .log-score { font-family: ui-serif, Georgia, serif; font-size: 15.5px; font-weight: 700; color: var(--flag); white-space: nowrap; margin-left: 16px; }
+  .log-nine-tag { flex: 0 0 auto; font-size: 15.5px; color: var(--ink-2); white-space: nowrap; }
   .log-memo-input {
     width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
     border-radius: 7px; padding: 6px 9px; font-size: 13.5px; font-family: inherit;
@@ -1691,7 +1691,7 @@
           const compactParts = [];
           if (r.courseFront) compactParts.push(esc(r.courseFront));
           if (r.courseBack) compactParts.push(esc(r.courseBack));
-          const compactTag = compactParts.length ? `<span class="log-nine-tag">${compactParts.join("/")}</span>` : "";
+          const compactTag = compactParts.length ? `<span class="log-nine-tag">(${compactParts.join("/")})</span>` : "";
           return `<div class="log-row">
             <div class="log-top">
               <span class="log-date">${r.date}</span>
