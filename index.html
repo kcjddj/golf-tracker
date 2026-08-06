@@ -539,6 +539,30 @@
     return stats;
   }
 
+  // ── distance-bucketed 1-putt success rate (1m~10m exact, 11m+ combined) ──
+  const PUTT_DISTANCES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  function puttSaveBuckets(allHoles, distances) {
+    const stats = {};
+    distances.forEach(d => {
+      const inBucket = allHoles.filter(h => {
+        if (!(h.putt >= 1)) return false;
+        const raw = h.detail?.putt?.dist ?? null;
+        if (raw == null) return false;
+        return Math.round(raw) === d;
+      });
+      stats[d] = { num: inBucket.filter(h => h.putt <= 1).length, den: inBucket.length };
+    });
+    return stats;
+  }
+  function puttSaveFarBucket(allHoles) {
+    const inBucket = allHoles.filter(h => {
+      if (!(h.putt >= 1)) return false;
+      const raw = h.detail?.putt?.dist ?? null;
+      return raw != null && Math.round(raw) >= 11;
+    });
+    return { num: inBucket.filter(h => h.putt <= 1).length, den: inBucket.length };
+  }
+
   // ── storage ──────────────────────────────────────────
   function loadRounds() {
     try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
@@ -748,12 +772,12 @@
     if (selItem) selItem.scrollIntoView({ block: "center" });
   }
 
-  function detailRowHTML(label, kind, sub, detail) {
-    const dataAttrs = `data-kind="${kind}" data-sub="${sub}"`;
+  function puttDetailRowHTML(h) {
     return `<div class="detail-row">
-      <div class="detail-row-label">${label}</div>
+      <div class="detail-row-label">퍼팅</div>
       <div class="detail-fields">
-        <span class="detail-field"><span class="field-label">거리</span><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${detail.dist ?? ""}" placeholder="0">m</span>
+        <span class="detail-field"><span class="field-label">남은거리</span><input type="number" inputmode="numeric" class="dist-input" data-kind="putt" data-sub="putt" value="${h.detail.putt.dist ?? ""}" placeholder="0">m</span>
+        <span class="detail-field"><span class="field-label">퍼팅수</span>${renderBtnRow([1, 2, 3, 4], h.putt, false, { kind: "putt" }, true)}</span>
       </div>
     </div>`;
   }
@@ -832,7 +856,7 @@
       const calcDist = (entry.dist != null && nextDist != null) ? (entry.dist - nextDist) : null;
       return detailEntryRowHTML(entry, calcDist);
     }).join("");
-    const detailPuttRow = detailRowHTML("퍼팅", "putt", "putt", h.detail.putt);
+    const detailPuttRow = puttDetailRowHTML(h);
 
     document.getElementById("panel-add").innerHTML = `
       <div class="live-header">
@@ -1147,6 +1171,8 @@
     const pitchSaveNum = allHoles.filter(h => h.approachPitching >= 1 && h.putt <= 1).length;
     const pitchSaveByDist = distanceSaveBuckets(allHoles, "approachPitching", h => h.detail?.approach?.pitching?.dist ?? null, PITCH_SAVE_DISTANCES, 10);
     const chipSaveByDist = distanceSaveBuckets(allHoles, "approachChip", h => h.detail?.approach?.chip?.dist ?? null, CHIP_SAVE_DISTANCES, 5);
+    const puttSaveByDist = puttSaveBuckets(allHoles, PUTT_DISTANCES);
+    const puttSaveFar = puttSaveFarBucket(allHoles);
     const pitchSaveRFDen = allHoles.filter(h => h.lastRF && h.approachPitching >= 1).length;
     const pitchSaveRFNum = allHoles.filter(h => h.lastRF && h.approachPitching >= 1 && h.putt <= 1).length;
     const pitchSaveFWDen = allHoles.filter(h => h.lastFW && h.approachPitching >= 1).length;
@@ -1207,7 +1233,7 @@
       pitchSaveRFNum, pitchSaveRFDen, pitchSaveFWNum, pitchSaveFWDen, cpSaveRFNum, cpSaveRFDen, cpSaveFWNum, cpSaveFWDen,
       fwBkParSaveNum, fwBkParSaveDen, roughParSaveNum, roughParSaveDen,
       roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar, clubStats,
-      pitchSaveByDist, chipSaveByDist,
+      pitchSaveByDist, chipSaveByDist, puttSaveByDist, puttSaveFar,
     };
   }
 
@@ -1231,6 +1257,10 @@
     { label: "페어웨이 키핑률", get: a => `${fmt1(a.fairwayRate)}%` },
     { label: "온그린율", get: a => `${fmt1(a.girRate)}%` },
     { label: "평균 퍼팅수", get: a => fmt1(a.avgPutts) },
+    ...PUTT_DISTANCES.map(d => ({
+      label: `${d}m 퍼팅성공률`, get: a => fmtRate(a.puttSaveByDist[d].num, a.puttSaveByDist[d].den),
+    })),
+    { label: "11m이상 퍼팅성공률", get: a => fmtRate(a.puttSaveFar.num, a.puttSaveFar.den) },
     { label: "벙커 세이브율", get: a => fmtRate(a.bkSaveNum, a.bkSaveDen) },
     { label: "피칭 세이브율", get: a => fmtRate(a.pitchSaveNum, a.pitchSaveDen) },
     ...PITCH_SAVE_DISTANCES.map(d => ({
