@@ -466,26 +466,6 @@
   }
   .backup-status { display: block; margin-top: 4px; font-size: 16px; color: var(--muted); }
 
-  .backup-guide {
-    margin-top: 18px; padding: 14px 16px; border-radius: 12px;
-    background: var(--paper-alt); border: 1px solid var(--line);
-  }
-  .backup-guide-title { font-size: 15px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
-  .backup-guide p { font-size: 14px; color: var(--muted); margin: 0 0 8px; line-height: 1.5; }
-  .backup-guide ol { margin: 0; padding-left: 20px; }
-  .backup-guide li { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
-  .backup-guide li + li { margin-top: 4px; }
-  .backup-guide b { color: var(--turf); }
-
-  .folder-import-row {
-    display: block; width: 100%; text-align: left; padding: 12px 6px;
-    border: none; border-bottom: 1px solid var(--line); background: none;
-    color: var(--ink); font-size: 14.5px; cursor: pointer;
-  }
-  .folder-import-row:last-child { border-bottom: none; }
-  .folder-import-row:active { background: var(--paper-alt); }
-  .folder-import-empty { padding: 16px 2px; color: var(--muted); font-size: 14.5px; text-align: center; }
-
   ::selection { background: var(--turf-wash); }
 </style>
 </head>
@@ -1762,121 +1742,15 @@
     });
   }
 
-  // ── optional: direct folder backup via File System Access API ──
-  // Chrome-only (desktop and recent Android Chrome); silently unavailable elsewhere (e.g.
-  // Samsung Internet, iOS Safari) — all UI for this is feature-detected and hidden when unsupported.
-  const FSA_SUPPORTED = typeof window.showDirectoryPicker === "function";
-  const FSA_DB_NAME = "golf-tracker-fsa", FSA_STORE = "handles", FSA_KEY = "backupDir";
-  function fsaOpenDb() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(FSA_DB_NAME, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(FSA_STORE);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-  async function fsaGetHandle() {
-    const db = await fsaOpenDb();
-    return new Promise((resolve, reject) => {
-      const req = db.transaction(FSA_STORE, "readonly").objectStore(FSA_STORE).get(FSA_KEY);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => reject(req.error);
-    });
-  }
-  async function fsaSetHandle(handle) {
-    const db = await fsaOpenDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(FSA_STORE, "readwrite");
-      tx.objectStore(FSA_STORE).put(handle, FSA_KEY);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-  // Only call from within a click handler — requestPermission needs a user gesture.
-  async function fsaEnsurePermission(handle, mode) {
-    if (!handle) return false;
-    const opts = { mode };
-    if ((await handle.queryPermission(opts)) === "granted") return true;
-    return (await handle.requestPermission(opts)) === "granted";
-  }
-  function fsaBackupFilename() { return `golf-tracker-backup-${todayISO()}.csv`; }
-
-  function openFolderImportPopup(entries) {
-    const overlay = document.createElement("div");
-    overlay.className = "detail-popup-overlay";
-    overlay.innerHTML = `
-      <div class="detail-popup-backdrop"></div>
-      <div class="detail-popup-sheet">
-        <div class="detail-popup-header">
-          <span class="detail-popup-title">백업 폴더에서 가져오기</span>
-          <button type="button" class="detail-popup-close">✕</button>
-        </div>
-        <div class="detail-popup-body">
-          ${entries.length ? entries.map((name, i) => `
-            <button type="button" class="folder-import-row" data-i="${i}">${esc(name)}</button>`).join("")
-            : `<div class="folder-import-empty">이 폴더에 백업 파일이 없어요.</div>`}
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-    const close = () => overlay.remove();
-    overlay.querySelector(".detail-popup-close").addEventListener("click", close);
-    overlay.querySelector(".detail-popup-backdrop").addEventListener("click", close);
-    overlay.querySelectorAll(".folder-import-row").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const name = entries[+btn.dataset.i];
-        close();
-        const handle = await fsaGetHandle();
-        if (!handle || !(await fsaEnsurePermission(handle, "read"))) return;
-        const fileHandle = await handle.getFileHandle(name);
-        importRoundsFromFile(await fileHandle.getFile());
-      });
-    });
-  }
-
-  async function refreshFolderUI() {
-    const btn = document.getElementById("folderBtn");
-    const importBtn = document.getElementById("folderImportBtn");
-    const status = document.getElementById("folderStatus");
-    if (!btn || !status) return;
-    const handle = await fsaGetHandle();
-    if (!handle) {
-      btn.textContent = "폴더 연결";
-      status.textContent = "";
-      importBtn.style.display = "none";
-      return;
-    }
-    const granted = (await handle.queryPermission({ mode: "readwrite" })) === "granted";
-    btn.textContent = `폴더 변경 (${handle.name})`;
-    status.textContent = granted ? `연결됨: ${handle.name} 폴더` : "권한이 필요해요 — 데이터 내보내기/가져오기를 누르면 다시 물어봐요.";
-    importBtn.style.display = "";
-  }
-
   // ── backup: export all rounds to a JSON file, import them back ──
   async function exportRounds() {
     const payload = { app: "golf-tracker", version: 1, exportedAt: new Date().toISOString(), rounds };
-    const filename = fsaBackupFilename();
-    const json = JSON.stringify(payload, null, 2);
-    const blob = new Blob([json], { type: "text/csv" });
-
-    if (FSA_SUPPORTED) {
-      const handle = await fsaGetHandle();
-      if (handle && await fsaEnsurePermission(handle, "readwrite")) {
-        try {
-          const fileHandle = await handle.getFileHandle(filename, { create: true });
-          const writable = await fileHandle.createWritable();
-          await writable.write(blob);
-          await writable.close();
-          const statusEl = document.getElementById("backupStatus");
-          if (statusEl) statusEl.textContent = `백업 폴더에 저장했어요: ${filename}`;
-          return;
-        } catch { /* fall through to share/download below */ }
-      }
-    }
-
     // .csv/text-csv (not .json/application-json, and not .txt/text-plain) because most mobile
     // browsers' Web Share API only accepts files whose extension/MIME is on a small allow-list
     // — .json isn't on it, so canShare() silently returns false and the share sheet never appears.
     // The content is still plain JSON text; import parses it the same way regardless of extension.
+    const filename = `golf-tracker-backup-${todayISO()}.csv`;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "text/csv" });
     const file = new File([blob], filename, { type: "text/csv" });
 
     // Prefer the OS share sheet (lets the user pick Google Drive/카카오톡/이메일 등) when file sharing is supported.
@@ -1971,7 +1845,7 @@
   }
 
   // ── 백업 panel (export/import buttons) ─────────────────
-  async function renderBackup() {
+  function renderBackup() {
     const el = document.getElementById("panel-backup");
     el.innerHTML = `
       <div class="card">
@@ -1982,25 +1856,6 @@
           <input type="file" id="importFile" accept="text/csv" style="display:none">
         </div>
         <span class="backup-status" id="backupStatus"></span>
-        ${FSA_SUPPORTED ? `
-        <div class="backup-guide">
-          <div class="backup-guide-title">백업 폴더 (선택)</div>
-          <p>폰의 폴더 하나를 지정해두면, 공유 시트나 파일 선택창 없이 그 폴더에 바로 저장하고 바로 불러올 수 있어요.</p>
-          <div class="backup-bar" style="margin-top:6px;">
-            <button type="button" class="backup-btn" id="folderBtn">폴더 연결</button>
-            <button type="button" class="backup-btn" id="folderImportBtn" style="display:none;">폴더에서 가져오기</button>
-          </div>
-          <span class="backup-status" id="folderStatus"></span>
-        </div>` : ""}
-        <div class="backup-guide">
-          <div class="backup-guide-title">카카오톡으로 백업 파일을 주고받을 때</div>
-          <p>카카오톡은 '데이터 내보내기'나 '데이터 가져오기' 화면에 바로 나오지 않을 수 있어요. 이럴 땐 아래처럼 해보세요.</p>
-          <ol>
-            <li>카카오톡 채팅방에서 받은 백업 파일을 길게 눌러 <b>다운로드(저장)</b>를 눌러요.</li>
-            <li>보통 <b>내 파일 &gt; Download</b> 폴더에 저장돼요.</li>
-            <li>이 앱에서 <b>데이터 가져오기</b>를 누르고 <b>내 파일</b>을 선택해 방금 저장한 파일을 골라요.</li>
-          </ol>
-        </div>
       </div>`;
     document.getElementById("exportBtn").addEventListener("click", exportRounds);
     document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
@@ -2009,34 +1864,6 @@
       if (file) importRoundsFromFile(file);
       e.target.value = "";
     });
-
-    if (FSA_SUPPORTED) {
-      await refreshFolderUI();
-      document.getElementById("folderBtn").addEventListener("click", async () => {
-        try {
-          const handle = await window.showDirectoryPicker({ id: "golf-tracker-backup", mode: "readwrite" });
-          await fsaSetHandle(handle);
-          await refreshFolderUI();
-        } catch (err) {
-          if (err && err.name !== "AbortError") {
-            document.getElementById("folderStatus").textContent = "폴더 연결에 실패했어요.";
-          }
-        }
-      });
-      document.getElementById("folderImportBtn").addEventListener("click", async () => {
-        const handle = await fsaGetHandle();
-        if (!handle || !(await fsaEnsurePermission(handle, "read"))) {
-          document.getElementById("folderStatus").textContent = "권한이 필요해요.";
-          return;
-        }
-        const names = [];
-        for await (const [name] of handle.entries()) {
-          if (name.startsWith("golf-tracker-backup-")) names.push(name);
-        }
-        names.sort().reverse();
-        openFolderImportPopup(names);
-      });
-    }
   }
 
   // ── tabs ──────────────────────────────────────────────
