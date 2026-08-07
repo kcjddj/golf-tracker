@@ -1756,13 +1756,19 @@
   // ── backup: export all rounds to a JSON file, import them back ──
   async function exportRounds() {
     const payload = { app: "golf-tracker", version: 1, exportedAt: new Date().toISOString(), rounds };
-    // .txt/text-plain (not .json/application-json) because most mobile browsers' Web Share API
-    // only accepts files whose extension/MIME is on a small allow-list — .json isn't on it, so
-    // canShare() silently returns false for a .json file and the share sheet never appears.
-    // The content is still plain JSON text; import parses it the same way regardless of extension.
-    const filename = `golf-tracker-backup-${todayISO()}.txt`;
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "text/plain" });
-    const file = new File([blob], filename, { type: "text/plain" });
+    // .csv/text-csv (not .json/application-json, and not .txt/text-plain) because:
+    // - most mobile browsers' Web Share API only accepts files whose extension/MIME is on a
+    //   small allow-list — .json isn't on it, so canShare() silently returns false and the
+    //   share sheet never appears.
+    // - text/plain is the MIME Android apps conventionally treat as "text to paste into the
+    //   message box" rather than a real file attachment, so some apps (e.g. KakaoTalk) show it
+    //   as a plain chat message with no way to save/download it.
+    // text/csv is on the allow-list but isn't the "paste as text" convention, so it's received
+    // as an actual file attachment. The content is still plain JSON text; import parses it the
+    // same way regardless of extension.
+    const filename = `golf-tracker-backup-${todayISO()}.csv`;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "text/csv" });
+    const file = new File([blob], filename, { type: "text/csv" });
 
     // Prefer the OS share sheet (lets the user pick Google Drive/카카오톡/이메일 등) when file sharing is supported.
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1864,7 +1870,7 @@
         <div class="backup-bar">
           <button type="button" class="backup-btn" id="exportBtn">데이터 내보내기</button>
           <button type="button" class="backup-btn" id="importBtn">데이터 가져오기</button>
-          <input type="file" id="importFile" accept="text/plain" style="display:none">
+          <input type="file" id="importFile" accept="text/csv" style="display:none">
         </div>
         <span class="backup-status" id="backupStatus"></span>
         <div class="backup-guide">
