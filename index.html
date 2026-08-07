@@ -465,6 +465,10 @@
     border-radius: 10px; padding: 14px 22px; font-size: 19px; font-weight: 700; cursor: pointer;
   }
   .backup-status { display: block; margin-top: 4px; font-size: 16px; color: var(--muted); }
+  .backup-link {
+    display: block; margin-top: 6px; border: none; background: none; padding: 4px 0;
+    color: var(--turf); font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;
+  }
 
   ::selection { background: var(--turf-wash); }
 </style>
@@ -1744,15 +1748,15 @@
 
   // ── backup: export all rounds to a JSON file, import them back ──
   const LAST_BACKUP_KEY = "golf-tracker-last-backup-date";
-  function exportRounds() {
+  function exportRounds(force) {
     const today = todayISO();
     const filename = `golf-tracker-backup-${today}.csv`;
     const statusEl = document.getElementById("backupStatus");
     // Browsers never overwrite an existing download — re-downloading the same filename just
     // creates "golf-tracker-backup-2026-08-07 (1).csv", "(2).csv", etc. Since there's no way to
     // force an overwrite from JS, the only way to stop duplicates is to skip re-downloading once
-    // today's backup already exists.
-    if (localStorage.getItem(LAST_BACKUP_KEY) === today) {
+    // today's backup already exists — unless the user explicitly asks via "그래도 다시 만들기".
+    if (!force && localStorage.getItem(LAST_BACKUP_KEY) === today) {
       if (statusEl) statusEl.textContent = `오늘 백업은 이미 만들어졌어요: ${filename}`;
       return;
     }
@@ -1770,7 +1774,7 @@
     a.remove();
     URL.revokeObjectURL(url);
     localStorage.setItem(LAST_BACKUP_KEY, today);
-    if (statusEl) statusEl.textContent = `백업했어요: ${filename}`;
+    if (statusEl) statusEl.textContent = force ? `다시 백업했어요: ${filename}` : `백업했어요: ${filename}`;
   }
   function importRoundsFromFile(file) {
     const reader = new FileReader();
@@ -1856,16 +1860,18 @@
           <input type="file" id="importFile" accept="text/csv" style="display:none">
         </div>
         <span class="backup-status" id="backupStatus"></span>
+        <button type="button" class="backup-link" id="forceBackupBtn">그래도 다시 만들기</button>
         <div class="backup-bar" style="margin-top:14px;">
           <button type="button" class="backup-btn" id="exportBtnUsb">PC로 보내기(USB)</button>
           <button type="button" class="backup-btn" id="importBtnUsb">PC에서 가져오기(USB)</button>
         </div>
         <span class="backup-status">위 버튼과 똑같이 동작해요 — 저장된 파일을 USB로 PC와 주고받으면 돼요.</span>
       </div>`;
-    document.getElementById("exportBtn").addEventListener("click", exportRounds);
+    document.getElementById("exportBtn").addEventListener("click", () => exportRounds());
     document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
-    document.getElementById("exportBtnUsb").addEventListener("click", exportRounds);
+    document.getElementById("exportBtnUsb").addEventListener("click", () => exportRounds());
     document.getElementById("importBtnUsb").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("forceBackupBtn").addEventListener("click", () => exportRounds(true));
     document.getElementById("importFile").addEventListener("change", e => {
       const file = e.target.files[0];
       if (file) importRoundsFromFile(file);
