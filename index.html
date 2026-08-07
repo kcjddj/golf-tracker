@@ -466,6 +466,17 @@
   }
   .backup-status { display: block; margin-top: 4px; font-size: 16px; color: var(--muted); }
 
+  .backup-guide {
+    margin-top: 18px; padding: 14px 16px; border-radius: 12px;
+    background: var(--paper-alt); border: 1px solid var(--line);
+  }
+  .backup-guide-title { font-size: 15px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+  .backup-guide p { font-size: 14px; color: var(--muted); margin: 0 0 8px; line-height: 1.5; }
+  .backup-guide ol { margin: 0; padding-left: 20px; }
+  .backup-guide li { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+  .backup-guide li + li { margin-top: 4px; }
+  .backup-guide b { color: var(--turf); }
+
   ::selection { background: var(--turf-wash); }
 </style>
 </head>
@@ -1856,6 +1867,15 @@
           <input type="file" id="importFile" accept="text/plain" style="display:none">
         </div>
         <span class="backup-status" id="backupStatus"></span>
+        <div class="backup-guide">
+          <div class="backup-guide-title">카카오톡으로 백업 파일을 주고받을 때</div>
+          <p>카카오톡은 '데이터 내보내기'나 '데이터 가져오기' 화면에 바로 나오지 않을 수 있어요. 이럴 땐 아래처럼 해보세요.</p>
+          <ol>
+            <li>카카오톡 채팅방에서 받은 백업 파일을 길게 눌러 <b>다운로드(저장)</b>를 눌러요.</li>
+            <li>보통 <b>내 파일 &gt; Download</b> 폴더에 저장돼요.</li>
+            <li>이 앱에서 <b>데이터 가져오기</b>를 누르고 <b>내 파일</b>을 선택해 방금 저장한 파일을 골라요.</li>
+          </ol>
+        </div>
       </div>`;
     document.getElementById("exportBtn").addEventListener("click", exportRounds);
     document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
