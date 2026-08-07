@@ -1838,14 +1838,21 @@
       <div class="card">
         <div class="card-title">백업</div>
         <div class="backup-bar">
-          <button type="button" class="backup-btn" id="exportBtn">데이터 내보내기</button>
-          <button type="button" class="backup-btn" id="importBtn">데이터 가져오기</button>
+          <button type="button" class="backup-btn" id="exportBtn">백업하기</button>
+          <button type="button" class="backup-btn" id="importBtn">백업 데이터 가져오기</button>
           <input type="file" id="importFile" accept="text/csv" style="display:none">
         </div>
         <span class="backup-status" id="backupStatus"></span>
+        <div class="backup-bar" style="margin-top:14px;">
+          <button type="button" class="backup-btn" id="exportBtnUsb">PC로 보내기(USB)</button>
+          <button type="button" class="backup-btn" id="importBtnUsb">PC에서 가져오기(USB)</button>
+        </div>
+        <span class="backup-status">위 버튼과 똑같이 동작해요 — 저장된 파일을 USB로 PC와 주고받으면 돼요.</span>
       </div>`;
     document.getElementById("exportBtn").addEventListener("click", exportRounds);
     document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("exportBtnUsb").addEventListener("click", exportRounds);
+    document.getElementById("importBtnUsb").addEventListener("click", () => document.getElementById("importFile").click());
     document.getElementById("importFile").addEventListener("change", e => {
       const file = e.target.files[0];
       if (file) importRoundsFromFile(file);
