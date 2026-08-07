@@ -1743,26 +1743,13 @@
   }
 
   // ── backup: export all rounds to a JSON file, import them back ──
-  async function exportRounds() {
+  function exportRounds() {
     const payload = { app: "golf-tracker", version: 1, exportedAt: new Date().toISOString(), rounds };
-    // .csv/text-csv (not .json/application-json, and not .txt/text-plain) because most mobile
-    // browsers' Web Share API only accepts files whose extension/MIME is on a small allow-list
-    // — .json isn't on it, so canShare() silently returns false and the share sheet never appears.
-    // The content is still plain JSON text; import parses it the same way regardless of extension.
+    // Plain browser download straight to the device's Downloads folder — no OS share sheet.
+    // .csv/text-csv content is still plain JSON text; import parses it the same way regardless
+    // of extension.
     const filename = `golf-tracker-backup-${todayISO()}.csv`;
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "text/csv" });
-    const file = new File([blob], filename, { type: "text/csv" });
-
-    // Prefer the OS share sheet (lets the user pick Google Drive/카카오톡/이메일 등) when file sharing is supported.
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: filename });
-        return;
-      } catch (err) {
-        if (err && err.name === "AbortError") return; // user closed the share sheet without picking anything
-        // otherwise fall through to a plain download
-      }
-    }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
