@@ -1743,12 +1743,23 @@
   }
 
   // ── backup: export all rounds to a JSON file, import them back ──
+  const LAST_BACKUP_KEY = "golf-tracker-last-backup-date";
   function exportRounds() {
+    const today = todayISO();
+    const filename = `golf-tracker-backup-${today}.csv`;
+    const statusEl = document.getElementById("backupStatus");
+    // Browsers never overwrite an existing download — re-downloading the same filename just
+    // creates "golf-tracker-backup-2026-08-07 (1).csv", "(2).csv", etc. Since there's no way to
+    // force an overwrite from JS, the only way to stop duplicates is to skip re-downloading once
+    // today's backup already exists.
+    if (localStorage.getItem(LAST_BACKUP_KEY) === today) {
+      if (statusEl) statusEl.textContent = `오늘 백업은 이미 만들어졌어요: ${filename}`;
+      return;
+    }
     const payload = { app: "golf-tracker", version: 1, exportedAt: new Date().toISOString(), rounds };
     // Plain browser download straight to the device's Downloads folder — no OS share sheet.
     // .csv/text-csv content is still plain JSON text; import parses it the same way regardless
     // of extension.
-    const filename = `golf-tracker-backup-${todayISO()}.csv`;
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1758,6 +1769,8 @@
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+    localStorage.setItem(LAST_BACKUP_KEY, today);
+    if (statusEl) statusEl.textContent = `백업했어요: ${filename}`;
   }
   function importRoundsFromFile(file) {
     const reader = new FileReader();
