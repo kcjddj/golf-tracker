@@ -735,8 +735,8 @@
     }).join("")}</div>`;
   }
 
-  function distFieldHTML(kind, sub, dist) {
-    return `<input type="number" inputmode="numeric" min="0" max="99" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}"><span class="dist-unit">m</span>`;
+  function distFieldHTML(kind, sub, dist, enterHint) {
+    return `<input type="number" inputmode="numeric" min="0" max="99" enterkeyhint="${enterHint || "done"}" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}"><span class="dist-unit">m</span>`;
   }
 
   function shotRowHTML(h, r, opts) {
@@ -758,7 +758,7 @@
     opts = opts || {};
     const mode = !enabled ? "hard" : (opts.pillLocked || false);
     const labelHTML = withDist ? `${label}<span class="dist-suffix">(남은거리)</span>` : label;
-    const distSlot = withDist ? distFieldHTML("approach", key, h.detail.approach[key].dist) : "";
+    const distSlot = withDist ? distFieldHTML("approach", key, h.detail.approach[key].dist, "next") : "";
     return `<div class="cat-sub-row">
       <span class="cat-sub-label${withDist ? " with-dist" : ""}">${labelHTML}</span>
       <span class="dist-slot">${distSlot}</span>
@@ -869,12 +869,20 @@
       });
     }
 
+    const DIST_NEXT = { "approach:pitching": '.dist-input[data-kind="approach"][data-sub="chip"]', "approach:chip": '.dist-input[data-kind="putt"]' };
     const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
     panel.querySelectorAll(".dist-input").forEach(inp => {
       inp.addEventListener("change", () => {
         detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : Math.max(0, Math.min(99, +inp.value));
         persistLive();
         renderHolePage(idx);
+      });
+      inp.addEventListener("keydown", e => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        const nextSel = DIST_NEXT[`${inp.dataset.kind}:${inp.dataset.sub}`];
+        const nextInp = nextSel ? panel.querySelector(nextSel) : null;
+        if (nextInp) nextInp.focus(); else inp.blur();
       });
     });
 
@@ -902,6 +910,9 @@
           h.putt = +val;
           if (+val === 0) h.detail.putt.dist = 0;
         }
+        ["pitching", "chip"].forEach(sub => {
+          if (h.approach[sub] == null) h.detail.approach[sub].dist = null;
+        });
         persistLive();
         renderHolePage(idx);
         if (focusApproachSub) {
