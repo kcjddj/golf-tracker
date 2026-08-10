@@ -871,8 +871,19 @@
 
     const DIST_NEXT = { "approach:pitching": '.dist-input[data-kind="approach"][data-sub="chip"]', "approach:chip": '.dist-input[data-kind="putt"]' };
     const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
+    const goToNextDist = inp => {
+      const nextSel = DIST_NEXT[`${inp.dataset.kind}:${inp.dataset.sub}`];
+      const nextInp = nextSel ? panel.querySelector(nextSel) : null;
+      if (nextInp) nextInp.focus(); else inp.blur();
+    };
     panel.querySelectorAll(".dist-input").forEach(inp => {
-      inp.addEventListener("input", () => {
+      inp.addEventListener("input", e => {
+        // Many Android IME "다음"/next action keys never dispatch a real keydown Enter —
+        // they only show up here as an `input` event with inputType "insertLineBreak".
+        if (e.inputType === "insertLineBreak") {
+          goToNextDist(inp);
+          return;
+        }
         const cleaned = inp.value.replace(/[^0-9]/g, "").slice(0, 2);
         if (cleaned !== inp.value) inp.value = cleaned;
       });
@@ -884,9 +895,7 @@
       inp.addEventListener("keydown", e => {
         if (e.key !== "Enter") return;
         e.preventDefault();
-        const nextSel = DIST_NEXT[`${inp.dataset.kind}:${inp.dataset.sub}`];
-        const nextInp = nextSel ? panel.querySelector(nextSel) : null;
-        if (nextInp) nextInp.focus(); else inp.blur();
+        goToNextDist(inp);
       });
     });
 
