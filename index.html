@@ -208,14 +208,13 @@
   .btn-row.compact .pill-btn { flex: 0 0 44px; }
   .pill-btn.sel { color: #fff; border-color: transparent; }
   .pill-btn:disabled { opacity: 0.32; cursor: not-allowed; }
-  .cat-sub-row { flex-wrap: wrap; row-gap: 6px; }
-  .detail-field { display: flex; align-items: center; gap: 6px; font-size: 15px; color: var(--ink-2); white-space: nowrap; }
-  .detail-field .field-label { font-size: 13.5px; color: var(--ink-2); }
-  .detail-field input {
-    width: 50px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 7px; padding: 5px 4px; font-size: 15px; text-align: center; font-family: inherit;
+  .dist-input {
+    flex: 0 0 auto; width: 68px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 7px; padding: 7px 2px; font-size: 13px; text-align: center; font-family: inherit;
   }
-  .detail-field input:disabled { opacity: 0.4; }
+  .dist-input::placeholder { color: var(--muted); font-size: 10.5px; }
+  .dist-input:disabled { opacity: 0.4; }
+  .dist-unit { flex: 0 0 auto; font-size: 13px; color: var(--ink-2); margin-right: 2px; }
 
   .bottom-bar { margin-top: 16px; }
   .bottom-row { display: flex; justify-content: flex-end; }
@@ -729,7 +728,7 @@
   }
 
   function distFieldHTML(kind, sub, dist, locked) {
-    return `<span class="detail-field"><span class="field-label">남은거리</span><input type="number" inputmode="numeric" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}" placeholder="0"${locked ? " disabled" : ""}>m</span>`;
+    return `<input type="number" inputmode="numeric" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}" placeholder="남은거리"${locked ? " disabled" : ""}><span class="dist-unit">m</span>`;
   }
 
   function shotRowHTML(h, r, opts) {
@@ -752,16 +751,16 @@
     const mode = !enabled ? "hard" : (opts.pillLocked || false);
     return `<div class="cat-sub-row">
       <span class="cat-sub-label">${label}</span>
-      ${renderBtnRow([1, 2, 3, 4], h.approach[key], mode, { kind: "approach", sub: key })}
       ${withDist ? distFieldHTML("approach", key, h.detail.approach[key].dist, !!opts.distLocked) : ""}
+      ${renderBtnRow([1, 2, 3, 4], h.approach[key], mode, { kind: "approach", sub: key })}
     </div>`;
   }
   function puttRowHTML(h, opts) {
     opts = opts || {};
     return `<div class="cat-sub-row">
       <span class="cat-sub-label">퍼팅</span>
-      ${renderBtnRow([0, 1, 2, 3, 4], h.putt, opts.pillLocked || false, { kind: "putt" }, true)}
       ${distFieldHTML("putt", "putt", h.detail.putt.dist, !!opts.distLocked)}
+      ${renderBtnRow([0, 1, 2, 3, 4], h.putt, opts.pillLocked || false, { kind: "putt" }, true)}
     </div>`;
   }
 
