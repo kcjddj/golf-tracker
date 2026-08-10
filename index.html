@@ -131,7 +131,7 @@
   .hdr-date-input.show { display: block; }
 
   nav.tabs {
-    display: grid; grid-template-columns: repeat(5, 1fr);
+    display: grid; grid-template-columns: repeat(4, 1fr);
     gap: 5px; margin-top: 5px;
     background: var(--paper-alt); border-radius: 11px; padding: 4px;
   }
@@ -186,11 +186,6 @@
     border-radius: 7px; padding: 6px 9px; font-size: 13px; font-family: inherit;
   }
   .nine-course-label { flex: 1 1 70px; min-width: 40px; font-size: 12.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hole-yardage-field { flex: 0 0 auto; display: flex; align-items: center; gap: 3px; font-size: 22px; color: var(--turf); white-space: nowrap; }
-  .hole-yardage-input {
-    width: 68px; border: 1px solid var(--line); background: var(--paper); color: var(--turf);
-    border-radius: 7px; padding: 5px 4px; font-size: 22px; text-align: center; font-family: inherit;
-  }
   .par-picker { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 6px; }
   .par-picker .lbl { font-size: 13px; font-weight: 700; color: var(--ink-2); }
 
@@ -203,6 +198,7 @@
 
   .btn-row { display: flex; gap: 4px; flex: 1; }
   .btn-row.disabled { opacity: 0.35; pointer-events: none; }
+  .btn-row.locked { opacity: 0.4; }
   .btn-row.compact { flex: 0 0 auto; }
   .pill-btn {
     border: 1px solid var(--line); background: var(--paper); color: var(--ink-2);
@@ -212,60 +208,14 @@
   .btn-row.compact .pill-btn { flex: 0 0 44px; }
   .pill-btn.sel { color: #fff; border-color: transparent; }
   .pill-btn:disabled { opacity: 0.32; cursor: not-allowed; }
-  .cat-group.readonly .pill-btn { pointer-events: none; cursor: default; }
-
-  /* ── Hole detail pager (swipe right for distance/club) ──── */
-  .hole-pager {
-    display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch; scrollbar-width: none;
-  }
-  .hole-pager::-webkit-scrollbar { display: none; }
-  .hole-page { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; }
-  .hole-page-detail { padding-left: 4px; }
-  .hole-page-detail .page-hint { margin: 3px 0 5px; }
-  .detail-row { display: flex; flex-direction: column; gap: 4px; padding: 7px 0; }
-  .detail-row + .detail-row { border-top: 1px solid var(--line); }
-  .detail-row-label { font-size: 17px; font-weight: 800; color: var(--ink); }
-  .page-hint { text-align: center; font-size: 17px; font-weight: 700; color: var(--turf); margin: 8px 0 10px; }
-  .detail-fields { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .detail-field { display: flex; align-items: center; gap: 6px; font-size: 18px; color: var(--ink-2); white-space: nowrap; }
-  .detail-field .field-label { font-size: 15px; color: var(--ink-2); }
+  .cat-sub-row { flex-wrap: wrap; row-gap: 6px; }
+  .detail-field { display: flex; align-items: center; gap: 6px; font-size: 15px; color: var(--ink-2); white-space: nowrap; }
+  .detail-field .field-label { font-size: 13.5px; color: var(--ink-2); }
   .detail-field input {
-    width: 58px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 7px; padding: 6px 4px; font-size: 18px; text-align: center; font-family: inherit;
+    width: 50px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 7px; padding: 5px 4px; font-size: 15px; text-align: center; font-family: inherit;
   }
-  .calc-dist {
-    display: inline-block; width: 58px; text-align: center; font-size: 18px;
-    border: 1px solid var(--line); background: var(--paper-alt); color: var(--ink-2);
-    border-radius: 7px; padding: 6px 4px;
-  }
-  .club-select-btn {
-    flex: 0 0 auto; width: auto; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 7px; padding: 6px 12px; font-size: 16px; font-family: inherit; cursor: pointer;
-  }
-
-  /* ── club picker: full-page dropdown list ────────────────── */
-  .club-picker-overlay {
-    position: fixed; inset: 0; z-index: 70; background: var(--paper);
-    display: flex; flex-direction: column;
-  }
-  .club-picker-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--card);
-    flex: 0 0 auto;
-  }
-  .club-picker-title { font-size: 15px; font-weight: 700; color: var(--ink-2); }
-  .club-picker-close {
-    border: none; background: var(--paper-alt); color: var(--ink-2);
-    width: 32px; height: 32px; border-radius: 999px; font-size: 16px; cursor: pointer; flex: 0 0 auto;
-  }
-  .club-picker-list { flex: 1 1 auto; overflow-y: auto; }
-  .club-picker-item {
-    display: block; width: 100%; box-sizing: border-box; text-align: center;
-    border: none; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink);
-    font-size: 20px; font-family: inherit; padding: 16px 0; cursor: pointer;
-  }
-  .club-picker-item.sel { background: var(--turf-wash); color: var(--turf-deep); font-weight: 800; }
+  .detail-field input:disabled { opacity: 0.4; }
 
   .bottom-bar { margin-top: 16px; }
   .bottom-row { display: flex; justify-content: flex-end; }
@@ -418,7 +368,33 @@
   .del-btn { border: 1px solid var(--flag); color: var(--flag); background: transparent; border-radius: 8px; padding: 9px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .del-btn.confirming { background: var(--flag); color: #fff; }
   .r-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-  .tap-hint { font-size: 17px; font-weight: 700; color: var(--turf); }
+  .replay-btn {
+    border: none; background: var(--turf); color: #fff; border-radius: 8px;
+    padding: 9px 14px; font-size: 14px; font-weight: 700; cursor: pointer; margin-left: auto;
+  }
+  .replay-btn:active { background: var(--turf-deep); }
+
+  /* ── confirm popup (예/아니오, 그래도 다시 만들기/취소 등) ─── */
+  .confirm-sheet { text-align: center; padding: 22px 18px; }
+  .confirm-msg { font-size: 16px; font-weight: 700; margin: 4px 0 18px; color: var(--ink); line-height: 1.5; }
+  .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+  .confirm-btn {
+    flex: 1; max-width: 160px; border: none; background: var(--turf); color: #fff;
+    border-radius: 10px; padding: 12px 0; font-size: 16px; font-weight: 700; cursor: pointer;
+  }
+  .confirm-btn:active { background: var(--turf-deep); }
+
+  /* ── replay (복기) mode header ────────────────────────── */
+  .replay-header { justify-content: space-between; }
+  .replay-badge {
+    flex: 0 0 auto; background: var(--turf); color: #fff; font-size: 12px; font-weight: 700;
+    border-radius: 999px; padding: 4px 10px;
+  }
+  .replay-course { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--ink-2); text-align: center; }
+  .replay-exit-btn {
+    flex: 0 0 auto; border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+    border-radius: 8px; padding: 7px 10px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
 
   /* ── Hole detail overlay (tap a scorecard cell) ──────────── */
   .hole-detail-overlay {
@@ -447,13 +423,18 @@
   .log-top { display: flex; align-items: baseline; gap: 10px; }
   .log-date { font-size: 15.5px; color: var(--muted); white-space: nowrap; }
   .log-course-input {
-    font-size: 15.5px; font-weight: 700; flex: 1; min-width: 0; font-family: inherit;
+    font-size: 15.5px; font-weight: 700; flex: 1 1 auto; min-width: 0; max-width: 96px; font-family: inherit;
     border: 1px solid transparent; background: transparent; color: var(--ink);
     border-radius: 6px; padding: 3px 6px; margin: -3px -6px;
   }
   .log-course-input:hover, .log-course-input:focus { border-color: var(--line); background: var(--paper); }
-  .log-score { font-family: ui-serif, Georgia, serif; font-size: 15.5px; font-weight: 700; color: var(--flag); white-space: nowrap; margin-left: 16px; }
+  .log-score { font-family: ui-serif, Georgia, serif; font-size: 15.5px; font-weight: 700; color: var(--flag); white-space: nowrap; margin-left: 10px; }
   .log-nine-tag { flex: 0 0 auto; font-size: 15.5px; color: var(--ink-2); white-space: nowrap; }
+  .log-scorecard-btn {
+    flex: 0 0 auto; border: none; background: var(--turf); color: #fff;
+    border-radius: 8px; padding: 6px 10px; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .log-scorecard-btn:active { background: var(--turf-deep); }
   .log-memo-input {
     width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
     border-radius: 7px; padding: 6px 9px; font-size: 13.5px; font-family: inherit;
@@ -467,10 +448,6 @@
   }
   .backup-btn:active { background: var(--turf-deep); }
   .backup-status { display: block; margin-top: 4px; font-size: 16px; color: var(--muted); }
-  .backup-link {
-    display: block; margin-top: 6px; border: none; background: none; padding: 4px 0;
-    color: var(--turf); font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;
-  }
   .backup-note { margin: 8px 0 0; font-size: 15px; color: var(--turf); line-height: 1.5; }
   .backup-note-tight { font-size: 14px; }
   .backup-note-gap { margin-top: 24px; }
@@ -494,7 +471,6 @@
   <nav class="tabs">
     <button data-tab="add" class="active">기록 추가</button>
     <button data-tab="analysis">분석</button>
-    <button data-tab="history">스코어카드</button>
     <button data-tab="roundlog">라운드기록</button>
     <button data-tab="backup">백업</button>
   </nav>
@@ -506,9 +482,6 @@
 
   <!-- ── 분석 ─────────────────────────────────────────── -->
   <section class="panel" id="panel-analysis"></section>
-
-  <!-- ── 스코어카드 ───────────────────────────────────── -->
-  <section class="panel" id="panel-history"></section>
 
   <!-- ── 라운드기록 ───────────────────────────────────── -->
   <section class="panel" id="panel-roundlog"></section>
@@ -691,6 +664,27 @@
   }
   function persistLive() { localStorage.setItem(LIVE_KEY, JSON.stringify(live)); }
   let live = loadLive();
+  // ── replay ("복기") mode: re-open a saved round's 18 holes for in-place editing ──
+  let replayState = null; // { roundIdx, holeIdx } while active, else null
+  // ── editing an already-saved hole in the normal add flow: unlocked via tapping a locked button,
+  // confirmed (or discarded) when "다음 홀" is pressed ──
+  let editState = null; // { idx, snapshot } while a saved hole is being re-edited, else null
+  function snapshotHole(h) {
+    return {
+      par: h.par,
+      rowValues: h.rowValues.slice(),
+      approach: { ...h.approach },
+      putt: h.putt,
+      detail: JSON.parse(JSON.stringify(h.detail)),
+    };
+  }
+  function restoreHoleFromSnapshot(h, snap) {
+    h.par = snap.par;
+    h.rowValues = snap.rowValues.slice();
+    h.approach = { ...snap.approach };
+    h.putt = snap.putt;
+    h.detail = JSON.parse(JSON.stringify(snap.detail));
+  }
 
   function computeHoleResult(h) {
     const start = activeStartRow(h.par);
@@ -717,9 +711,13 @@
     return { rawStrokes, score: rawStrokes - h.par, fir, gir, ob, pa, bk, rf, lastBK, lastRF, lastFW, puttVal };
   }
 
-  function renderBtnRow(options, selected, disabled, dataset, compact, labelFn, disabledOptions) {
+  // disabledMode: false (normal) | "hard" (dimmed, unclickable — e.g. rows past GR) | "soft" (dimmed but
+  // still clickable — a saved hole's locked buttons, where tapping any of them unlocks the whole hole)
+  function renderBtnRow(options, selected, disabledMode, dataset, compact, labelFn, disabledOptions) {
     const attrs = Object.entries(dataset).map(([k, v]) => `data-${k}="${v}"`).join(" ");
-    const cls = "btn-row" + (disabled ? " disabled" : "") + (compact ? " compact" : "");
+    let cls = "btn-row" + (compact ? " compact" : "");
+    if (disabledMode === "hard" || disabledMode === true) cls += " disabled";
+    else if (disabledMode === "soft") cls += " locked";
     const dis = disabledOptions || [];
     return `<div class="${cls}">${options.map(o => {
       const isSel = String(o) === String(selected);
@@ -730,7 +728,12 @@
     }).join("")}</div>`;
   }
 
-  function shotRowHTML(h, r) {
+  function distFieldHTML(kind, sub, dist, locked) {
+    return `<span class="detail-field"><span class="field-label">남은거리</span><input type="number" inputmode="numeric" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}" placeholder="0"${locked ? " disabled" : ""}>m</span>`;
+  }
+
+  function shotRowHTML(h, r, opts) {
+    opts = opts || {};
     if (!isRowActive(h.par, r)) return "";
     const start = activeStartRow(h.par);
     let grRow = -1;
@@ -738,106 +741,32 @@
       if (h.rowValues[rr] === "GR") { grRow = rr; break; }
     }
     const isPastGR = grRow !== -1 && r > grRow;
+    const mode = isPastGR ? "hard" : (opts.pillLocked || false);
     return `<div class="cat-sub-row${isPastGR ? " disabled" : ""}">
       <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
-      ${renderBtnRow(rowOptions(r), isPastGR ? null : h.rowValues[r], false, { kind: "shot", row: r }, false)}
+      ${renderBtnRow(rowOptions(r), isPastGR ? null : h.rowValues[r], mode, { kind: "shot", row: r }, false)}
     </div>`;
   }
-  function approachRowHTML(h, key, label, enabled) {
+  function approachRowHTML(h, key, label, enabled, withDist, opts) {
+    opts = opts || {};
+    const mode = !enabled ? "hard" : (opts.pillLocked || false);
     return `<div class="cat-sub-row">
       <span class="cat-sub-label">${label}</span>
-      ${renderBtnRow([1, 2, 3, 4], h.approach[key], !enabled, { kind: "approach", sub: key })}
+      ${renderBtnRow([1, 2, 3, 4], h.approach[key], mode, { kind: "approach", sub: key })}
+      ${withDist ? distFieldHTML("approach", key, h.detail.approach[key].dist, !!opts.distLocked) : ""}
     </div>`;
   }
-  function puttRowHTML(h) {
+  function puttRowHTML(h, opts) {
+    opts = opts || {};
     return `<div class="cat-sub-row">
       <span class="cat-sub-label">퍼팅</span>
-      ${renderBtnRow([0, 1, 2, 3, 4], h.putt, false, { kind: "putt" })}
-    </div>`;
-  }
-
-  // ── hole detail page: distance / remaining / club per shot ──
-  const CLUB_GROUPS = [
-    { label: "우드", clubs: ["D", "DW", "3W", "5W", "7W", "9W"] },
-    { label: "유틸리티", clubs: ["2U", "3U", "4U", "5U", "6U", "7U"] },
-    { label: "아이언", clubs: ["DI", "2I", "3I", "4I", "5I", "6I", "7I", "8I", "9I", "PW"] },
-    { label: "웨지", clubs: ["46", "48", "50", "52", "54", "56", "58", "60", "62", "64"] },
-  ];
-  function orderedClubGroups(priorityLabels) {
-    if (!priorityLabels) return CLUB_GROUPS;
-    const labels = Array.isArray(priorityLabels) ? priorityLabels : [priorityLabels];
-    const picked = labels.map(l => CLUB_GROUPS.find(g => g.label === l)).filter(Boolean);
-    const rest = CLUB_GROUPS.filter(g => !labels.includes(g.label));
-    return [...picked, ...rest];
-  }
-  function flatClubList(priorityLabels) {
-    return orderedClubGroups(priorityLabels).flatMap(g => g.clubs);
-  }
-  function shotClubDefault(shotIndex, par) {
-    if (shotIndex === 0) return par === 3 ? "7I" : "D";
-    if (shotIndex === 1) return (par === 5 || par === 6) ? "3W" : "7I";
-    if (shotIndex === 2) return par === 5 ? "PW" : "7I";
-    return "PW";
-  }
-  function shotClubPriority(shotIndex) {
-    if (shotIndex === 0) return "우드";
-    if (shotIndex === 1) return "유틸리티";
-    return ["아이언", "웨지"];
-  }
-  const APPROACH_CLUB_DEFAULT = "56";
-  const APPROACH_CLUB_PRIORITY = ["아이언", "웨지"];
-
-  // ── club picker: full-page dropdown list, opened from a club-select-btn ──
-  function openClubPicker(list, currentValue, onCommit, triggerBtn) {
-    const overlay = document.createElement("div");
-    overlay.className = "club-picker-overlay";
-    overlay.innerHTML = `
-      <div class="club-picker-header">
-        <span class="club-picker-title">클럽 선택</span>
-        <button type="button" class="club-picker-close">✕</button>
-      </div>
-      <div class="club-picker-list">
-        ${list.map(c => `<button type="button" class="club-picker-item${c === currentValue ? " sel" : ""}" data-club="${c}">${c}</button>`).join("")}
-      </div>`;
-    document.body.appendChild(overlay);
-
-    overlay.querySelectorAll(".club-picker-item").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const value = btn.dataset.club;
-        onCommit(value);
-        if (triggerBtn) triggerBtn.textContent = value;
-        overlay.remove();
-      });
-    });
-    overlay.querySelector(".club-picker-close").addEventListener("click", () => overlay.remove());
-
-    const selItem = overlay.querySelector(".club-picker-item.sel");
-    if (selItem) selItem.scrollIntoView({ block: "center" });
-  }
-
-  function puttDetailRowHTML(h) {
-    return `<div class="detail-row">
-      <div class="detail-row-label">퍼팅</div>
-      <div class="detail-fields">
-        <span class="detail-field"><span class="field-label">남은거리</span><input type="number" inputmode="numeric" class="dist-input" data-kind="putt" data-sub="putt" value="${h.detail.putt.dist ?? ""}" placeholder="0">m</span>
-        <span class="detail-field"><span class="field-label">퍼팅수</span>${renderBtnRow([0, 1, 2, 3, 4], h.putt, false, { kind: "putt" }, true)}</span>
-      </div>
-    </div>`;
-  }
-  // shot/approach row: subtitle → 남은거리(or 홀 전장) input → club select → 비거리(계산값)
-  function detailEntryRowHTML(entry, calcDist) {
-    const dataAttrs = `data-kind="${entry.kind}" data-sub="${entry.sub}"`;
-    return `<div class="detail-row">
-      <div class="detail-row-label">${entry.label}</div>
-      <div class="detail-fields">
-        <span class="detail-field"><span class="field-label">${entry.fieldLabel}</span><input type="number" inputmode="numeric" class="dist-input" ${dataAttrs} value="${entry.dist ?? ""}" placeholder="0">m</span>
-        <button type="button" class="club-select-btn" ${dataAttrs}>${entry.club ?? "클럽"}</button>
-        <span class="detail-field"><span class="field-label">비거리</span><span class="calc-dist">${calcDist != null ? calcDist : "—"}</span>m</span>
-      </div>
+      ${renderBtnRow([0, 1, 2, 3, 4], h.putt, opts.pillLocked || false, { kind: "putt" }, true)}
+      ${distFieldHTML("putt", "putt", h.detail.putt.dist, !!opts.distLocked)}
     </div>`;
   }
 
   function renderAddPanel() {
+    if (replayState) { renderReplayHolePage(replayState.holeIdx); return; }
     if (live.currentHole >= 18) renderSummaryPage();
     else renderHolePage(live.currentHole);
   }
@@ -848,6 +777,8 @@
     const holeNum = idx < 9 ? idx + 1 : idx - 9 + 1;
     const nineKey = idx < 9 ? "courseFront" : "courseBack";
     const isNineFirst = idx === 0 || idx === 9;
+    const editingThisHole = !!(editState && editState.idx === idx);
+    const softLocked = !!h.saved && !editingThisHole;
 
     const savedHoles = live.holes.filter(x => x.saved);
     const total = sum(savedHoles.map(x => x.result.score));
@@ -857,49 +788,16 @@
     const frontRaw = sum(live.holes.slice(0, 9).filter(x => x.saved).map(x => x.result.rawStrokes));
     const backRaw  = sum(live.holes.slice(9, 18).filter(x => x.saved).map(x => x.result.rawStrokes));
 
-    const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r)).join("");
-    const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"], ["penalty", "벌타"]]
-      .map(([k, l]) => approachRowHTML(h, k, l, true)).join("");
+    const rowOpts = { pillLocked: softLocked ? "soft" : false, distLocked: softLocked };
+    const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r, rowOpts)).join("");
+    const approachRows = [["pitching", "피칭", true], ["bunker", "벙커", false], ["chip", "칩샷", true], ["penalty", "벌타", false]]
+      .map(([k, l, wd]) => approachRowHTML(h, k, l, true, wd, rowOpts)).join("");
     const isLast = idx === 17;
     const liveResult = computeHoleResult(h);
 
     const nineCourseField = isNineFirst
       ? `<input type="text" id="nineCourseInput" class="nine-course-input" placeholder="코스명" lang="ko" inputmode="text" value="${esc(live[nineKey])}">`
       : (live[nineKey] ? `<span class="nine-course-label">${esc(live[nineKey])}</span>` : "");
-
-    const start = activeStartRow(h.par);
-    let detailGrRow = -1;
-    for (let rr = start; rr <= 3; rr++) {
-      if (h.rowValues[rr] === "GR") { detailGrRow = rr; break; }
-    }
-    const detailLastRow = detailGrRow !== -1 ? detailGrRow : 3;
-    const detailEntries = [];
-    for (let r = start; r <= detailLastRow; r++) {
-      const shotIndex = r - start;
-      detailEntries.push({
-        kind: "shot", sub: r,
-        label: shotRowLabel(h.par, r),
-        fieldLabel: shotIndex === 0 ? "홀 전장" : "남은거리",
-        dist: h.detail.shot[r].dist,
-        club: h.detail.shot[r].club ?? shotClubDefault(shotIndex, h.par),
-      });
-    }
-    [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"]]
-      .filter(([k]) => h.approach[k] != null)
-      .forEach(([k, l]) => {
-        detailEntries.push({
-          kind: "approach", sub: k,
-          label: l, fieldLabel: "남은거리",
-          dist: h.detail.approach[k].dist, club: h.detail.approach[k].club ?? APPROACH_CLUB_DEFAULT,
-        });
-      });
-    const puttDist = h.detail.putt.dist;
-    const detailShotAndApproachRows = detailEntries.map((entry, i) => {
-      const nextDist = i + 1 < detailEntries.length ? detailEntries[i + 1].dist : puttDist;
-      const calcDist = (entry.dist != null && nextDist != null) ? (entry.dist - nextDist) : null;
-      return detailEntryRowHTML(entry, calcDist);
-    }).join("");
-    const detailPuttRow = puttDetailRowHTML(h);
 
     document.getElementById("panel-add").innerHTML = `
       <div class="live-header">
@@ -913,35 +811,24 @@
 
       <div class="hole-title-row">
         <div class="hole-title">${nine} <span class="hole-word">Hole</span> <span class="hole-num">${holeNum}</span></div>
-        <span class="hole-yardage-field"><input type="number" inputmode="numeric" id="holeYardageInput" class="hole-yardage-input" placeholder="0" value="${h.detail.shot[start].dist ?? ""}">m</span>
         ${nineCourseField}
         <div class="par-picker">
           <span class="lbl">Par</span>
-          ${renderBtnRow([3, 4, 5, 6], h.par, false, { kind: "par" }, true)}
+          ${renderBtnRow([3, 4, 5, 6], h.par, softLocked ? "soft" : false, { kind: "par" }, true)}
         </div>
       </div>
 
-      <div class="hole-pager" id="holePager">
-        <div class="hole-page">
-          <div class="cat-group">${shotRows}</div>
+      <div class="cat-group">${shotRows}</div>
 
-          <div class="cat-group">${approachRows}</div>
+      <div class="cat-group">${approachRows}</div>
 
-          <div class="cat-group">${puttRowHTML(h)}</div>
+      <div class="cat-group">${puttRowHTML(h, rowOpts)}</div>
 
-          <div class="page-hint">비거리·클럽 입력 → 오른쪽으로 스와이프</div>
-
-          <div class="bottom-bar">
-            <div class="next-row">
-              <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전 홀</button>
-              <span class="bottom-score">score<span class="num">${fmtScore(liveResult.rawStrokes, liveResult.score)}</span></span>
-              <button class="next-btn" id="holeNextBtn">${isLast ? "라운드 종료" : "다음 홀"}</button>
-            </div>
-          </div>
-        </div>
-        <div class="hole-page hole-page-detail">
-          <div class="page-hint">← 스와이프해서 돌아가기</div>
-          <div class="cat-group">${detailShotAndApproachRows}${detailPuttRow}</div>
+      <div class="bottom-bar">
+        <div class="next-row">
+          <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전 홀</button>
+          <span class="bottom-score">score<span class="num">${fmtScore(liveResult.rawStrokes, liveResult.score)}</span></span>
+          <button class="next-btn" id="holeNextBtn">${isLast ? "라운드 종료" : "다음 홀"}</button>
         </div>
       </div>
     `;
@@ -961,7 +848,6 @@
       scoreNotation = scoreNotation === "total" ? "diff" : "total";
       saveScoreNotation();
       renderAddPanel();
-      renderHistory();
       renderRoundLog();
     });
 
@@ -974,55 +860,22 @@
       });
     }
 
-    const yardageInput = document.getElementById("holeYardageInput");
-    if (yardageInput) {
-      yardageInput.addEventListener("change", e => {
-        const start = activeStartRow(h.par);
-        h.detail.shot[start].dist = e.target.value === "" ? null : +e.target.value;
-        persistLive();
-        const pager = document.getElementById("holePager");
-        const scrollLeft = pager ? pager.scrollLeft : 0;
-        renderHolePage(idx);
-        const newPager = document.getElementById("holePager");
-        if (newPager) newPager.scrollLeft = scrollLeft;
-      });
-    }
-
-    const detailTarget = (kind, sub) => {
-      if (kind === "shot") return h.detail.shot[+sub];
-      if (kind === "approach") return h.detail.approach[sub];
-      return h.detail.putt;
-    };
+    const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
     panel.querySelectorAll(".dist-input").forEach(inp => {
       inp.addEventListener("change", () => {
         detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : +inp.value;
         persistLive();
-        // re-render to refresh computed 비거리 fields, but keep the swiped-to detail page in view
-        const pager = document.getElementById("holePager");
-        const scrollLeft = pager ? pager.scrollLeft : 0;
         renderHolePage(idx);
-        const newPager = document.getElementById("holePager");
-        if (newPager) newPager.scrollLeft = scrollLeft;
-      });
-    });
-    panel.querySelectorAll(".club-select-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const kind = btn.dataset.kind, sub = btn.dataset.sub;
-        const target = detailTarget(kind, sub);
-        const shotIndex = +sub - activeStartRow(h.par);
-        const priority = kind === "approach" ? APPROACH_CLUB_PRIORITY : shotClubPriority(shotIndex);
-        const defaultClub = kind === "approach" ? APPROACH_CLUB_DEFAULT : shotClubDefault(shotIndex, h.par);
-        const list = flatClubList(priority);
-        openClubPicker(list, target.club ?? defaultClub, value => {
-          target.club = value;
-          persistLive();
-        }, btn);
       });
     });
 
     panel.querySelectorAll(".pill-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const kind = btn.dataset.kind, val = btn.dataset.val;
+        const wasSoftLocked = h.saved && !(editState && editState.idx === idx);
+        if (wasSoftLocked) {
+          editState = { idx, snapshot: snapshotHole(h) };
+        }
         if (kind === "par") {
           h.par = +val;
         } else if (kind === "shot") {
@@ -1043,21 +896,35 @@
       });
     });
 
-    document.getElementById("holeNextBtn").addEventListener("click", () => {
+    function finishHole() {
       h.result = computeHoleResult(h);
       h.saved = true;
+      editState = null;
       if (idx === 17) {
         finalizeRound();
         live.currentHole = 18;
         persistLive();
         renderAddPanel();
-        renderAnalysis(); renderHistory(); renderRoundLog(); renderHeaderHcp();
+        renderAnalysis(); renderRoundLog(); renderHeaderHcp();
       } else {
         live.currentHole = idx + 1;
         persistLive();
         renderAddPanel();
       }
       window.scrollTo(0, 0);
+    }
+
+    document.getElementById("holeNextBtn").addEventListener("click", () => {
+      if (editState && editState.idx === idx) {
+        const snap = editState.snapshot;
+        openConfirmPopup(
+          "수정된 내용을 저장 하시겠습니까?",
+          () => finishHole(),
+          () => { restoreHoleFromSnapshot(h, snap); finishHole(); }
+        );
+        return;
+      }
+      finishHole();
     });
 
     document.getElementById("holePrevBtn").addEventListener("click", () => {
@@ -1067,6 +934,146 @@
       renderAddPanel();
       window.scrollTo(0, 0);
     });
+  }
+
+  // ── replay mode: view/edit a completed round's holes, always active, confirm-gated ──
+  function roundHoleToLiveHole(rh) {
+    return {
+      par: rh.par,
+      rowValues: rh.rowValues.slice(),
+      approach: {
+        pitching: rh.approachPitching || null, bunker: rh.approachBunker || null,
+        penalty: rh.approachPenalty || null, chip: rh.approachChip || null,
+      },
+      putt: rh.putt,
+      detail: rh.detail || freshDetail(),
+    };
+  }
+
+  function startReplay(idx) {
+    replayState = { roundIdx: idx, holeIdx: 0 };
+    switchTab("add");
+    renderAddPanel();
+    window.scrollTo(0, 0);
+  }
+  function exitReplay() {
+    replayState = null;
+    renderAddPanel();
+    window.scrollTo(0, 0);
+  }
+
+  function renderReplayHolePage(holeIdx) {
+    const round = rounds[replayState.roundIdx];
+    const rh = round.holes[holeIdx];
+    const h = roundHoleToLiveHole(rh);
+    const nine = holeIdx < 9 ? "전반" : "후반";
+    const holeNum = holeIdx < 9 ? holeIdx + 1 : holeIdx - 9 + 1;
+    const nineKey = holeIdx < 9 ? "courseFront" : "courseBack";
+    const isLast = holeIdx === 17;
+    const result = computeHoleResult(h);
+
+    const rowOpts = { pillLocked: false, distLocked: true };
+    const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r, rowOpts)).join("");
+    const approachRows = [["pitching", "피칭", true], ["bunker", "벙커", false], ["chip", "칩샷", true], ["penalty", "벌타", false]]
+      .map(([k, l, wd]) => approachRowHTML(h, k, l, true, wd, rowOpts)).join("");
+    const nineCourseField = round[nineKey] ? `<span class="nine-course-label">${esc(round[nineKey])}</span>` : "";
+
+    document.getElementById("panel-add").innerHTML = `
+      <div class="live-header replay-header">
+        <span class="replay-badge">복기 모드</span>
+        <span class="replay-course">${esc(round.course)} · ${round.date}</span>
+        <button type="button" class="replay-exit-btn" id="replayExitBtn">복기 종료</button>
+      </div>
+
+      <div class="hole-title-row">
+        <div class="hole-title">${nine} <span class="hole-word">Hole</span> <span class="hole-num">${holeNum}</span></div>
+        ${nineCourseField}
+        <div class="par-picker">
+          <span class="lbl">Par</span>
+          ${renderBtnRow([3, 4, 5, 6], h.par, false, { kind: "par" }, true)}
+        </div>
+      </div>
+
+      <div class="cat-group">${shotRows}</div>
+
+      <div class="cat-group">${approachRows}</div>
+
+      <div class="cat-group">${puttRowHTML(h, rowOpts)}</div>
+
+      <div class="bottom-bar">
+        <div class="next-row">
+          <button class="prev-btn" id="replayPrevBtn" ${holeIdx === 0 ? "disabled" : ""}>이전 홀</button>
+          <span class="bottom-score">score<span class="num">${fmtScore(result.rawStrokes, result.score)}</span></span>
+          <button class="next-btn" id="replayNextBtn">${isLast ? "복기 종료" : "다음 홀"}</button>
+        </div>
+      </div>
+    `;
+    attachReplayHoleHandlers(holeIdx, h);
+  }
+
+  function attachReplayHoleHandlers(holeIdx, h) {
+    const panel = document.getElementById("panel-add");
+    const round = rounds[replayState.roundIdx];
+
+    function commitChange(mutateFn) {
+      mutateFn();
+      const result = computeHoleResult(h);
+      const rh = round.holes[holeIdx];
+      rh.par = h.par;
+      rh.rowValues = h.rowValues.slice();
+      rh.score = result.score; rh.gir = result.gir; rh.fir = result.fir;
+      rh.ob = result.ob; rh.pa = result.pa; rh.bk = result.bk; rh.rf = result.rf;
+      rh.lastBK = result.lastBK; rh.lastRF = result.lastRF; rh.lastFW = result.lastFW;
+      rh.approachPitching = h.approach.pitching || 0;
+      rh.approachBunker = h.approach.bunker || 0;
+      rh.approachPenalty = h.approach.penalty || 0;
+      rh.approachChip = h.approach.chip || 0;
+      rh.putt = result.puttVal;
+      rh.detail = h.detail;
+      Object.assign(round, buildRoundAggregates(round.holes));
+      saveRounds(rounds);
+      renderReplayHolePage(holeIdx);
+      renderRoundLog(); renderAnalysis(); renderHeaderHcp();
+    }
+
+    panel.querySelectorAll(".pill-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const kind = btn.dataset.kind, val = btn.dataset.val;
+        openConfirmPopup("변경 하시겠습니까?", () => {
+          commitChange(() => {
+            if (kind === "par") {
+              h.par = +val;
+            } else if (kind === "shot") {
+              const r = +btn.dataset.row;
+              h.rowValues[r] = val;
+              if (r === 3 && val === "BK") { h.approach.bunker = 1; h.approach.pitching = null; h.approach.chip = null; }
+              if (r === 3 && val === "RF") { h.approach.pitching = 1; h.approach.bunker = null; h.approach.chip = null; }
+              if (r === 3 && val === "FW") { h.approach.chip = 1; h.approach.bunker = null; h.approach.pitching = null; }
+            } else if (kind === "approach") {
+              const sub = btn.dataset.sub;
+              h.approach[sub] = (h.approach[sub] === +val) ? null : +val;
+            } else if (kind === "putt") {
+              h.putt = +val;
+              if (+val === 0) h.detail.putt.dist = 0;
+            }
+          });
+        });
+      });
+    });
+
+    document.getElementById("replayPrevBtn").addEventListener("click", () => {
+      if (holeIdx === 0) return;
+      replayState.holeIdx = holeIdx - 1;
+      renderReplayHolePage(replayState.holeIdx);
+      window.scrollTo(0, 0);
+    });
+    document.getElementById("replayNextBtn").addEventListener("click", () => {
+      if (holeIdx === 17) { exitReplay(); return; }
+      replayState.holeIdx = holeIdx + 1;
+      renderReplayHolePage(replayState.holeIdx);
+      window.scrollTo(0, 0);
+    });
+    document.getElementById("replayExitBtn").addEventListener("click", exitReplay);
   }
 
   function renderSummaryPage() {
@@ -1082,10 +1089,25 @@
     document.getElementById("appEndBtn").addEventListener("click", () => {
       localStorage.removeItem(LIVE_KEY);
       live = freshLiveState();
+      editState = null;
       renderHeaderDate();
-      switchTab("history");
+      switchTab("roundlog");
       renderAddPanel();
     });
+  }
+
+  // ── round-level aggregate stats derived from a holes array (shared by finalizeRound & replay commit) ──
+  function buildRoundAggregates(holesOut) {
+    return {
+      fairways: holesOut.filter(h => h.par >= 4 && h.fir).length,
+      greens:   holesOut.filter(h => h.gir).length,
+      obCount:  sum(holesOut.map(h => h.ob)),
+      paCount:  sum(holesOut.map(h => h.pa)),
+      bkShotCount: sum(holesOut.map(h => h.bk)),
+      roughCount:  sum(holesOut.map(h => h.rf)),
+      putts:    sum(holesOut.map(h => h.putt)),
+      threePuttCount: holesOut.filter(h => h.putt >= 3).length,
+    };
   }
 
   function finalizeRound() {
@@ -1109,14 +1131,7 @@
       courseFront: (live.courseFront || "").trim(),
       courseBack: (live.courseBack || "").trim(),
       holes: holesOut,
-      fairways: holesOut.filter(h => h.par >= 4 && h.fir).length,
-      greens:   holesOut.filter(h => h.gir).length,
-      obCount:  sum(holesOut.map(h => h.ob)),
-      paCount:  sum(holesOut.map(h => h.pa)),
-      bkShotCount: sum(holesOut.map(h => h.bk)),
-      roughCount:  sum(holesOut.map(h => h.rf)),
-      putts:    sum(holesOut.map(h => h.putt)),
-      threePuttCount: holesOut.filter(h => h.putt >= 3).length,
+      ...buildRoundAggregates(holesOut),
       memo: "",
     };
     rounds.push(round);
@@ -1142,41 +1157,6 @@
       else buckets.quad++;
     });
     return { totalScore, totalPar, diff: totalDiff, par45Count, buckets };
-  }
-
-  // ── club-by-club carry distance (shot rows only, computed the same way as the detail page's 비거리) ──
-  function holeShotClubDistances(hole) {
-    const start = activeStartRow(hole.par);
-    let grRow = -1;
-    for (let rr = start; rr <= 3; rr++) {
-      if (hole.rowValues[rr] === "GR") { grRow = rr; break; }
-    }
-    const lastRow = grRow !== -1 ? grRow : 3;
-    const entries = [];
-    // A hole's par/rows never change once the round is saved, so a club left unselected
-    // (never tapped) can be safely inferred as the default shown at entry time — without
-    // this fallback, clubs whose default was "obviously correct" (Driver, woods) and thus
-    // never explicitly tapped would be silently excluded from the club-distance stats.
-    for (let r = start; r <= lastRow; r++) {
-      const shotIndex = r - start;
-      const s = hole.detail?.shot?.[r];
-      entries.push({ kind: "shot", club: s?.club ?? shotClubDefault(shotIndex, hole.par), dist: s?.dist ?? null });
-    }
-    [["pitching", "approachPitching"], ["bunker", "approachBunker"], ["chip", "approachChip"]].forEach(([key, countField]) => {
-      if (hole[countField] > 0) {
-        const a = hole.detail?.approach?.[key];
-        entries.push({ kind: "approach", club: a?.club ?? APPROACH_CLUB_DEFAULT, dist: a?.dist ?? null });
-      }
-    });
-    const puttDist = hole.detail?.putt?.dist ?? null;
-    const out = [];
-    entries.forEach((entry, i) => {
-      const nextDist = i + 1 < entries.length ? entries[i + 1].dist : puttDist;
-      if (entry.kind === "shot" && entry.club != null && entry.dist != null && nextDist != null) {
-        out.push({ club: entry.club, dist: entry.dist - nextDist });
-      }
-    });
-    return out;
   }
 
   function analyze(list) {
@@ -1258,25 +1238,12 @@
       { label: "Putt",           value: totalHoles ? (1 - threePuttTotal / totalHoles) * 100 : 0 },
     ];
 
-    // ── club-by-club carry distance (shot rows only) ──
-    const clubDistLists = {};
-    allHoles.forEach(h => {
-      holeShotClubDistances(h).forEach(({ club, dist }) => {
-        if (!isFinite(dist)) return;
-        (clubDistLists[club] || (clubDistLists[club] = [])).push(dist);
-      });
-    });
-    const clubStats = {};
-    Object.entries(clubDistLists).forEach(([club, arr]) => {
-      clubStats[club] = { avg: mean(arr), max: Math.max(...arr), min: Math.min(...arr), count: arr.length };
-    });
-
     return {
       handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: list.length,
       bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, pitchSaveNum, pitchSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
       pitchSaveRFNum, pitchSaveRFDen, pitchSaveFWNum, pitchSaveFWDen, cpSaveRFNum, cpSaveRFDen, cpSaveFWNum, cpSaveFWDen,
       fwBkParSaveNum, fwBkParSaveDen, roughParSaveNum, roughParSaveDen,
-      roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar, clubStats,
+      roughTotal, bkShotTotal, threePuttTotal, maxThreePutt, avgPar3, avgPar4, avgPar5, radar,
       pitchSaveByDist, chipSaveByDist, puttSaveByDist, puttSaveFar,
     };
   }
@@ -1353,6 +1320,29 @@
     overlay.querySelector(".detail-popup-close").addEventListener("click", close);
     overlay.querySelector(".detail-popup-backdrop").addEventListener("click", close);
   }
+
+  // ── generic confirm popup: message + 2 green action buttons ──
+  function openConfirmPopup(messageHTML, onYes, onNo, opts) {
+    opts = opts || {};
+    const yesLabel = opts.yesLabel || "예";
+    const noLabel = opts.noLabel || "아니오";
+    const overlay = document.createElement("div");
+    overlay.className = "detail-popup-overlay";
+    overlay.innerHTML = `
+      <div class="detail-popup-backdrop"></div>
+      <div class="detail-popup-sheet confirm-sheet">
+        <p class="confirm-msg">${messageHTML}</p>
+        <div class="confirm-actions">
+          <button type="button" class="confirm-btn confirm-yes">${yesLabel}</button>
+          <button type="button" class="confirm-btn confirm-no">${noLabel}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    overlay.querySelector(".confirm-yes").addEventListener("click", () => { close(); if (onYes) onYes(); });
+    overlay.querySelector(".confirm-no").addEventListener("click", () => { close(); if (onNo) onNo(); });
+    overlay.querySelector(".detail-popup-backdrop").addEventListener("click", () => { close(); if (onNo) onNo(); });
+  }
   function openDetailFor(key, aData, bData) {
     const buildRate = (distances, saveKey, labelFn) => distances.map(d => ({
       label: labelFn(d),
@@ -1371,16 +1361,6 @@
       openDetailPopup("상세 피칭 세이브율", buildRate(PITCH_SAVE_DISTANCES, "pitchSaveByDist", d => `피칭 ${d}m`));
     } else if (key === "chip") {
       openDetailPopup("상세 칩 세이브율", buildRate(CHIP_SAVE_DISTANCES, "chipSaveByDist", d => `칩샷 ${d}m`));
-    } else if (key === "club") {
-      const fmtClubStat = s => s ? `${Math.round(s.avg)}m (${Math.round(s.max)}/${Math.round(s.min)})` : "—";
-      const clubOrder = CLUB_GROUPS.flatMap(g => g.clubs);
-      const clubKeys = clubOrder.filter(c => (aData && aData.clubStats[c]) || (bData && bData.clubStats[c]));
-      const rows = clubKeys.map(c => ({
-        label: c,
-        aVal: fmtClubStat(aData && aData.clubStats[c]),
-        bVal: fmtClubStat(bData && bData.clubStats[c]),
-      }));
-      openDetailPopup("클럽별 평균 비거리", rows);
     }
   }
 
@@ -1413,14 +1393,6 @@
       </div>`;
     }).join("");
 
-    const clubOrder = CLUB_GROUPS.flatMap(g => g.clubs);
-    const clubKeys = clubOrder.filter(c => (aData && aData.clubStats[c]) || (bData && bData.clubStats[c]));
-    const clubRows = clubKeys.length ? `
-      <div class="cmp-row">
-        <div class="cmp-cell cmp-label" style="font-weight:800;">클럽별 평균 비거리</div>
-        <div class="cmp-cell cmp-detail-trigger" data-detail="club" style="grid-column: span 2;">자세한 분석을 보려면 터치하세요</div>
-      </div>` : "";
-
     el.innerHTML = `
       <div class="cmp-card">
         <div class="cmp-row cmp-head-row">
@@ -1441,7 +1413,6 @@
           </div>
         </div>
         ${statRows}
-        ${clubRows}
         <div class="cmp-row cmp-chart-row">
           <div class="cmp-cell cmp-label">스코어<br>추이</div>
           <div class="cmp-cell"><div id="trendChartA" class="cmp-chart"></div></div>
@@ -1645,42 +1616,30 @@
     overlay.querySelector("#hdCloseBtn").addEventListener("click", () => overlay.remove());
   }
 
-  // ── history panel ─────────────────────────────────────
-  function renderHistory() {
-    const el = document.getElementById("panel-history");
-    if (!rounds.length) {
-      el.innerHTML = `<div class="card"><div class="empty"><div class="big">🗒️</div>아직 기록이 없어요.</div></div>`;
-      return;
-    }
-    const sorted = [...rounds].map((r, idx) => ({ r, idx })).sort((a, b) => new Date(b.r.date) - new Date(a.r.date));
-    el.innerHTML = sorted.map(({ r, idx }) => {
-      const m = roundMetrics(r);
-      const chipClass = m.diff < 0 ? "under" : (m.diff === 0 ? "even" : "over");
-      const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
-      const holeCells = r.holes.map((h, i) => {
-        const d = h.score;
-        let bg = "transparent", fg = "var(--ink)";
-        if (d <= -1) { bg = "var(--turf-wash)"; fg = "var(--turf-deep)"; }
-        else if (d >= 2) { bg = "var(--flag-wash)"; fg = "var(--flag)"; }
-        const holeNum = i < 9 ? i + 1 : i - 9 + 1;
-        return `<div class="r-hole" data-hole="${i}"><div class="hn">${holeNum}<span class="hp">(${h.par})</span></div><div class="hs" style="background:${bg};color:${fg}">${fmtScoreZ(h.score + h.par, h.score)}</div></div>`;
-      });
-      return `
-      <details class="round-row" data-ridx="${idx}">
-        <summary>
-          <div class="r-left">
-            <div class="r-date">${r.date}</div>
-            <div class="r-course-line">
-              <input type="text" class="r-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
-              ${nineCourseTagsHTML(r)}
-            </div>
-          </div>
-          <div class="r-right">
-            <span class="score-chip ${chipClass}">${scoreNotation === "total" ? `${m.totalScore}` : diffStr}</span>
-            <span class="chevron">▾</span>
-          </div>
-        </summary>
-        <div class="r-detail">
+  // ── scorecard popup: opened from 라운드기록 탭's "스코어카드 보기" button ──
+  function openScorecardPopup(idx) {
+    const r = rounds[idx];
+    if (!r) return;
+    const m = roundMetrics(r);
+    const holeCells = r.holes.map((h, i) => {
+      const d = h.score;
+      let bg = "transparent", fg = "var(--ink)";
+      if (d <= -1) { bg = "var(--turf-wash)"; fg = "var(--turf-deep)"; }
+      else if (d >= 2) { bg = "var(--flag-wash)"; fg = "var(--flag)"; }
+      const holeNum = i < 9 ? i + 1 : i - 9 + 1;
+      return `<div class="r-hole" data-hole="${i}"><div class="hn">${holeNum}<span class="hp">(${h.par})</span></div><div class="hs" style="background:${bg};color:${fg}">${fmtScoreZ(h.score + h.par, h.score)}</div></div>`;
+    });
+    const nineTags = nineCourseTagsHTML(r);
+    const overlay = document.createElement("div");
+    overlay.className = "hole-detail-overlay";
+    overlay.innerHTML = `
+      <div class="hd-header">
+        <span class="hd-title">${esc(r.course)} · ${r.date}${scoreNotation === "total" ? ` · ${m.totalScore}` : ` · ${m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`)}`}</span>
+        <button type="button" class="hd-close" id="scorecardCloseBtn">✕</button>
+      </div>
+      <div class="hd-scroll">
+        <div class="card">
+          ${nineTags ? `<div class="r-course-line" style="margin-bottom:8px;">${nineTags}</div>` : ""}
           <div class="r-mini-grid">${holeCells.slice(0, 9).join("")}</div>
           <div class="r-mini-grid">${holeCells.slice(9, 18).join("")}</div>
           <div class="r-extra">
@@ -1696,59 +1655,48 @@
           <textarea class="memo-box" data-idx="${idx}" rows="3" placeholder="메모 (예: 그린 스피드, 바람, 컨디션...)">${esc(r.memo || "")}</textarea>
           <div class="r-actions">
             <button class="del-btn" data-idx="${idx}">이 라운드 삭제</button>
-            <span class="tap-hint">복기 하려면 스코어카드를 터치 하세요</span>
+            <button type="button" class="replay-btn" data-idx="${idx}">이 라운드 복기하기</button>
           </div>
         </div>
-      </details>`;
-    }).join("");
+      </div>`;
+    document.body.appendChild(overlay);
 
-    el.querySelectorAll(".r-hole").forEach(cell => {
-      cell.addEventListener("click", () => {
-        const ridx = +cell.closest(".round-row").dataset.ridx;
-        openHoleDetail(ridx);
-      });
+    overlay.querySelector("#scorecardCloseBtn").addEventListener("click", () => overlay.remove());
+
+    overlay.querySelectorAll(".r-hole").forEach(cell => {
+      cell.addEventListener("click", () => openHoleDetail(idx));
     });
 
-    el.querySelectorAll(".r-course-input").forEach(inp => {
-      inp.addEventListener("click", e => e.stopPropagation());
-      inp.addEventListener("change", () => {
-        const idx = +inp.dataset.idx;
-        const val = inp.value.trim() || "이름 없는 골프장";
-        rounds[idx].course = val;
-        inp.value = val;
+    const memoBox = overlay.querySelector(".memo-box");
+    memoBox.addEventListener("change", () => {
+      rounds[idx].memo = memoBox.value;
+      saveRounds(rounds);
+    });
+
+    const delBtn = overlay.querySelector(".del-btn");
+    delBtn.addEventListener("click", () => {
+      if (delBtn.dataset.confirming === "1") {
+        rounds.splice(idx, 1);
         saveRounds(rounds);
-        renderRoundLog();
-      });
-    });
-
-    el.querySelectorAll(".memo-box").forEach(box => {
-      box.addEventListener("change", () => {
-        rounds[+box.dataset.idx].memo = box.value;
-        saveRounds(rounds);
-      });
-    });
-
-    el.querySelectorAll(".del-btn").forEach(btn => {
-      btn.addEventListener("click", e => {
-        e.preventDefault();
-        const idx = +btn.dataset.idx;
-        if (btn.dataset.confirming === "1") {
-          rounds.splice(idx, 1);
-          saveRounds(rounds);
-          renderHistory(); renderRoundLog(); renderAnalysis(); renderHeaderHcp();
-          return;
+        overlay.remove();
+        renderRoundLog(); renderAnalysis(); renderHeaderHcp();
+        return;
+      }
+      delBtn.dataset.confirming = "1";
+      delBtn.classList.add("confirming");
+      delBtn.textContent = "정말 삭제할까요? (다시 탭)";
+      setTimeout(() => {
+        if (delBtn.isConnected && delBtn.dataset.confirming === "1") {
+          delBtn.dataset.confirming = "0";
+          delBtn.classList.remove("confirming");
+          delBtn.textContent = "이 라운드 삭제";
         }
-        btn.dataset.confirming = "1";
-        btn.classList.add("confirming");
-        btn.textContent = "정말 삭제할까요? (다시 탭)";
-        setTimeout(() => {
-          if (btn.isConnected && btn.dataset.confirming === "1") {
-            btn.dataset.confirming = "0";
-            btn.classList.remove("confirming");
-            btn.textContent = "이 라운드 삭제";
-          }
-        }, 3000);
-      });
+      }, 3000);
+    });
+
+    overlay.querySelector(".replay-btn").addEventListener("click", () => {
+      overlay.remove();
+      startReplay(idx);
     });
   }
 
@@ -1761,11 +1709,14 @@
     // Browsers never overwrite an existing download — re-downloading the same filename just
     // creates "golf-tracker-backup-2026-08-07 (1).csv", "(2).csv", etc. Since there's no way to
     // force an overwrite from JS, the only way to stop duplicates is to skip re-downloading once
-    // today's backup already exists — unless the user explicitly asks via "그래도 다시 만들기".
-    const forceBtn = document.getElementById("forceBackupBtn");
+    // today's backup already exists — unless the user explicitly confirms via the popup below.
     if (!force && localStorage.getItem(LAST_BACKUP_KEY) === today) {
-      if (statusEl) statusEl.textContent = `오늘 백업은 이미 만들어졌어요: ${filename}`;
-      if (forceBtn) forceBtn.style.display = "block";
+      openConfirmPopup(
+        `오늘 백업은 이미 만들어졌어요: ${filename}<br>그래도 다시 만들까요?`,
+        () => exportRounds(true),
+        () => {},
+        { yesLabel: "그래도 다시 만들기", noLabel: "취소" }
+      );
       return;
     }
     const payload = { app: "golf-tracker", version: 1, exportedAt: new Date().toISOString(), rounds };
@@ -1783,7 +1734,6 @@
     URL.revokeObjectURL(url);
     localStorage.setItem(LAST_BACKUP_KEY, today);
     if (statusEl) statusEl.textContent = force ? `다시 백업했어요: ${filename}` : `백업했어요: ${filename}`;
-    if (forceBtn) forceBtn.style.display = "none";
   }
   function importRoundsFromFile(file) {
     const reader = new FileReader();
@@ -1803,7 +1753,7 @@
       rounds = rounds.concat(toAdd);
       saveRounds(rounds);
       const dupCount = incoming.length - toAdd.length;
-      renderAnalysis(); renderHistory(); renderRoundLog(); renderHeaderHcp();
+      renderAnalysis(); renderRoundLog(); renderHeaderHcp();
       const statusEl = document.getElementById("backupStatus");
       if (statusEl) statusEl.textContent = `${toAdd.length}개 라운드를 가져왔어요.${dupCount > 0 ? ` (중복 ${dupCount}개 제외)` : ""}`;
     };
@@ -1830,6 +1780,7 @@
               <span class="log-date">${r.date}</span>
               <input type="text" class="log-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
               ${compactTag}
+              <button type="button" class="log-scorecard-btn" data-idx="${idx}">스코어카드 보기</button>
               <span class="log-score">${scoreNotation === "total" ? `${m.totalScore}` : diffStr}</span>
             </div>
             <input type="text" class="log-memo-input" data-idx="${idx}" placeholder="메모" value="${esc(r.memo || "")}">
@@ -1845,15 +1796,16 @@
         rounds[idx].course = val;
         inp.value = val;
         saveRounds(rounds);
-        renderHistory();
       });
     });
     el.querySelectorAll(".log-memo-input").forEach(inp => {
       inp.addEventListener("change", () => {
         rounds[+inp.dataset.idx].memo = inp.value;
         saveRounds(rounds);
-        renderHistory();
       });
+    });
+    el.querySelectorAll(".log-scorecard-btn").forEach(btn => {
+      btn.addEventListener("click", () => openScorecardPopup(+btn.dataset.idx));
     });
   }
 
@@ -1870,7 +1822,6 @@
           <input type="file" id="importFile" accept="text/csv" style="display:none">
         </div>
         <span class="backup-status" id="backupStatus"></span>
-        <button type="button" class="backup-link" id="forceBackupBtn" style="display:none;">그래도 다시 만들기</button>
         <p class="backup-note">내 파일 → 내장저장공간 → Download 에서 파일을 찾아 선택하고 완료를 누르면 파일을 가져옵니다.</p>
         <p class="backup-note backup-note-tight backup-note-gap"><span class="backup-note-label">PC로 보내기</span> : 위 경로 내의 파일을 찾아 PC로 보내세요.</p>
         <p class="backup-note backup-note-tight"><span class="backup-note-label">PC에서 가져오기</span> : PC에서 파일을 위 경로로 보낸 후 [백업 데이터 가져오기]로 들어가 파일을 선택하고 완료를 누르세요.</p>
@@ -1880,7 +1831,6 @@
       </div>`;
     document.getElementById("exportBtn").addEventListener("click", () => exportRounds());
     document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
-    document.getElementById("forceBackupBtn").addEventListener("click", () => exportRounds(true));
     document.getElementById("importFile").addEventListener("change", e => {
       const file = e.target.files[0];
       if (file) importRoundsFromFile(file);
@@ -1916,7 +1866,6 @@
 
   renderAddPanel();
   renderAnalysis();
-  renderHistory();
   renderRoundLog();
   renderBackup();
   renderHeaderHcp();
