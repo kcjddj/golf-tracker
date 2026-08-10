@@ -736,7 +736,7 @@
   }
 
   function distFieldHTML(kind, sub, dist, enterHint) {
-    return `<input type="number" inputmode="numeric" min="0" max="99" enterkeyhint="${enterHint || "done"}" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}"><span class="dist-unit">m</span>`;
+    return `<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" enterkeyhint="${enterHint || "done"}" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}"><span class="dist-unit">m</span>`;
   }
 
   function shotRowHTML(h, r, opts) {
@@ -872,6 +872,10 @@
     const DIST_NEXT = { "approach:pitching": '.dist-input[data-kind="approach"][data-sub="chip"]', "approach:chip": '.dist-input[data-kind="putt"]' };
     const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
     panel.querySelectorAll(".dist-input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const cleaned = inp.value.replace(/[^0-9]/g, "").slice(0, 2);
+        if (cleaned !== inp.value) inp.value = cleaned;
+      });
       inp.addEventListener("change", () => {
         detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : Math.max(0, Math.min(99, +inp.value));
         persistLive();
