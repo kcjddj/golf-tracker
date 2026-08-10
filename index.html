@@ -213,14 +213,16 @@
   .dist-slot { flex: 0 0 51px; display: flex; }
   .dist-input {
     width: 30px; border: 1px solid var(--line); border-right: none; background: var(--paper); color: var(--ink);
-    border-radius: 7px 0 0 7px; padding: 7px 0 7px 2px; font-size: 13px; text-align: center; font-family: inherit;
+    border-radius: 7px 0 0 7px; padding: 7px 3px 7px 0; font-size: 13px; text-align: right; font-family: inherit;
+    position: relative; -moz-appearance: textfield;
   }
+  .dist-input::-webkit-outer-spin-button, .dist-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .dist-input:focus, .dist-input:focus-visible { position: relative; z-index: 2; }
   .dist-unit {
     flex: 0 0 auto; display: flex; align-items: center; padding: 0 4px;
     border: 1px solid var(--line); border-left: none; border-radius: 0 7px 7px 0;
     background: var(--paper-alt); font-size: 12.5px; font-weight: 700; color: var(--ink-2);
   }
-  .dist-input:disabled, .dist-input:disabled + .dist-unit { opacity: 0.4; }
 
   .bottom-bar { margin-top: 16px; }
   .bottom-row { display: flex; justify-content: flex-end; }
@@ -733,8 +735,8 @@
     }).join("")}</div>`;
   }
 
-  function distFieldHTML(kind, sub, dist, locked) {
-    return `<input type="number" inputmode="numeric" min="0" max="99" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}"${locked ? " disabled" : ""}><span class="dist-unit">m</span>`;
+  function distFieldHTML(kind, sub, dist) {
+    return `<input type="number" inputmode="numeric" min="0" max="99" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}"><span class="dist-unit">m</span>`;
   }
 
   function shotRowHTML(h, r, opts) {
@@ -756,7 +758,7 @@
     opts = opts || {};
     const mode = !enabled ? "hard" : (opts.pillLocked || false);
     const labelHTML = withDist ? `${label}<span class="dist-suffix">(남은거리)</span>` : label;
-    const distSlot = withDist ? distFieldHTML("approach", key, h.detail.approach[key].dist, !!opts.distLocked) : "";
+    const distSlot = withDist ? distFieldHTML("approach", key, h.detail.approach[key].dist) : "";
     return `<div class="cat-sub-row">
       <span class="cat-sub-label${withDist ? " with-dist" : ""}">${labelHTML}</span>
       <span class="dist-slot">${distSlot}</span>
@@ -767,7 +769,7 @@
     opts = opts || {};
     return `<div class="cat-sub-row">
       <span class="cat-sub-label with-dist">퍼팅<span class="dist-suffix">(남은거리)</span></span>
-      <span class="dist-slot">${distFieldHTML("putt", "putt", h.detail.putt.dist, !!opts.distLocked)}</span>
+      <span class="dist-slot">${distFieldHTML("putt", "putt", h.detail.putt.dist)}</span>
       ${renderBtnRow([0, 1, 2, 3, 4], h.putt, opts.pillLocked || false, { kind: "putt" }, true)}
     </div>`;
   }
@@ -795,7 +797,7 @@
     const frontRaw = sum(live.holes.slice(0, 9).filter(x => x.saved).map(x => x.result.rawStrokes));
     const backRaw  = sum(live.holes.slice(9, 18).filter(x => x.saved).map(x => x.result.rawStrokes));
 
-    const rowOpts = { pillLocked: softLocked ? "soft" : false, distLocked: softLocked };
+    const rowOpts = { pillLocked: softLocked ? "soft" : false };
     const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r, rowOpts)).join("");
     const approachRows = [["pitching", "피칭", true], ["bunker", "벙커", false], ["chip", "칩샷", true], ["penalty", "벌타", false]]
       .map(([k, l, wd]) => approachRowHTML(h, k, l, true, wd, rowOpts)).join("");
@@ -979,7 +981,7 @@
     const isLast = holeIdx === 17;
     const result = computeHoleResult(h);
 
-    const rowOpts = { pillLocked: false, distLocked: true };
+    const rowOpts = { pillLocked: false };
     const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r, rowOpts)).join("");
     const approachRows = [["pitching", "피칭", true], ["bunker", "벙커", false], ["chip", "칩샷", true], ["penalty", "벌타", false]]
       .map(([k, l, wd]) => approachRowHTML(h, k, l, true, wd, rowOpts)).join("");
