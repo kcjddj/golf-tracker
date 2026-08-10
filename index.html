@@ -187,7 +187,7 @@
   }
   .nine-course-label { flex: 1 1 70px; min-width: 40px; font-size: 12.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .par-picker { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 6px; }
-  .par-picker .lbl { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+  .par-picker .lbl { font-size: 18px; font-weight: 800; color: var(--ink); }
 
   .cat-group { margin-bottom: 5px; }
   .cat-group.disabled { opacity: 0.45; }
@@ -195,6 +195,8 @@
   .cat-sub-row + .cat-sub-row { border-top: 1px solid var(--line); }
   .cat-sub-row.disabled { opacity: 0.4; pointer-events: none; }
   .cat-sub-label { flex: 0 0 92px; font-size: 18px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+  .cat-sub-label.with-dist { white-space: normal; line-height: 1.15; }
+  .dist-suffix { font-size: 12px; font-weight: 800; color: var(--ink); }
 
   .btn-row { display: flex; gap: 4px; flex: 1; }
   .btn-row.disabled { opacity: 0.35; pointer-events: none; }
@@ -208,13 +210,17 @@
   .btn-row.compact .pill-btn { flex: 0 0 44px; }
   .pill-btn.sel { color: #fff; border-color: transparent; }
   .pill-btn:disabled { opacity: 0.32; cursor: not-allowed; }
-  .dist-slot { flex: 0 0 80px; display: flex; }
+  .dist-slot { flex: 0 0 51px; display: flex; }
   .dist-input {
-    width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 7px; padding: 7px 2px; font-size: 13px; text-align: center; font-family: inherit;
+    width: 30px; border: 1px solid var(--line); border-right: none; background: var(--paper); color: var(--ink);
+    border-radius: 7px 0 0 7px; padding: 7px 0 7px 2px; font-size: 13px; text-align: center; font-family: inherit;
   }
-  .dist-input::placeholder { color: var(--ink-2); font-size: 13px; font-weight: 700; }
-  .dist-input:disabled { opacity: 0.4; }
+  .dist-unit {
+    flex: 0 0 auto; display: flex; align-items: center; padding: 0 4px;
+    border: 1px solid var(--line); border-left: none; border-radius: 0 7px 7px 0;
+    background: var(--paper-alt); font-size: 12.5px; font-weight: 700; color: var(--ink-2);
+  }
+  .dist-input:disabled, .dist-input:disabled + .dist-unit { opacity: 0.4; }
 
   .bottom-bar { margin-top: 16px; }
   .bottom-row { display: flex; justify-content: flex-end; }
@@ -728,7 +734,7 @@
   }
 
   function distFieldHTML(kind, sub, dist, locked) {
-    return `<input type="number" inputmode="numeric" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}" placeholder="남은거리"${locked ? " disabled" : ""}>`;
+    return `<input type="number" inputmode="numeric" min="0" max="99" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}"${locked ? " disabled" : ""}><span class="dist-unit">m</span>`;
   }
 
   function shotRowHTML(h, r, opts) {
@@ -749,9 +755,10 @@
   function approachRowHTML(h, key, label, enabled, withDist, opts) {
     opts = opts || {};
     const mode = !enabled ? "hard" : (opts.pillLocked || false);
+    const labelHTML = withDist ? `${label}<span class="dist-suffix">(남은거리)</span>` : label;
     const distSlot = withDist ? distFieldHTML("approach", key, h.detail.approach[key].dist, !!opts.distLocked) : "";
     return `<div class="cat-sub-row">
-      <span class="cat-sub-label">${label}</span>
+      <span class="cat-sub-label${withDist ? " with-dist" : ""}">${labelHTML}</span>
       <span class="dist-slot">${distSlot}</span>
       ${renderBtnRow([1, 2, 3, 4], h.approach[key], mode, { kind: "approach", sub: key })}
     </div>`;
@@ -759,7 +766,7 @@
   function puttRowHTML(h, opts) {
     opts = opts || {};
     return `<div class="cat-sub-row">
-      <span class="cat-sub-label">퍼팅</span>
+      <span class="cat-sub-label with-dist">퍼팅<span class="dist-suffix">(남은거리)</span></span>
       <span class="dist-slot">${distFieldHTML("putt", "putt", h.detail.putt.dist, !!opts.distLocked)}</span>
       ${renderBtnRow([0, 1, 2, 3, 4], h.putt, opts.pillLocked || false, { kind: "putt" }, true)}
     </div>`;
@@ -863,7 +870,7 @@
     const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
     panel.querySelectorAll(".dist-input").forEach(inp => {
       inp.addEventListener("change", () => {
-        detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : +inp.value;
+        detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : Math.max(0, Math.min(99, +inp.value));
         persistLive();
         renderHolePage(idx);
       });
