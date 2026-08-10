@@ -886,6 +886,10 @@
         }
         const cleaned = inp.value.replace(/[^0-9]/g, "").slice(0, 2);
         if (cleaned !== inp.value) inp.value = cleaned;
+        // Once the field is full (2 digits), some IMEs (Samsung Keyboard) swallow the
+        // "다음" key entirely instead of firing insertLineBreak — so just advance right away,
+        // there's nothing more to type here anyway.
+        if (inp.value.length >= 2) goToNextDist(inp);
       });
       inp.addEventListener("change", () => {
         detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : Math.max(0, Math.min(99, +inp.value));
