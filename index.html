@@ -902,6 +902,10 @@
         }
         persistLive();
         renderHolePage(idx);
+        if (kind === "approach" && (btn.dataset.sub === "pitching" || btn.dataset.sub === "chip") && h.approach[btn.dataset.sub] != null) {
+          const distInp = panel.querySelector(`.dist-input[data-kind="approach"][data-sub="${btn.dataset.sub}"]`);
+          if (distInp) distInp.focus();
+        }
       });
     });
 
