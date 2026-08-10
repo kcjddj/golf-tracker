@@ -885,25 +885,27 @@
         if (wasSoftLocked) {
           editState = { idx, snapshot: snapshotHole(h) };
         }
+        let focusApproachSub = null;
         if (kind === "par") {
           h.par = +val;
         } else if (kind === "shot") {
           const r = +btn.dataset.row;
           h.rowValues[r] = val;
           if (r === 3 && val === "BK") { h.approach.bunker = 1; h.approach.pitching = null; h.approach.chip = null; }
-          if (r === 3 && val === "RF") { h.approach.pitching = 1; h.approach.bunker = null; h.approach.chip = null; }
-          if (r === 3 && val === "FW") { h.approach.chip = 1; h.approach.bunker = null; h.approach.pitching = null; }
+          if (r === 3 && val === "RF") { h.approach.pitching = 1; h.approach.bunker = null; h.approach.chip = null; focusApproachSub = "pitching"; }
+          if (r === 3 && val === "FW") { h.approach.chip = 1; h.approach.bunker = null; h.approach.pitching = null; focusApproachSub = "chip"; }
         } else if (kind === "approach") {
           const sub = btn.dataset.sub;
           h.approach[sub] = (h.approach[sub] === +val) ? null : +val;
+          if ((sub === "pitching" || sub === "chip") && h.approach[sub] != null) focusApproachSub = sub;
         } else if (kind === "putt") {
           h.putt = +val;
           if (+val === 0) h.detail.putt.dist = 0;
         }
         persistLive();
         renderHolePage(idx);
-        if (kind === "approach" && (btn.dataset.sub === "pitching" || btn.dataset.sub === "chip") && h.approach[btn.dataset.sub] != null) {
-          const distInp = panel.querySelector(`.dist-input[data-kind="approach"][data-sub="${btn.dataset.sub}"]`);
+        if (focusApproachSub) {
+          const distInp = panel.querySelector(`.dist-input[data-kind="approach"][data-sub="${focusApproachSub}"]`);
           if (distInp) distInp.focus();
         }
       });
