@@ -739,6 +739,36 @@
     return `<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" enterkeyhint="${enterHint || "done"}" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}"><span class="dist-unit">m</span>`;
   }
 
+  // ── shared distance-field wiring (남은거리 boxes): sanitize input, chain focus 피칭→칩샷→퍼팅 ──
+  const DIST_NEXT = { "approach:pitching": '.dist-input[data-kind="approach"][data-sub="chip"]', "approach:chip": '.dist-input[data-kind="putt"]' };
+  function goToNextDist(panel, inp) {
+    const nextSel = DIST_NEXT[`${inp.dataset.kind}:${inp.dataset.sub}`];
+    const nextInp = nextSel ? panel.querySelector(nextSel) : null;
+    if (nextInp) nextInp.focus(); else inp.blur();
+  }
+  function wireDistInputs(panel, detailTarget, onChange) {
+    panel.querySelectorAll(".dist-input").forEach(inp => {
+      inp.addEventListener("input", e => {
+        if (e.inputType === "insertLineBreak") {
+          goToNextDist(panel, inp);
+          return;
+        }
+        const cleaned = inp.value.replace(/[^0-9]/g, "").slice(0, 2);
+        if (cleaned !== inp.value) inp.value = cleaned;
+        if (inp.value.length >= 2) goToNextDist(panel, inp);
+      });
+      inp.addEventListener("change", () => {
+        detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : Math.max(0, Math.min(99, +inp.value));
+        onChange();
+      });
+      inp.addEventListener("keydown", e => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        goToNextDist(panel, inp);
+      });
+    });
+  }
+
   function shotRowHTML(h, r, opts) {
     opts = opts || {};
     if (!isRowActive(h.par, r)) return "";
@@ -869,38 +899,10 @@
       });
     }
 
-    const DIST_NEXT = { "approach:pitching": '.dist-input[data-kind="approach"][data-sub="chip"]', "approach:chip": '.dist-input[data-kind="putt"]' };
     const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
-    const goToNextDist = inp => {
-      const nextSel = DIST_NEXT[`${inp.dataset.kind}:${inp.dataset.sub}`];
-      const nextInp = nextSel ? panel.querySelector(nextSel) : null;
-      if (nextInp) nextInp.focus(); else inp.blur();
-    };
-    panel.querySelectorAll(".dist-input").forEach(inp => {
-      inp.addEventListener("input", e => {
-        // Many Android IME "다음"/next action keys never dispatch a real keydown Enter —
-        // they only show up here as an `input` event with inputType "insertLineBreak".
-        if (e.inputType === "insertLineBreak") {
-          goToNextDist(inp);
-          return;
-        }
-        const cleaned = inp.value.replace(/[^0-9]/g, "").slice(0, 2);
-        if (cleaned !== inp.value) inp.value = cleaned;
-        // Once the field is full (2 digits), some IMEs (Samsung Keyboard) swallow the
-        // "다음" key entirely instead of firing insertLineBreak — so just advance right away,
-        // there's nothing more to type here anyway.
-        if (inp.value.length >= 2) goToNextDist(inp);
-      });
-      inp.addEventListener("change", () => {
-        detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : Math.max(0, Math.min(99, +inp.value));
-        persistLive();
-        renderHolePage(idx);
-      });
-      inp.addEventListener("keydown", e => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        goToNextDist(inp);
-      });
+    wireDistInputs(panel, detailTarget, () => {
+      persistLive();
+      renderHolePage(idx);
     });
 
     panel.querySelectorAll(".pill-btn").forEach(btn => {
@@ -1078,6 +1080,15 @@
       renderReplayHolePage(holeIdx);
       renderRoundLog(); renderAnalysis(); renderHeaderHcp();
     }
+
+    const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
+    wireDistInputs(panel, detailTarget, () => {
+      const rh = round.holes[holeIdx];
+      rh.detail = h.detail;
+      saveRounds(rounds);
+      renderReplayHolePage(holeIdx);
+      renderAnalysis();
+    });
 
     panel.querySelectorAll(".pill-btn").forEach(btn => {
       btn.addEventListener("click", () => {
