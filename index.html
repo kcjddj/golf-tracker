@@ -769,6 +769,14 @@
     });
   }
 
+  function blurOnEnter(inp) {
+    inp.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      inp.blur();
+    });
+  }
+
   function shotRowHTML(h, r, opts) {
     opts = opts || {};
     if (!isRowActive(h.par, r)) return "";
@@ -878,10 +886,12 @@
     const h = live.holes[idx];
     const panel = document.getElementById("panel-add");
 
-    document.getElementById("liveCourse").addEventListener("input", e => {
+    const liveCourseInput = document.getElementById("liveCourse");
+    liveCourseInput.addEventListener("input", e => {
       live.course = e.target.value;
       persistLive();
     });
+    blurOnEnter(liveCourseInput);
 
     document.getElementById("scoreNotationToggle").addEventListener("click", () => {
       scoreNotation = scoreNotation === "total" ? "diff" : "total";
@@ -897,6 +907,7 @@
         live[nineKey] = e.target.value;
         persistLive();
       });
+      blurOnEnter(nineCourseInput);
     }
 
     const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
@@ -1851,12 +1862,14 @@
         inp.value = val;
         saveRounds(rounds);
       });
+      blurOnEnter(inp);
     });
     el.querySelectorAll(".log-memo-input").forEach(inp => {
       inp.addEventListener("change", () => {
         rounds[+inp.dataset.idx].memo = inp.value;
         saveRounds(rounds);
       });
+      blurOnEnter(inp);
     });
     el.querySelectorAll(".log-scorecard-btn").forEach(btn => {
       btn.addEventListener("click", () => openScorecardPopup(+btn.dataset.idx));
