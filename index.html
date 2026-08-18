@@ -217,6 +217,7 @@
     -moz-appearance: textfield;
   }
   .dist-popup-input::-webkit-outer-spin-button, .dist-popup-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .dist-popup-input:focus, .dist-popup-input:focus-visible { position: relative; z-index: 2; border-radius: 7px; }
   .dist-unit {
     flex: 0 0 auto; display: flex; align-items: center; padding: 0 8px; align-self: stretch;
     border: 1px solid var(--line); border-left: none; border-radius: 0 7px 7px 0;
@@ -1430,7 +1431,7 @@
       <div class="detail-popup-sheet confirm-sheet">
         <p class="confirm-msg">${esc(label)} 남은거리</p>
         <div class="dist-popup-input-row">
-          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" enterkeyhint="done" class="dist-popup-input" value="${initial ?? ""}"><span class="dist-unit">m</span>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="done" class="dist-popup-input" value="${initial ?? ""}"><span class="dist-unit">m</span>
         </div>
         <div class="confirm-actions">
           <button type="button" class="confirm-btn dist-popup-save">확인</button>
@@ -1441,11 +1442,11 @@
     const inp = overlay.querySelector(".dist-popup-input");
     const close = () => overlay.remove();
     inp.addEventListener("input", () => {
-      const cleaned = inp.value.replace(/[^0-9]/g, "").slice(0, 2);
+      const cleaned = inp.value.replace(/[^0-9]/g, "").slice(0, 3);
       if (cleaned !== inp.value) inp.value = cleaned;
     });
     function save() {
-      const v = inp.value === "" ? null : Math.max(0, Math.min(99, +inp.value));
+      const v = inp.value === "" ? null : Math.max(0, Math.min(999, +inp.value));
       close();
       onSave(v);
     }
