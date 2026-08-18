@@ -536,6 +536,22 @@
     location.href = url.toString();
   });
 
+  // ── keep screen awake while the app is open (Screen Wake Lock API) ──
+  // Released by the OS whenever the tab/screen isn't visible, so it must be re-requested
+  // every time the page becomes visible again, not just once on load.
+  let wakeLock = null;
+  async function requestWakeLock() {
+    if (!("wakeLock" in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } catch {}
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") requestWakeLock();
+  });
+  requestWakeLock();
+
   const STORE_KEY = "golf-tracker-rounds-v2";
   const LIVE_KEY = "golf-tracker-live-v2";
   const PAR_COLORS = { par: "var(--muted)" };
