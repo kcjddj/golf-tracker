@@ -195,8 +195,6 @@
   .cat-sub-row + .cat-sub-row { border-top: 1px solid var(--line); }
   .cat-sub-row.disabled { opacity: 0.4; pointer-events: none; }
   .cat-sub-label { flex: 0 0 92px; font-size: 18px; font-weight: 800; color: var(--ink); white-space: nowrap; }
-  .cat-sub-label.with-dist { white-space: normal; line-height: 1.15; }
-  .dist-suffix { font-size: 12px; font-weight: 800; color: var(--ink); }
 
   .btn-row { display: flex; gap: 4px; flex: 1; }
   .btn-row.disabled { opacity: 0.35; pointer-events: none; }
@@ -210,21 +208,29 @@
   .btn-row.compact .pill-btn { flex: 0 0 44px; }
   .pill-btn.sel { color: #fff; border-color: transparent; }
   .pill-btn:disabled { opacity: 0.32; cursor: not-allowed; }
-  .dist-slot { flex: 0 0 51px; display: flex; }
-  .dist-input {
-    width: 30px; border: 1px solid var(--line); border-right: none; background: var(--paper); color: var(--ink);
-    border-radius: 7px 0 0 7px; padding: 7px 3px 7px 0; font-size: 13px; text-align: right; font-family: inherit;
-    position: relative; -moz-appearance: textfield;
+
+  /* ── distance-entry popup (남은거리) ──────────────────── */
+  .dist-popup-input-row { display: flex; justify-content: center; align-items: center; gap: 0; margin-bottom: 16px; }
+  .dist-popup-input {
+    width: 74px; border: 1px solid var(--line); border-right: none; background: var(--paper); color: var(--ink);
+    border-radius: 7px 0 0 7px; padding: 11px 4px; font-size: 20px; text-align: right; font-family: inherit;
+    -moz-appearance: textfield;
   }
-  .dist-input::-webkit-outer-spin-button, .dist-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .dist-input:focus, .dist-input:focus-visible { position: relative; z-index: 2; border-radius: 7px; }
+  .dist-popup-input::-webkit-outer-spin-button, .dist-popup-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .dist-unit {
-    flex: 0 0 auto; display: flex; align-items: center; padding: 0 4px;
+    flex: 0 0 auto; display: flex; align-items: center; padding: 0 8px; align-self: stretch;
     border: 1px solid var(--line); border-left: none; border-radius: 0 7px 7px 0;
-    background: var(--paper-alt); font-size: 12.5px; font-weight: 700; color: var(--ink-2);
+    background: var(--paper-alt); font-size: 14px; font-weight: 700; color: var(--ink-2);
   }
 
-  .bottom-bar { margin-top: 16px; }
+  .bottom-bar {
+    display: none;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
+    background: var(--paper); border-top: 1px solid var(--line);
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  }
+  .bottom-bar.show { display: block; }
+  main:has(~ .bottom-bar.show) { padding-bottom: 92px; }
   .bottom-row { display: flex; justify-content: flex-end; }
   .bottom-score {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -232,7 +238,7 @@
   }
   .bottom-score .num { margin-left: 10px; }
   .score-row { display: flex; justify-content: center; margin-top: 6px; }
-  .next-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .next-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; max-width: 560px; margin: 0 auto; }
   .next-btn { border: none; background: var(--turf); color: #fff; padding: 12px 30px; border-radius: 11px; font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .next-btn:disabled { background: var(--muted); opacity: 0.5; cursor: not-allowed; }
   .prev-btn {
@@ -497,6 +503,10 @@
   <section class="panel" id="panel-backup"></section>
 </main>
 
+<!-- Rendered outside the animated .panel so it never inherits a transient CSS-animation
+     containing block, which would otherwise make its position:fixed jump on tab/page switches. -->
+<div class="bottom-bar" id="liveBottomBar"></div>
+
 <script>
 (() => {
   // ── theme toggle (manual override, independent of system dark mode) ──
@@ -644,10 +654,11 @@
   });
   function freshHole() {
     return {
-      par: 4,
-      rowValues: ["FW", "FW", "FW", "GR"],
+      par: 4,             // internal default used only to decide how many shot rows to lay out before Par is chosen
+      parChosen: false,   // gates shot/approach/putt rows: locked+unselected until the user taps a Par button
+      rowValues: [null, null, null, null],
       approach: { pitching: null, bunker: null, penalty: null, chip: null },
-      putt: 2,
+      putt: null,
       saved: false,
       result: null,
       detail: freshDetail(),
@@ -663,7 +674,10 @@
         if (!raw.date) raw.date = todayISO();
         if (raw.courseFront == null) raw.courseFront = "";
         if (raw.courseBack == null) raw.courseBack = "";
-        raw.holes.forEach(h => { if (!h.detail) h.detail = freshDetail(); });
+        raw.holes.forEach(h => {
+          if (!h.detail) h.detail = freshDetail();
+          if (h.parChosen === undefined) h.parChosen = h.saved || h.rowValues.some(v => v != null) || h.putt != null;
+        });
         return raw;
       }
     } catch {}
@@ -735,40 +749,6 @@
     }).join("")}</div>`;
   }
 
-  function distFieldHTML(kind, sub, dist, enterHint) {
-    return `<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" enterkeyhint="${enterHint || "done"}" class="dist-input" data-kind="${kind}" data-sub="${sub}" value="${dist ?? ""}"><span class="dist-unit">m</span>`;
-  }
-
-  // ── shared distance-field wiring (남은거리 boxes): sanitize input, chain focus 피칭→칩샷→퍼팅 ──
-  const DIST_NEXT = { "approach:pitching": '.dist-input[data-kind="approach"][data-sub="chip"]', "approach:chip": '.dist-input[data-kind="putt"]' };
-  function goToNextDist(panel, inp) {
-    const nextSel = DIST_NEXT[`${inp.dataset.kind}:${inp.dataset.sub}`];
-    const nextInp = nextSel ? panel.querySelector(nextSel) : null;
-    if (nextInp) nextInp.focus(); else inp.blur();
-  }
-  function wireDistInputs(panel, detailTarget, onChange) {
-    panel.querySelectorAll(".dist-input").forEach(inp => {
-      inp.addEventListener("input", e => {
-        if (e.inputType === "insertLineBreak") {
-          goToNextDist(panel, inp);
-          return;
-        }
-        const cleaned = inp.value.replace(/[^0-9]/g, "").slice(0, 2);
-        if (cleaned !== inp.value) inp.value = cleaned;
-        if (inp.value.length >= 2) goToNextDist(panel, inp);
-      });
-      inp.addEventListener("change", () => {
-        detailTarget(inp.dataset.kind, inp.dataset.sub).dist = inp.value === "" ? null : Math.max(0, Math.min(99, +inp.value));
-        onChange();
-      });
-      inp.addEventListener("keydown", e => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        goToNextDist(panel, inp);
-      });
-    });
-  }
-
   function blurOnEnter(inp) {
     inp.addEventListener("keydown", e => {
       if (e.key !== "Enter") return;
@@ -786,29 +766,26 @@
       if (h.rowValues[rr] === "GR") { grRow = rr; break; }
     }
     const isPastGR = grRow !== -1 && r > grRow;
-    const mode = isPastGR ? "hard" : (opts.pillLocked || false);
+    const mode = isPastGR ? "hard" : (opts.parLocked ? "hard" : (opts.pillLocked || false));
     return `<div class="cat-sub-row${isPastGR ? " disabled" : ""}">
       <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
       ${renderBtnRow(rowOptions(r), isPastGR ? null : h.rowValues[r], mode, { kind: "shot", row: r }, false)}
     </div>`;
   }
-  function approachRowHTML(h, key, label, enabled, withDist, opts) {
+  function approachRowHTML(h, key, label, enabled, opts) {
     opts = opts || {};
-    const mode = !enabled ? "hard" : (opts.pillLocked || false);
-    const labelHTML = withDist ? `${label}<span class="dist-suffix">(남은거리)</span>` : label;
-    const distSlot = withDist ? distFieldHTML("approach", key, h.detail.approach[key].dist, "next") : "";
+    const mode = !enabled ? "hard" : (opts.parLocked ? "hard" : (opts.pillLocked || false));
     return `<div class="cat-sub-row">
-      <span class="cat-sub-label${withDist ? " with-dist" : ""}">${labelHTML}</span>
-      <span class="dist-slot">${distSlot}</span>
+      <span class="cat-sub-label">${label}</span>
       ${renderBtnRow([1, 2, 3, 4], h.approach[key], mode, { kind: "approach", sub: key })}
     </div>`;
   }
   function puttRowHTML(h, opts) {
     opts = opts || {};
+    const mode = opts.parLocked ? "hard" : (opts.pillLocked || false);
     return `<div class="cat-sub-row">
-      <span class="cat-sub-label with-dist">퍼팅<span class="dist-suffix">(남은거리)</span></span>
-      <span class="dist-slot">${distFieldHTML("putt", "putt", h.detail.putt.dist)}</span>
-      ${renderBtnRow([0, 1, 2, 3, 4], h.putt, opts.pillLocked || false, { kind: "putt" }, true)}
+      <span class="cat-sub-label">퍼팅</span>
+      ${renderBtnRow([0, 1, 2, 3, 4], h.putt, mode, { kind: "putt" }, true)}
     </div>`;
   }
 
@@ -835,12 +812,13 @@
     const frontRaw = sum(live.holes.slice(0, 9).filter(x => x.saved).map(x => x.result.rawStrokes));
     const backRaw  = sum(live.holes.slice(9, 18).filter(x => x.saved).map(x => x.result.rawStrokes));
 
-    const rowOpts = { pillLocked: softLocked ? "soft" : false };
+    const rowOpts = { pillLocked: softLocked ? "soft" : false, parLocked: !h.parChosen };
     const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r, rowOpts)).join("");
-    const approachRows = [["pitching", "피칭", true], ["bunker", "벙커", false], ["chip", "칩샷", true], ["penalty", "벌타", false]]
-      .map(([k, l, wd]) => approachRowHTML(h, k, l, true, wd, rowOpts)).join("");
+    const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"], ["penalty", "벌타"]]
+      .map(([k, l]) => approachRowHTML(h, k, l, true, rowOpts)).join("");
     const isLast = idx === 17;
-    const liveResult = computeHoleResult(h);
+    const liveResult = h.parChosen ? computeHoleResult(h) : null;
+    const holeScoreText = liveResult ? fmtScore(liveResult.rawStrokes, liveResult.score) : "—";
 
     const nineCourseField = isNineFirst
       ? `<input type="text" id="nineCourseInput" class="nine-course-input" placeholder="코스명" lang="ko" inputmode="text" value="${esc(live[nineKey])}">`
@@ -861,7 +839,7 @@
         ${nineCourseField}
         <div class="par-picker">
           <span class="lbl">Par</span>
-          ${renderBtnRow([3, 4, 5, 6], h.par, softLocked ? "soft" : false, { kind: "par" }, true)}
+          ${renderBtnRow([3, 4, 5, 6], h.parChosen ? h.par : null, softLocked ? "soft" : false, { kind: "par" }, true)}
         </div>
       </div>
 
@@ -870,15 +848,15 @@
       <div class="cat-group">${approachRows}</div>
 
       <div class="cat-group">${puttRowHTML(h, rowOpts)}</div>
-
-      <div class="bottom-bar">
-        <div class="next-row">
-          <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전 홀</button>
-          <span class="bottom-score">score<span class="num">${fmtScore(liveResult.rawStrokes, liveResult.score)}</span></span>
-          <button class="next-btn" id="holeNextBtn">${isLast ? "라운드 종료" : "다음 홀"}</button>
-        </div>
+    `;
+    document.getElementById("liveBottomBar").innerHTML = `
+      <div class="next-row">
+        <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전 홀</button>
+        <span class="bottom-score">score<span class="num">${holeScoreText}</span></span>
+        <button class="next-btn" id="holeNextBtn" ${h.parChosen ? "" : "disabled"}>${isLast ? "라운드 종료" : "다음 홀"}</button>
       </div>
     `;
+    updateBottomBarVisibility();
     attachHoleHandlers(idx);
   }
 
@@ -910,12 +888,6 @@
       blurOnEnter(nineCourseInput);
     }
 
-    const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
-    wireDistInputs(panel, detailTarget, () => {
-      persistLive();
-      renderHolePage(idx);
-    });
-
     panel.querySelectorAll(".pill-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const kind = btn.dataset.kind, val = btn.dataset.val;
@@ -924,8 +896,12 @@
           editState = { idx, snapshot: snapshotHole(h) };
         }
         let focusApproachSub = null;
+        let puttActivated = false;
         if (kind === "par") {
+          const firstChoice = !h.parChosen;
           h.par = +val;
+          h.parChosen = true;
+          if (firstChoice) h.rowValues = ["FW", "FW", "FW", "GR"];
         } else if (kind === "shot") {
           const r = +btn.dataset.row;
           h.rowValues[r] = val;
@@ -938,7 +914,7 @@
           if ((sub === "pitching" || sub === "chip") && h.approach[sub] != null) focusApproachSub = sub;
         } else if (kind === "putt") {
           h.putt = +val;
-          if (+val === 0) h.detail.putt.dist = 0;
+          if (+val === 0) h.detail.putt.dist = 0; else puttActivated = true;
         }
         ["pitching", "chip"].forEach(sub => {
           if (h.approach[sub] == null) h.detail.approach[sub].dist = null;
@@ -946,8 +922,18 @@
         persistLive();
         renderHolePage(idx);
         if (focusApproachSub) {
-          const distInp = panel.querySelector(`.dist-input[data-kind="approach"][data-sub="${focusApproachSub}"]`);
-          if (distInp) distInp.focus();
+          const label = focusApproachSub === "pitching" ? "피칭" : "칩샷";
+          openDistancePopup(label, h.detail.approach[focusApproachSub].dist, v => {
+            h.detail.approach[focusApproachSub].dist = v;
+            persistLive();
+            renderHolePage(idx);
+          });
+        } else if (puttActivated) {
+          openDistancePopup("퍼팅", h.detail.putt.dist, v => {
+            h.detail.putt.dist = v;
+            persistLive();
+            renderHolePage(idx);
+          });
         }
       });
     });
@@ -1030,8 +1016,8 @@
 
     const rowOpts = { pillLocked: false };
     const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r, rowOpts)).join("");
-    const approachRows = [["pitching", "피칭", true], ["bunker", "벙커", false], ["chip", "칩샷", true], ["penalty", "벌타", false]]
-      .map(([k, l, wd]) => approachRowHTML(h, k, l, true, wd, rowOpts)).join("");
+    const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"], ["penalty", "벌타"]]
+      .map(([k, l]) => approachRowHTML(h, k, l, true, rowOpts)).join("");
     const nineCourseField = round[nineKey] ? `<span class="nine-course-label">${esc(round[nineKey])}</span>` : "";
 
     document.getElementById("panel-add").innerHTML = `
@@ -1055,15 +1041,15 @@
       <div class="cat-group">${approachRows}</div>
 
       <div class="cat-group">${puttRowHTML(h, rowOpts)}</div>
-
-      <div class="bottom-bar">
-        <div class="next-row">
-          <button class="prev-btn" id="replayPrevBtn" ${holeIdx === 0 ? "disabled" : ""}>이전 홀</button>
-          <span class="bottom-score">score<span class="num">${fmtScore(result.rawStrokes, result.score)}</span></span>
-          <button class="next-btn" id="replayNextBtn">${isLast ? "복기 종료" : "다음 홀"}</button>
-        </div>
+    `;
+    document.getElementById("liveBottomBar").innerHTML = `
+      <div class="next-row">
+        <button class="prev-btn" id="replayPrevBtn" ${holeIdx === 0 ? "disabled" : ""}>이전 홀</button>
+        <span class="bottom-score">score<span class="num">${fmtScore(result.rawStrokes, result.score)}</span></span>
+        <button class="next-btn" id="replayNextBtn">${isLast ? "복기 종료" : "다음 홀"}</button>
       </div>
     `;
+    updateBottomBarVisibility();
     attachReplayHoleHandlers(holeIdx, h);
   }
 
@@ -1092,19 +1078,12 @@
       renderRoundLog(); renderAnalysis(); renderHeaderHcp();
     }
 
-    const detailTarget = (kind, sub) => kind === "approach" ? h.detail.approach[sub] : h.detail.putt;
-    wireDistInputs(panel, detailTarget, () => {
-      const rh = round.holes[holeIdx];
-      rh.detail = h.detail;
-      saveRounds(rounds);
-      renderReplayHolePage(holeIdx);
-      renderAnalysis();
-    });
-
     panel.querySelectorAll(".pill-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const kind = btn.dataset.kind, val = btn.dataset.val;
         openConfirmPopup("변경 하시겠습니까?", () => {
+          let focusApproachSub = null;
+          let puttActivated = false;
           commitChange(() => {
             if (kind === "par") {
               h.par = +val;
@@ -1112,16 +1091,31 @@
               const r = +btn.dataset.row;
               h.rowValues[r] = val;
               if (r === 3 && val === "BK") { h.approach.bunker = 1; h.approach.pitching = null; h.approach.chip = null; }
-              if (r === 3 && val === "RF") { h.approach.pitching = 1; h.approach.bunker = null; h.approach.chip = null; }
-              if (r === 3 && val === "FW") { h.approach.chip = 1; h.approach.bunker = null; h.approach.pitching = null; }
+              if (r === 3 && val === "RF") { h.approach.pitching = 1; h.approach.bunker = null; h.approach.chip = null; focusApproachSub = "pitching"; }
+              if (r === 3 && val === "FW") { h.approach.chip = 1; h.approach.bunker = null; h.approach.pitching = null; focusApproachSub = "chip"; }
             } else if (kind === "approach") {
               const sub = btn.dataset.sub;
               h.approach[sub] = (h.approach[sub] === +val) ? null : +val;
+              if ((sub === "pitching" || sub === "chip") && h.approach[sub] != null) focusApproachSub = sub;
             } else if (kind === "putt") {
               h.putt = +val;
-              if (+val === 0) h.detail.putt.dist = 0;
+              if (+val === 0) h.detail.putt.dist = 0; else puttActivated = true;
             }
           });
+          const rh = round.holes[holeIdx];
+          const saveDist = (target, v) => {
+            target.dist = v;
+            rh.detail = h.detail;
+            saveRounds(rounds);
+            renderReplayHolePage(holeIdx);
+            renderAnalysis();
+          };
+          if (focusApproachSub) {
+            const label = focusApproachSub === "pitching" ? "피칭" : "칩샷";
+            openDistancePopup(label, h.detail.approach[focusApproachSub].dist, v => saveDist(h.detail.approach[focusApproachSub], v));
+          } else if (puttActivated) {
+            openDistancePopup("퍼팅", h.detail.putt.dist, v => saveDist(h.detail.putt, v));
+          }
         });
       });
     });
@@ -1151,6 +1145,8 @@
         <div class="finish-msg">수고하셨습니다!</div>
         <button class="save-btn" id="appEndBtn" style="max-width:220px;margin:0 auto;">앱 종료</button>
       </div>`;
+    document.getElementById("liveBottomBar").innerHTML = "";
+    updateBottomBarVisibility();
     document.getElementById("appEndBtn").addEventListener("click", () => {
       localStorage.removeItem(LIVE_KEY);
       live = freshLiveState();
@@ -1407,6 +1403,45 @@
     overlay.querySelector(".confirm-yes").addEventListener("click", () => { close(); if (onYes) onYes(); });
     overlay.querySelector(".confirm-no").addEventListener("click", () => { close(); if (onNo) onNo(); });
     overlay.querySelector(".detail-popup-backdrop").addEventListener("click", () => { close(); if (onNo) onNo(); });
+  }
+
+  // ── distance-entry popup (남은거리): shown when a 피칭/칩샷/퍼팅 row button is activated ──
+  function openDistancePopup(label, initial, onSave) {
+    const overlay = document.createElement("div");
+    overlay.className = "detail-popup-overlay";
+    overlay.innerHTML = `
+      <div class="detail-popup-backdrop"></div>
+      <div class="detail-popup-sheet confirm-sheet">
+        <p class="confirm-msg">${esc(label)} 남은거리</p>
+        <div class="dist-popup-input-row">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" enterkeyhint="done" class="dist-popup-input" value="${initial ?? ""}"><span class="dist-unit">m</span>
+        </div>
+        <div class="confirm-actions">
+          <button type="button" class="confirm-btn dist-popup-save">확인</button>
+          <button type="button" class="confirm-btn dist-popup-skip">건너뛰기</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const inp = overlay.querySelector(".dist-popup-input");
+    const close = () => overlay.remove();
+    inp.addEventListener("input", () => {
+      const cleaned = inp.value.replace(/[^0-9]/g, "").slice(0, 2);
+      if (cleaned !== inp.value) inp.value = cleaned;
+    });
+    function save() {
+      const v = inp.value === "" ? null : Math.max(0, Math.min(99, +inp.value));
+      close();
+      onSave(v);
+    }
+    inp.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      save();
+    });
+    overlay.querySelector(".dist-popup-save").addEventListener("click", save);
+    overlay.querySelector(".dist-popup-skip").addEventListener("click", close);
+    overlay.querySelector(".detail-popup-backdrop").addEventListener("click", close);
+    setTimeout(() => inp.focus(), 30);
   }
   function openDetailFor(key, aData, bData) {
     const buildRate = (distances, saveKey, labelFn) => distances.map(d => ({
@@ -1906,10 +1941,18 @@
   }
 
   // ── tabs ──────────────────────────────────────────────
+  // liveBottomBar lives outside the animated .panel (see comment at its declaration) so its
+  // fixed position never gets scoped to an ancestor mid-transition; visibility is driven here.
+  function updateBottomBarVisibility() {
+    const onAddTab = document.getElementById("panel-add").classList.contains("active");
+    const onHolePage = !!replayState || live.currentHole < 18;
+    document.getElementById("liveBottomBar").classList.toggle("show", onAddTab && onHolePage);
+  }
   function switchTab(name) {
     document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll("section.panel").forEach(p => p.classList.toggle("active", p.id === `panel-${name}`));
     document.getElementById("hdrDate").classList.toggle("show", name === "add");
+    updateBottomBarVisibility();
   }
   document.querySelectorAll("nav.tabs button").forEach(btn => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
