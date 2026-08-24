@@ -1297,7 +1297,9 @@
     const bkShotTotal = sum(list.map(r => r.bkShotCount || 0));
     const threePuttTotal = sum(list.map(r => r.threePuttCount || 0));
     const maxThreePutt = Math.max(0, ...list.map(r => r.threePuttCount || 0));
-    const par3Strokes = allHoles.filter(h => h.par === 3).map(h => h.score + h.par);
+    const par3Holes = allHoles.filter(h => h.par === 3);
+    const par3GirRate = par3Holes.length ? (par3Holes.filter(h => h.gir).length / par3Holes.length * 100) : 0;
+    const par3Strokes = par3Holes.map(h => h.score + h.par);
     const par4Strokes = allHoles.filter(h => h.par === 4).map(h => h.score + h.par);
     const par5Strokes = allHoles.filter(h => h.par === 5).map(h => h.score + h.par);
     const avgPar3 = par3Strokes.length ? mean(par3Strokes) : null;
@@ -1317,7 +1319,7 @@
     ];
 
     return {
-      handicap, nBest, fairwayRate, girRate, avgPutts, bucketCounts, totalHoles, trend, count: list.length,
+      handicap, nBest, fairwayRate, girRate, par3GirRate, avgPutts, bucketCounts, totalHoles, trend, count: list.length,
       bkSaveNum, bkSaveDen, cpSaveNum, cpSaveDen, pitchSaveNum, pitchSaveDen, chipInNum, chipInDen, parSaveNum, parSaveDen,
       pitchSaveRFNum, pitchSaveRFDen, pitchSaveFWNum, pitchSaveFWDen, cpSaveRFNum, cpSaveRFDen, cpSaveFWNum, cpSaveFWDen,
       fwBkParSaveNum, fwBkParSaveDen, roughParSaveNum, roughParSaveDen,
@@ -1345,6 +1347,7 @@
     { label: "간이 핸디캡", get: a => a.handicap > 0 ? `+${fmt1(a.handicap)}` : fmt1(a.handicap) },
     { label: "페어웨이 키핑률", get: a => `${fmt1(a.fairwayRate)}%` },
     { label: "온그린율", get: a => `${fmt1(a.girRate)}%` },
+    { label: "파3 온그린율", get: a => `${fmt1(a.par3GirRate)}%` },
     { label: "파 세이브율", get: a => fmtRate(a.parSaveNum, a.parSaveDen) },
     { label: "평균 퍼팅수", get: a => fmt1(a.avgPutts) },
     { label: "쓰리퍼트", get: a => fmtPer18(a.threePuttTotal, a.totalHoles) },
