@@ -95,17 +95,18 @@
   input, select { font-family: inherit; }
   :focus-visible { outline: 2px solid var(--turf); outline-offset: 2px; }
 
-  /* ── Header: single compact row (icons + tabs + HCP) to keep as much vertical room as
-     possible for the scorecard, especially in landscape where viewport height is short ── */
+  /* ── Header: icons + HCP on one row, tabs on their own row below — the tabs need the full
+     header width to read as clear single-line buttons (see nav.tabs note below); landscape hides
+     the whole header anyway, so this only costs portrait a little extra (spare) vertical room. ── */
   header {
     position: sticky; top: 0; z-index: 20;
     background: var(--paper);
     border-bottom: 1px solid var(--line);
     padding: 6px 14px;
   }
-  .hdr-row { display: flex; align-items: center; gap: 6px; }
+  .hdr-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 
-  .hcp-chip { flex: 0 0 auto; display: flex; align-items: baseline; gap: 5px; }
+  .hcp-chip { flex: 0 0 auto; margin-left: auto; display: flex; align-items: baseline; gap: 5px; }
   .hcp-chip-inner {
     display: flex; align-items: baseline; gap: 4px;
     background: var(--flag-wash); border-radius: 999px;
@@ -123,14 +124,17 @@
 
   /* Every tab reads as its own button (border + shadow), not just the active one — the previous
      segmented-control look (shared flat background, only the active tab standing out) made the
-     other three tabs blend in and go unnoticed once this row got squeezed by commit 96. */
+     other three tabs blend in and go unnoticed once this row got squeezed by commit 96. Now on
+     its own full-width row (see header note above) so all 4 labels fit on one line at a readable
+     size instead of wrapping — minmax(0,1fr)/break-word kept as a safety net for very narrow
+     screens rather than assuming this measured width holds on every real device. */
   nav.tabs {
     display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px; flex: 1 1 0; min-width: 0;
+    gap: 6px; width: 100%;
   }
   nav.tabs button {
     border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
-    padding: 8px 1px; border-radius: 9px; font-size: 12.5px; font-weight: 700; line-height: 1.15;
+    padding: 10px 2px; border-radius: 9px; font-size: 13.5px; font-weight: 700; line-height: 1.15;
     cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
     white-space: normal; overflow-wrap: break-word;
     box-shadow: var(--shadow);
@@ -540,14 +544,14 @@
   <div class="hdr-row">
     <button type="button" class="theme-toggle" id="refreshBtn" aria-label="새로고침" title="최신 버전으로 새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button>
     <button type="button" class="theme-toggle" id="themeToggle" aria-label="다크모드 전환"></button>
-    <nav class="tabs">
-      <button data-tab="add" class="active">기록 추가</button>
-      <button data-tab="analysis">분석</button>
-      <button data-tab="roundlog">라운드기록</button>
-      <button data-tab="backup">백업</button>
-    </nav>
     <div class="hcp-chip"><div class="hcp-chip-inner"><span class="lbl">HCP</span><span class="val" id="hdrHcp">—</span></div></div>
   </div>
+  <nav class="tabs">
+    <button data-tab="add" class="active">기록 추가</button>
+    <button data-tab="analysis">분석</button>
+    <button data-tab="roundlog">라운드기록</button>
+    <button data-tab="backup">백업</button>
+  </nav>
 </header>
 
 <main>
