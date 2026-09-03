@@ -217,11 +217,15 @@
   .cover-nine-row { display: flex; gap: 8px; margin-top: 8px; }
 
   .cover-par-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
-  .cover-hole-row { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+  .cover-par-col-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    color: var(--ink-2); text-align: center; margin-bottom: 6px;
+  }
+  .cover-hole-row { display: flex; align-items: center; gap: 4px; padding: 3px 0; }
   .cover-hole-row + .cover-hole-row { border-top: 1px solid var(--line); }
-  .cover-hole-label { flex: 0 0 32px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+  .cover-hole-label { flex: 0 0 32px; font-size: 13px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
   .cover-hole-row .btn-row.compact { gap: 3px; }
-  .cover-hole-row .btn-row.compact .pill-btn { flex: 0 0 30px; padding: 6px 0; font-size: 12.5px; }
+  .cover-hole-row .btn-row.compact .pill-btn { flex: 0 0 34px; padding: 7px 0; font-size: 13px; }
   .cover-start-btn { margin-top: 4px; }
 
   .cat-group { margin-bottom: 5px; }
@@ -879,8 +883,14 @@
 
       <div class="card">
         <div class="cover-par-grid">
-          <div class="cover-par-col">${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i)).join("")}</div>
-          <div class="cover-par-col">${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i + 9)).join("")}</div>
+          <div class="cover-par-col">
+            <div class="cover-par-col-title">전반홀 Par</div>
+            ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i)).join("")}
+          </div>
+          <div class="cover-par-col">
+            <div class="cover-par-col-title">후반홀 Par</div>
+            ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i + 9)).join("")}
+          </div>
         </div>
       </div>
 
