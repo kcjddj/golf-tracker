@@ -213,10 +213,15 @@
     border: 1px solid var(--line); background: var(--paper); color: var(--ink);
     border-radius: 7px; padding: 8px 10px; font-size: 15px; font-family: inherit; flex: 1 1 140px; min-width: 0;
   }
+  .cover-course-input::placeholder, .cover-nine-input::placeholder { color: var(--ink); opacity: 1; }
   .cover-nine-row { display: flex; gap: 8px; margin-top: 8px; }
-  .cover-hole-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+
+  .cover-par-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .cover-hole-row { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
   .cover-hole-row + .cover-hole-row { border-top: 1px solid var(--line); }
-  .cover-hole-label { flex: 0 0 46px; font-size: 15px; font-weight: 700; color: var(--ink-2); }
+  .cover-hole-label { flex: 0 0 32px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+  .cover-hole-row .btn-row.compact { gap: 3px; }
+  .cover-hole-row .btn-row.compact .pill-btn { flex: 0 0 30px; padding: 6px 0; font-size: 12.5px; }
   .cover-start-btn { margin-top: 4px; }
 
   .cat-group { margin-bottom: 5px; }
@@ -854,16 +859,14 @@
 
   // ── 표지 (cover page): round info + per-hole Par planning, shown once before Hole 1 ──
   function coverHoleRowHTML(idx) {
-    const label = idx < 9 ? idx + 1 : idx - 9 + 1;
     return `<div class="cover-hole-row">
-      <span class="cover-hole-label">${label}번</span>
+      <span class="cover-hole-label">${idx + 1}번</span>
       ${renderBtnRow([3, 4, 5, 6], live.parPlan[idx], false, { kind: "coverPar", idx }, true)}
     </div>`;
   }
   function renderCoverPage() {
     document.getElementById("panel-add").innerHTML = `
       <div class="card">
-        <div class="card-title">라운드 정보</div>
         <div class="cover-info-grid">
           <input type="date" id="coverDate" class="cover-date-input" value="${live.date || todayISO()}">
           <input type="text" id="coverCourse" class="cover-course-input" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">
@@ -875,13 +878,10 @@
       </div>
 
       <div class="card">
-        <div class="card-title">전반 Par</div>
-        ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i)).join("")}
-      </div>
-
-      <div class="card">
-        <div class="card-title">후반 Par</div>
-        ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i + 9)).join("")}
+        <div class="cover-par-grid">
+          <div class="cover-par-col">${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i)).join("")}</div>
+          <div class="cover-par-col">${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i + 9)).join("")}</div>
+        </div>
       </div>
 
       <button type="button" class="save-btn cover-start-btn" id="coverStartBtn">라운드 시작</button>
