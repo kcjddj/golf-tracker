@@ -176,28 +176,39 @@
   .par-picker { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 6px; }
   .par-picker .lbl { font-size: 18px; font-weight: 800; color: var(--ink); }
 
-  /* ── 스코어카드 (single-page live scorecard: info row + 전반/후반 tables) ── */
-  .scorecard-info-row { display: flex; align-items: center; gap: 8px; }
-  /* Only the date/course fields scroll — the score stays pinned and visible at all times, since
-     that's the one thing worth glancing at mid-round without having to scroll for it. */
-  .sc-info-scroll {
-    display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; min-width: 0; flex: 1 1 auto; padding-bottom: 2px;
-  }
-  .sc-info-scroll::-webkit-scrollbar { display: none; }
+  /* ── 스코어카드: two structurally different layouts sharing the same live.holes data — a
+     vertical hole list in portrait (no horizontal scrolling needed) and the wide paper-scorecard
+     table in landscape (holes as columns, bigger fonts, a 합계 column per nine). Only one is ever
+     visible at a time (@media orientation), both always rendered so switching is instant. ── */
+  .sc-info-landscape { display: none; }
+  .sc-info-portrait { display: flex; flex-direction: column; gap: 8px; }
+  .sc-info-portrait-row1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sc-info-portrait-row2 { display: flex; align-items: center; gap: 8px; }
+
   .sc-date-input, .sc-course-input, .sc-nine-input {
-    flex: 0 0 auto; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-    border-radius: 7px; padding: 8px 10px; font-size: 14px; font-family: inherit;
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 7px; padding: 8px 10px; font-size: 14px; font-family: inherit; min-width: 0;
   }
   .sc-course-input::placeholder, .sc-nine-input::placeholder { color: var(--ink); opacity: 1; }
-  .sc-date-input { width: 134px; }
-  .sc-course-input { width: 120px; }
-  .sc-nine-input { width: 108px; }
-  .sc-total { flex: 0 0 auto; display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+  .sc-date-input { flex: 0 0 auto; width: 134px; }
+  .sc-course-input { flex: 1 1 100px; }
+  .sc-nine-input { flex: 1 1 0; }
+  .sc-total { flex: 0 0 auto; display: flex; align-items: baseline; gap: 8px; white-space: nowrap; margin-left: auto; }
   .sc-total-score { font-size: 21px; font-weight: 700; }
   .sc-total-sub { font-size: 12.5px; color: var(--muted); }
 
-  .scorecard-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
+  .sc-list-view { margin-top: 4px; }
+  .sc-list-section + .sc-list-section { margin-top: 10px; }
+  .sc-list-title { font-size: 15px; font-weight: 800; color: var(--ink-2); margin-bottom: 2px; }
+  .sc-list-row { display: flex; align-items: center; gap: 10px; padding: 7px 2px; border-bottom: 1px solid var(--line); }
+  .sc-list-hole { flex: 0 0 46px; font-size: 15px; font-weight: 700; color: var(--turf); }
+  .sc-list-row .sc-par-select {
+    flex: 0 0 64px; width: auto; border: 1px solid var(--line); background: var(--paper);
+    border-radius: 7px; padding: 8px 4px;
+  }
+  .sc-list-row .sc-score-cell { flex: 1 1 auto; border-radius: 7px; }
+
+  .scorecard-table-wrap { display: none; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
   .scorecard-table { border-collapse: collapse; width: 100%; table-layout: fixed; }
   .scorecard-table th, .scorecard-table td { border: 1px solid var(--line); text-align: center; padding: 0; }
   .scorecard-table .sc-row-label {
@@ -205,6 +216,7 @@
     background: var(--paper-alt); padding: 8px 4px; white-space: nowrap;
   }
   .scorecard-table th.sc-hole-num { font-size: 14px; font-weight: 700; color: var(--turf); padding: 8px 2px; background: var(--paper-alt); min-width: 40px; }
+  .scorecard-table .sc-total-col { background: var(--paper-alt); font-weight: 800; }
   .sc-par-select {
     width: 100%; border: none; background: transparent; color: var(--ink); text-align: center;
     text-align-last: center; font-size: 14px; font-weight: 700; padding: 8px 0; font-family: inherit; appearance: none; -webkit-appearance: none;
@@ -213,6 +225,30 @@
   .sc-score-cell:active { opacity: 0.75; }
   .scorecard-round-actions { display: flex; justify-content: center; margin: 18px 0 4px; }
   .scorecard-finish-btn { max-width: 260px; }
+
+  /* Landscape: swap in the wide table (with 합계 columns) over the vertical list, and size
+     everything up a lot — landscape has plenty of spare width/height now that the header is gone. */
+  @media (orientation: landscape) {
+    .sc-info-portrait { display: none; }
+    .sc-info-landscape { display: flex; align-items: center; gap: 10px; }
+    .sc-info-landscape .sc-date-input, .sc-info-landscape .sc-course-input, .sc-info-landscape .sc-nine-input {
+      font-size: 19px; padding: 10px 12px;
+    }
+    .sc-info-landscape .sc-date-input { width: 168px; }
+    .sc-info-landscape .sc-course-input { width: 170px; flex: 1 1 130px; }
+    .sc-info-landscape .sc-nine-input { width: 150px; flex: 1 1 110px; }
+    .sc-info-landscape .sc-total-score { font-size: 32px; }
+    .sc-info-landscape .sc-total-sub { font-size: 17px; }
+    .sc-list-view { display: none; }
+    .scorecard-table-wrap { display: block; }
+    .scorecard-table .sc-row-label { font-size: 18px; width: 70px; min-width: 70px; padding: 12px 6px; }
+    .scorecard-table th.sc-hole-num { font-size: 22px; padding: 12px 4px; min-width: 56px; }
+    .scorecard-table .sc-total-col { font-size: 18px; }
+    .sc-par-select { font-size: 20px; padding: 12px 0; }
+    .sc-score-cell { font-size: 24px; padding: 14px 4px; }
+    .scorecard-round-actions { margin: 24px 0 8px; }
+    .scorecard-finish-btn { max-width: 320px; font-size: 22px; padding: 20px; }
+  }
 
   .cat-group { margin-bottom: 5px; }
   .cat-group.disabled { opacity: 0.45; }
@@ -811,28 +847,52 @@
     renderScorecardPage();
   }
 
-  // ── 스코어카드: single always-visible page (info row + 전반/후반 tables). Tapping a hole's
-  // 타수 cell opens a popup with that hole's shot/approach/putt entry, editable immediately. ──
-  function scHoleRowHTML(startIdx) {
+  // ── 스코어카드: two layouts for the same live.holes data — a vertical hole list (portrait)
+  // and a wide hole-columns table with a 합계 column per nine (landscape). Both are always
+  // rendered; CSS shows only the one matching the current orientation. Tapping a hole's 타수
+  // cell/row opens a popup with that hole's shot/approach/putt entry, editable immediately. ──
+  function scScoreCellHTML(i, tag) {
+    const h = live.holes[i];
+    const result = h.saved ? (h.result || computeHoleResult(h)) : null;
+    let style = "";
+    if (result) {
+      const d = result.score;
+      if (d <= -1) style = "background:var(--turf-wash);color:var(--turf-deep);";
+      else if (d >= 2) style = "background:var(--flag-wash);color:var(--flag);";
+    }
+    const text = result ? fmtScoreZ(result.rawStrokes, result.score) : "-";
+    return `<${tag} class="sc-score-cell" data-idx="${i}" style="${style}">${text}</${tag}>`;
+  }
+  function scParSelectHTML(i) {
+    const h = live.holes[i];
+    const opts = [3, 4, 5, 6].map(p => `<option value="${p}"${h.par === p ? " selected" : ""}>${p}</option>`).join("");
+    return `<select class="sc-par-select" data-idx="${i}">${opts}</select>`;
+  }
+  function scNineTotals(startIdx) {
+    const holes9 = Array.from({ length: 9 }, (_, i) => live.holes[startIdx + i]);
+    const saved9 = holes9.filter(h => h.saved);
+    const parSum = sum(holes9.map(h => h.par));
+    const diffSum = sum(saved9.map(h => h.result.score));
+    const rawSum = sum(saved9.map(h => h.result.rawStrokes));
+    return { parSum, text: saved9.length ? fmtScoreZ(rawSum, diffSum) : "-" };
+  }
+  function scHoleListSectionHTML(startIdx, title) {
+    const rows = Array.from({ length: 9 }, (_, i) => {
+      const idx = startIdx + i;
+      return `<div class="sc-list-row">
+        <span class="sc-list-hole">${idx + 1}번</span>
+        ${scParSelectHTML(idx)}
+        ${scScoreCellHTML(idx, "span")}
+      </div>`;
+    }).join("");
+    return `<div class="sc-list-section"><div class="sc-list-title">${title}</div>${rows}</div>`;
+  }
+  function scHoleTableHTML(startIdx) {
     const idxs = Array.from({ length: 9 }, (_, i) => startIdx + i);
-    const numCells = idxs.map(i => `<th class="sc-hole-num">${i + 1}</th>`).join("");
-    const parCells = idxs.map(i => {
-      const h = live.holes[i];
-      const opts = [3, 4, 5, 6].map(p => `<option value="${p}"${h.par === p ? " selected" : ""}>${p}</option>`).join("");
-      return `<td><select class="sc-par-select" data-idx="${i}">${opts}</select></td>`;
-    }).join("");
-    const scoreCells = idxs.map(i => {
-      const h = live.holes[i];
-      const result = h.saved ? (h.result || computeHoleResult(h)) : null;
-      let style = "";
-      if (result) {
-        const d = result.score;
-        if (d <= -1) style = "background:var(--turf-wash);color:var(--turf-deep);";
-        else if (d >= 2) style = "background:var(--flag-wash);color:var(--flag);";
-      }
-      const text = result ? fmtScoreZ(result.rawStrokes, result.score) : "-";
-      return `<td class="sc-score-cell" data-idx="${i}" style="${style}">${text}</td>`;
-    }).join("");
+    const { parSum, text: totalText } = scNineTotals(startIdx);
+    const numCells = idxs.map(i => `<th class="sc-hole-num">${i + 1}</th>`).join("") + `<th class="sc-hole-num sc-total-col">합계</th>`;
+    const parCells = idxs.map(i => `<td>${scParSelectHTML(i)}</td>`).join("") + `<td class="sc-total-col">${parSum}</td>`;
+    const scoreCells = idxs.map(i => `<td>${scScoreCellHTML(i, "span")}</td>`).join("") + `<td class="sc-total-col">${totalText}</td>`;
     return `<div class="scorecard-table-wrap">
       <table class="scorecard-table">
         <tr><th class="sc-row-label">Hole</th>${numCells}</tr>
@@ -850,23 +910,32 @@
     const frontRaw = sum(live.holes.slice(0, 9).filter(h => h.saved).map(h => h.result.rawStrokes));
     const backRaw  = sum(live.holes.slice(9, 18).filter(h => h.saved).map(h => h.result.rawStrokes));
 
+    const totalHTML = `
+      <div class="sc-total">
+        <button type="button" class="score-toggle sc-score-toggle" title="점수 표기 전환">${scoreNotation === "total" ? "73" : "E"}</button>
+        <span class="sc-total-score">${fmtScore(totalRaw, total)}</span>
+        <span class="sc-total-sub">(전${fmtScore(frontRaw, front)}/후${fmtScore(backRaw, back)})</span>
+      </div>`;
+    const dateField = `<input type="date" class="sc-date-input" data-field="date" value="${live.date || todayISO()}">`;
+    const courseField = `<input type="text" class="sc-course-input" data-field="course" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">`;
+    const frontField = `<input type="text" class="sc-nine-input" data-field="courseFront" placeholder="전반 코스명" lang="ko" inputmode="text" value="${esc(live.courseFront)}">`;
+    const backField = `<input type="text" class="sc-nine-input" data-field="courseBack" placeholder="후반 코스명" lang="ko" inputmode="text" value="${esc(live.courseBack)}">`;
+
     document.getElementById("panel-add").innerHTML = `
-      <div class="scorecard-info-row">
-        <div class="sc-info-scroll">
-          <input type="date" id="scDate" class="sc-date-input" value="${live.date || todayISO()}">
-          <input type="text" id="scCourse" class="sc-course-input" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">
-          <input type="text" id="scCourseFront" class="sc-nine-input" placeholder="전반 코스명" lang="ko" inputmode="text" value="${esc(live.courseFront)}">
-          <input type="text" id="scCourseBack" class="sc-nine-input" placeholder="후반 코스명" lang="ko" inputmode="text" value="${esc(live.courseBack)}">
-        </div>
-        <div class="sc-total">
-          <button type="button" class="score-toggle" id="scoreNotationToggle" title="점수 표기 전환">${scoreNotation === "total" ? "73" : "E"}</button>
-          <span class="sc-total-score">${fmtScore(totalRaw, total)}</span>
-          <span class="sc-total-sub">(전${fmtScore(frontRaw, front)}/후${fmtScore(backRaw, back)})</span>
-        </div>
+      <div class="sc-info-portrait">
+        <div class="sc-info-portrait-row1">${dateField}${courseField}${totalHTML}</div>
+        <div class="sc-info-portrait-row2">${frontField}${backField}</div>
       </div>
 
-      ${scHoleRowHTML(0)}
-      ${scHoleRowHTML(9)}
+      <div class="sc-info-landscape">${dateField}${courseField}${frontField}${backField}${totalHTML}</div>
+
+      <div class="sc-list-view">
+        ${scHoleListSectionHTML(0, "전반")}
+        ${scHoleListSectionHTML(9, "후반")}
+      </div>
+
+      ${scHoleTableHTML(0)}
+      ${scHoleTableHTML(9)}
 
       <div class="scorecard-round-actions">
         <button type="button" class="save-btn scorecard-finish-btn" id="scFinishBtn">라운드 종료</button>
@@ -879,29 +948,32 @@
   function attachScorecardHandlers() {
     const panel = document.getElementById("panel-add");
 
-    const dateInput = document.getElementById("scDate");
-    dateInput.addEventListener("change", e => {
-      live.date = e.target.value || todayISO();
-      persistLive();
+    panel.querySelectorAll(".sc-date-input").forEach(inp => {
+      inp.addEventListener("change", e => {
+        live.date = e.target.value || todayISO();
+        persistLive();
+      });
+    });
+    panel.querySelectorAll(".sc-course-input").forEach(inp => {
+      inp.addEventListener("input", e => { live.course = e.target.value; persistLive(); });
+      blurOnEnter(inp);
+    });
+    panel.querySelectorAll('.sc-nine-input[data-field="courseFront"]').forEach(inp => {
+      inp.addEventListener("input", e => { live.courseFront = e.target.value; persistLive(); });
+      blurOnEnter(inp);
+    });
+    panel.querySelectorAll('.sc-nine-input[data-field="courseBack"]').forEach(inp => {
+      inp.addEventListener("input", e => { live.courseBack = e.target.value; persistLive(); });
+      blurOnEnter(inp);
     });
 
-    const courseInput = document.getElementById("scCourse");
-    courseInput.addEventListener("input", e => { live.course = e.target.value; persistLive(); });
-    blurOnEnter(courseInput);
-
-    const frontInput = document.getElementById("scCourseFront");
-    frontInput.addEventListener("input", e => { live.courseFront = e.target.value; persistLive(); });
-    blurOnEnter(frontInput);
-
-    const backInput = document.getElementById("scCourseBack");
-    backInput.addEventListener("input", e => { live.courseBack = e.target.value; persistLive(); });
-    blurOnEnter(backInput);
-
-    document.getElementById("scoreNotationToggle").addEventListener("click", () => {
-      scoreNotation = scoreNotation === "total" ? "diff" : "total";
-      saveScoreNotation();
-      renderScorecardPage();
-      renderRoundLog();
+    panel.querySelectorAll(".sc-score-toggle").forEach(btn => {
+      btn.addEventListener("click", () => {
+        scoreNotation = scoreNotation === "total" ? "diff" : "total";
+        saveScoreNotation();
+        renderScorecardPage();
+        renderRoundLog();
+      });
     });
 
     panel.querySelectorAll(".sc-par-select").forEach(sel => {
@@ -1981,6 +2053,10 @@
     if (header) document.documentElement.style.setProperty("--header-h", header.offsetHeight + "px");
   }
   window.addEventListener("resize", syncHeaderHeight);
+  // Portrait/landscape scorecard each keep their own copy of the date/course text fields (so
+  // typing never fights a cross-orientation re-render mid-keystroke); re-render on an actual
+  // rotation so whichever copy becomes visible reflects what was just typed into the other one.
+  window.addEventListener("orientationchange", renderAddPanel);
 
   renderAddPanel();
   renderAnalysis();
