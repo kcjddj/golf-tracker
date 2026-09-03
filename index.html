@@ -181,7 +181,8 @@
   .hole-title .hole-word { font-size: 0.667em; }
   .hole-title .hole-num { font-size: 30px; }
   .hole-title .hd-par { font-size: 13px; font-weight: 400; color: var(--ink-2); margin-left: 6px; }
-  .hole-title .hole-par-inline { margin-left: 4px; }
+  .hole-title .hole-par-inline { margin-left: 5ch; }
+  .hole-title .hole-par-num { font-size: 30px; }
   .nine-course-input {
     flex: 1 1 90px; min-width: 70px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
     border-radius: 7px; padding: 6px 9px; font-size: 13px; font-family: inherit;
@@ -200,7 +201,7 @@
     padding: 10px 12px; margin: 6px 0 8px;
     animation: readyBarFlash 1s ease-in-out infinite;
   }
-  .hole-ready-msg { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+  .hole-ready-msg { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.25; min-width: 0; }
   .hole-start-btn {
     flex: 0 0 auto; border: none; background: var(--turf); color: #fff;
     padding: 10px 16px; border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap;
@@ -987,7 +988,7 @@
       </div>
 
       <div class="hole-title-row">
-        <div class="hole-title">${nine} <span class="hole-word">Hole</span> <span class="hole-num">${holeNum}</span><span class="hole-par-inline">Par ${h.par}</span></div>
+        <div class="hole-title">${nine} <span class="hole-word">Hole</span> <span class="hole-num">${holeNum}</span><span class="hole-par-inline">Par <span class="hole-par-num">${h.par}</span></span></div>
         ${nineCourseField}
       </div>
 
