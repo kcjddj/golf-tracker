@@ -223,22 +223,26 @@
      shrink gracefully (never below a usable touch size) on short ones. */
   .cover-page { display: flex; flex-direction: column; gap: 14px; min-height: calc(100vh - var(--header-h, 82px) - 16px); }
   .cover-par-card { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-  .cover-par-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; gap: 0 10px; min-height: 0; }
+  .cover-par-grid { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: 1fr; gap: 0 10px; min-height: 0; }
   .cover-par-col-title {
     font-size: 15px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase;
     color: var(--ink-2); text-align: center; margin-bottom: 5px;
   }
-  .cover-par-col { display: flex; flex-direction: column; min-height: 0; }
-  .cover-hole-row { flex: 1; display: flex; align-items: stretch; gap: 4px; padding: 0; min-height: 34px; }
+  .cover-par-col { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .cover-hole-row { flex: 1; display: flex; align-items: stretch; gap: 4px; padding: 0; min-height: 34px; min-width: 0; }
   .cover-hole-row + .cover-hole-row { border-top: 1px solid var(--line); }
-  .cover-hole-label { flex: 0 0 30px; display: flex; align-items: center; font-size: 13px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
-  /* only 3,4,5 fit in view; Par 6 sits past the edge and is reached by scrolling the row */
+  .cover-hole-label { flex: 0 0 26px; display: flex; align-items: center; font-size: 13px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+  /* Width is entirely fluid (percentages of whatever space is actually left after the label), not a
+     fixed px guess — a fixed px minimum was exactly what caused real-device horizontal overflow here
+     before (the row simply couldn't shrink to fit an actual phone's width). 3 buttons' widths + the
+     2 gaps between them are sized to exactly fill the row; Par 6 (4th) extends past that and is
+     reached by scrolling. */
   .cover-hole-row .btn-row.compact {
-    flex: 0 0 168px; gap: 4px; align-items: stretch; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+    flex: 1 1 0; min-width: 0; gap: 4px; align-items: stretch; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
   }
   .cover-hole-row .btn-row.compact::-webkit-scrollbar { display: none; }
   .cover-hole-row .btn-row.compact .pill-btn {
-    flex: 0 0 52px; display: flex; align-items: center; justify-content: center; padding: 0; font-size: 15px;
+    flex: 0 0 calc((100% - 8px) / 3); display: flex; align-items: center; justify-content: center; padding: 0; font-size: 14px;
   }
   .cover-start-btn { flex: 0 0 auto; margin-top: 4px; }
 
