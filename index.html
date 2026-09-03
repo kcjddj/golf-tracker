@@ -181,15 +181,43 @@
   .hole-title .hole-word { font-size: 0.667em; }
   .hole-title .hole-num { font-size: 30px; }
   .hole-title .hd-par { font-size: 13px; font-weight: 400; color: var(--ink-2); margin-left: 6px; }
-  .hole-title-flash { animation: holeTitleFlash 1s ease-in-out infinite; }
-  @keyframes holeTitleFlash { 0%, 100% { color: var(--turf); } 50% { color: var(--flag); } }
+  .hole-title .hole-par-inline { margin-left: 4px; }
   .nine-course-input {
     flex: 1 1 90px; min-width: 70px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
     border-radius: 7px; padding: 6px 9px; font-size: 13px; font-family: inherit;
   }
   .nine-course-label { flex: 1 1 70px; min-width: 40px; font-size: 12.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* pins the 기록추가 flow's course-name field to the row's right edge without affecting 복기 mode's layout */
+  .nine-course-end { flex: 0 1 140px !important; margin-left: auto; }
+  .nine-course-end.nine-course-label { text-align: right; }
   .par-picker { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 6px; }
   .par-picker .lbl { font-size: 18px; font-weight: 800; color: var(--ink); }
+
+  /* ── hole "ready" bar: shown until 기록시작 is tapped, replaces the old per-hole Par picker ── */
+  .hole-ready-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--turf-wash); border: 1px solid var(--turf); border-radius: 10px;
+    padding: 10px 12px; margin: 6px 0 8px;
+    animation: readyBarFlash 1s ease-in-out infinite;
+  }
+  .hole-ready-msg { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+  .hole-start-btn {
+    flex: 0 0 auto; border: none; background: var(--turf); color: #fff;
+    padding: 10px 16px; border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  @keyframes readyBarFlash { 0%, 100% { background: var(--turf-wash); border-color: var(--turf); } 50% { background: var(--flag-wash); border-color: var(--flag); } }
+
+  /* ── 표지 (cover page): round info + per-hole Par planning, shown before Hole 1 ── */
+  .cover-info-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cover-date-input, .cover-course-input, .cover-nine-input {
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 7px; padding: 8px 10px; font-size: 15px; font-family: inherit; flex: 1 1 140px; min-width: 0;
+  }
+  .cover-nine-row { display: flex; gap: 8px; margin-top: 8px; }
+  .cover-hole-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .cover-hole-row + .cover-hole-row { border-top: 1px solid var(--line); }
+  .cover-hole-label { flex: 0 0 46px; font-size: 15px; font-weight: 700; color: var(--ink-2); }
+  .cover-start-btn { margin-top: 4px; }
 
   .cat-group { margin-bottom: 5px; }
   .cat-group.disabled { opacity: 0.45; }
@@ -673,8 +701,8 @@
   });
   function freshHole() {
     return {
-      par: 4,             // internal default used only to decide how many shot rows to lay out before Par is chosen
-      parChosen: false,   // gates shot/approach/putt rows: locked+unselected until the user taps a Par button
+      par: 4,          // internal default; kept in sync with live.parPlan[idx] on every render once the round starts
+      started: false,  // gates shot/approach/putt rows: locked+unselected until the user taps 기록시작
       rowValues: [null, null, null, null],
       approach: { pitching: null, bunker: null, penalty: null, chip: null },
       putt: null,
@@ -684,7 +712,12 @@
     };
   }
   function freshLiveState() {
-    return { course: "", courseFront: "", courseBack: "", date: todayISO(), currentHole: 0, holes: Array.from({ length: 18 }, freshHole) };
+    return {
+      course: "", courseFront: "", courseBack: "", date: todayISO(), currentHole: 0,
+      coverDone: false,                             // true once 라운드 시작 is tapped on the 표지 (cover) page
+      parPlan: Array.from({ length: 18 }, () => 4),  // per-hole Par, set on the cover page before play starts
+      holes: Array.from({ length: 18 }, freshHole),
+    };
   }
   function loadLive() {
     try {
@@ -693,9 +726,13 @@
         if (!raw.date) raw.date = todayISO();
         if (raw.courseFront == null) raw.courseFront = "";
         if (raw.courseBack == null) raw.courseBack = "";
+        // Rounds saved before the 표지/parPlan feature existed: skip the cover page (they're already
+        // mid-round) and derive a parPlan from whatever Par each hole already had.
+        if (raw.coverDone === undefined) raw.coverDone = true;
+        if (!Array.isArray(raw.parPlan) || raw.parPlan.length !== 18) raw.parPlan = raw.holes.map(h => h.par || 4);
         raw.holes.forEach(h => {
           if (!h.detail) h.detail = freshDetail();
-          if (h.parChosen === undefined) h.parChosen = h.saved || h.rowValues.some(v => v != null) || h.putt != null;
+          if (h.started === undefined) h.started = h.parChosen ?? (h.saved || h.rowValues.some(v => v != null) || h.putt != null);
         });
         return raw;
       }
@@ -785,7 +822,7 @@
       if (h.rowValues[rr] === "GR") { grRow = rr; break; }
     }
     const isPastGR = grRow !== -1 && r > grRow;
-    const mode = isPastGR ? "hard" : (opts.parLocked ? "hard" : (opts.pillLocked || false));
+    const mode = isPastGR ? "hard" : (opts.locked ? "hard" : (opts.pillLocked || false));
     return `<div class="cat-sub-row${isPastGR ? " disabled" : ""}">
       <span class="cat-sub-label">${shotRowLabel(h.par, r)}</span>
       ${renderBtnRow(rowOptions(r), isPastGR ? null : h.rowValues[r], mode, { kind: "shot", row: r }, false)}
@@ -793,7 +830,7 @@
   }
   function approachRowHTML(h, key, label, enabled, opts) {
     opts = opts || {};
-    const mode = !enabled ? "hard" : (opts.parLocked ? "hard" : (opts.pillLocked || false));
+    const mode = !enabled ? "hard" : (opts.locked ? "hard" : (opts.pillLocked || false));
     return `<div class="cat-sub-row">
       <span class="cat-sub-label">${label}</span>
       ${renderBtnRow([1, 2, 3, 4], h.approach[key], mode, { kind: "approach", sub: key })}
@@ -801,7 +838,7 @@
   }
   function puttRowHTML(h, opts) {
     opts = opts || {};
-    const mode = opts.parLocked ? "hard" : (opts.pillLocked || false);
+    const mode = opts.locked ? "hard" : (opts.pillLocked || false);
     return `<div class="cat-sub-row">
       <span class="cat-sub-label">퍼팅</span>
       ${renderBtnRow([0, 1, 2, 3, 4], h.putt, mode, { kind: "putt" }, true)}
@@ -810,18 +847,97 @@
 
   function renderAddPanel() {
     if (replayState) { renderReplayHolePage(replayState.holeIdx); return; }
+    if (!live.coverDone) { renderCoverPage(); return; }
     if (live.currentHole >= 18) renderSummaryPage();
     else renderHolePage(live.currentHole);
   }
 
+  // ── 표지 (cover page): round info + per-hole Par planning, shown once before Hole 1 ──
+  function coverHoleRowHTML(idx) {
+    const label = idx < 9 ? idx + 1 : idx - 9 + 1;
+    return `<div class="cover-hole-row">
+      <span class="cover-hole-label">${label}번</span>
+      ${renderBtnRow([3, 4, 5, 6], live.parPlan[idx], false, { kind: "coverPar", idx }, true)}
+    </div>`;
+  }
+  function renderCoverPage() {
+    document.getElementById("panel-add").innerHTML = `
+      <div class="card">
+        <div class="card-title">라운드 정보</div>
+        <div class="cover-info-grid">
+          <input type="date" id="coverDate" class="cover-date-input" value="${live.date || todayISO()}">
+          <input type="text" id="coverCourse" class="cover-course-input" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">
+        </div>
+        <div class="cover-nine-row">
+          <input type="text" id="coverCourseFront" class="cover-nine-input" placeholder="전반 코스명" lang="ko" inputmode="text" value="${esc(live.courseFront)}">
+          <input type="text" id="coverCourseBack" class="cover-nine-input" placeholder="후반 코스명" lang="ko" inputmode="text" value="${esc(live.courseBack)}">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">전반 Par</div>
+        ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i)).join("")}
+      </div>
+
+      <div class="card">
+        <div class="card-title">후반 Par</div>
+        ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i + 9)).join("")}
+      </div>
+
+      <button type="button" class="save-btn cover-start-btn" id="coverStartBtn">라운드 시작</button>
+    `;
+    document.getElementById("liveBottomBar").innerHTML = "";
+    updateBottomBarVisibility();
+    attachCoverHandlers();
+  }
+  function attachCoverHandlers() {
+    const panel = document.getElementById("panel-add");
+
+    const dateInput = document.getElementById("coverDate");
+    dateInput.addEventListener("change", e => {
+      live.date = e.target.value || todayISO();
+      persistLive();
+      renderHeaderDate();
+    });
+
+    const courseInput = document.getElementById("coverCourse");
+    courseInput.addEventListener("input", e => { live.course = e.target.value; persistLive(); });
+    blurOnEnter(courseInput);
+
+    const frontInput = document.getElementById("coverCourseFront");
+    frontInput.addEventListener("input", e => { live.courseFront = e.target.value; persistLive(); });
+    blurOnEnter(frontInput);
+
+    const backInput = document.getElementById("coverCourseBack");
+    backInput.addEventListener("input", e => { live.courseBack = e.target.value; persistLive(); });
+    blurOnEnter(backInput);
+
+    panel.querySelectorAll('.pill-btn[data-kind="coverPar"]').forEach(btn => {
+      btn.addEventListener("click", () => {
+        live.parPlan[+btn.dataset.idx] = +btn.dataset.val;
+        persistLive();
+        renderCoverPage();
+      });
+    });
+
+    document.getElementById("coverStartBtn").addEventListener("click", () => {
+      live.coverDone = true;
+      persistLive();
+      renderAddPanel();
+      window.scrollTo(0, 0);
+    });
+  }
+
   function renderHolePage(idx) {
     const h = live.holes[idx];
+    h.par = live.parPlan[idx] || h.par || 4; // Par is fixed on the 표지 (cover page); keep the hole in sync with it
     const nine = idx < 9 ? "전반" : "후반";
     const holeNum = idx < 9 ? idx + 1 : idx - 9 + 1;
     const nineKey = idx < 9 ? "courseFront" : "courseBack";
     const isNineFirst = idx === 0 || idx === 9;
     const editingThisHole = !!(editState && editState.idx === idx);
     const softLocked = !!h.saved && !editingThisHole;
+    const showReadyBar = !h.started && !softLocked;
 
     const savedHoles = live.holes.filter(x => x.saved);
     const total = sum(savedHoles.map(x => x.result.score));
@@ -831,17 +947,20 @@
     const frontRaw = sum(live.holes.slice(0, 9).filter(x => x.saved).map(x => x.result.rawStrokes));
     const backRaw  = sum(live.holes.slice(9, 18).filter(x => x.saved).map(x => x.result.rawStrokes));
 
-    const rowOpts = { pillLocked: softLocked ? "soft" : false, parLocked: !h.parChosen };
+    const rowOpts = { pillLocked: softLocked ? "soft" : false, locked: !h.started };
     const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r, rowOpts)).join("");
     const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"], ["penalty", "벌타"]]
       .map(([k, l]) => approachRowHTML(h, k, l, true, rowOpts)).join("");
     const isLast = idx === 17;
-    const liveResult = h.parChosen ? computeHoleResult(h) : null;
+    const liveResult = h.started ? computeHoleResult(h) : null;
     const holeScoreText = liveResult ? fmtScore(liveResult.rawStrokes, liveResult.score) : "—";
 
     const nineCourseField = isNineFirst
-      ? `<input type="text" id="nineCourseInput" class="nine-course-input" placeholder="코스명" lang="ko" inputmode="text" value="${esc(live[nineKey])}">`
-      : (live[nineKey] ? `<span class="nine-course-label">${esc(live[nineKey])}</span>` : "");
+      ? `<input type="text" id="nineCourseInput" class="nine-course-input nine-course-end" placeholder="코스명" lang="ko" inputmode="text" value="${esc(live[nineKey])}">`
+      : (live[nineKey] ? `<span class="nine-course-label nine-course-end">${esc(live[nineKey])}</span>` : "");
+
+    const prevPar = idx > 0 ? live.parPlan[idx - 1] : null;
+    const readyMsg = (idx > 0 ? `지난홀 ${idx}번홀 파 ${prevPar}, ` : "") + `이번홀 ${idx + 1}번홀 파 ${h.par}`;
 
     document.getElementById("panel-add").innerHTML = `
       <div class="live-header">
@@ -854,13 +973,15 @@
       </div>
 
       <div class="hole-title-row">
-        <div class="hole-title${!h.parChosen ? " hole-title-flash" : ""}">${nine} <span class="hole-word">Hole</span> <span class="hole-num">${holeNum}</span></div>
+        <div class="hole-title">${nine} <span class="hole-word">Hole</span> <span class="hole-num">${holeNum}</span><span class="hole-par-inline">Par ${h.par}</span></div>
         ${nineCourseField}
-        <div class="par-picker">
-          <span class="lbl">Par</span>
-          ${renderBtnRow([3, 4, 5, 6], h.parChosen ? h.par : null, softLocked ? "soft" : false, { kind: "par" }, true)}
-        </div>
       </div>
+
+      ${showReadyBar ? `
+      <div class="hole-ready-bar">
+        <span class="hole-ready-msg">${readyMsg}</span>
+        <button type="button" class="hole-start-btn" id="holeStartBtn">기록시작</button>
+      </div>` : ""}
 
       <div class="cat-group">${shotRows}</div>
 
@@ -872,7 +993,7 @@
       <div class="next-row">
         <button class="prev-btn" id="holePrevBtn" ${idx === 0 ? "disabled" : ""}>이전 홀</button>
         <span class="bottom-score">score<span class="num">${holeScoreText}</span></span>
-        <button class="next-btn" id="holeNextBtn" ${h.parChosen ? "" : "disabled"}>${isLast ? "라운드 종료" : "다음 홀"}</button>
+        <button class="next-btn" id="holeNextBtn" ${h.started ? "" : "disabled"}>${isLast ? "라운드 종료" : "다음 홀"}</button>
       </div>
     `;
     updateBottomBarVisibility();
@@ -907,6 +1028,16 @@
       blurOnEnter(nineCourseInput);
     }
 
+    const holeStartBtn = document.getElementById("holeStartBtn");
+    if (holeStartBtn) {
+      holeStartBtn.addEventListener("click", () => {
+        h.started = true;
+        h.rowValues = ["FW", "FW", "FW", "GR"];
+        persistLive();
+        renderHolePage(idx);
+      });
+    }
+
     panel.querySelectorAll(".pill-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const kind = btn.dataset.kind, val = btn.dataset.val;
@@ -916,12 +1047,7 @@
         }
         let focusApproachSub = null;
         let puttActivated = false;
-        if (kind === "par") {
-          const firstChoice = !h.parChosen;
-          h.par = +val;
-          h.parChosen = true;
-          if (firstChoice) h.rowValues = ["FW", "FW", "FW", "GR"];
-        } else if (kind === "shot") {
+        if (kind === "shot") {
           const r = +btn.dataset.row;
           h.rowValues[r] = val;
           if (r === 3 && val === "BK") { h.approach.bunker = 1; h.approach.pitching = null; h.approach.chip = null; }
@@ -1967,7 +2093,7 @@
   // fixed position never gets scoped to an ancestor mid-transition; visibility is driven here.
   function updateBottomBarVisibility() {
     const onAddTab = document.getElementById("panel-add").classList.contains("active");
-    const onHolePage = !!replayState || live.currentHole < 18;
+    const onHolePage = !!replayState || (live.coverDone && live.currentHole < 18);
     document.getElementById("liveBottomBar").classList.toggle("show", onAddTab && onHolePage);
   }
   function switchTab(name) {
