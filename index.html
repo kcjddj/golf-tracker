@@ -218,14 +218,18 @@
 
   .cover-par-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
   .cover-par-col-title {
-    font-size: 13px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
-    color: var(--ink-2); text-align: center; margin-bottom: 6px;
+    font-size: 15px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase;
+    color: var(--ink-2); text-align: center; margin-bottom: 5px;
   }
   .cover-hole-row { display: flex; align-items: center; gap: 4px; padding: 3px 0; }
   .cover-hole-row + .cover-hole-row { border-top: 1px solid var(--line); }
-  .cover-hole-label { flex: 0 0 32px; font-size: 13px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
-  .cover-hole-row .btn-row.compact { gap: 3px; }
-  .cover-hole-row .btn-row.compact .pill-btn { flex: 0 0 34px; padding: 7px 0; font-size: 13px; }
+  .cover-hole-label { flex: 0 0 30px; font-size: 13px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+  /* only 3,4,5 fit in view; Par 6 sits past the edge and is reached by scrolling the row */
+  .cover-hole-row .btn-row.compact {
+    flex: 0 0 144px; gap: 4px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .cover-hole-row .btn-row.compact::-webkit-scrollbar { display: none; }
+  .cover-hole-row .btn-row.compact .pill-btn { flex: 0 0 45px; padding: 6px 0; font-size: 14px; }
   .cover-start-btn { margin-top: 4px; }
 
   .cat-group { margin-bottom: 5px; }
