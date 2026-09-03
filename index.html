@@ -197,16 +197,18 @@
   .sc-total-score { font-size: 21px; font-weight: 700; }
   .sc-total-sub { font-size: 12.5px; color: var(--muted); }
 
-  .sc-list-view { margin-top: 4px; }
-  .sc-list-section + .sc-list-section { margin-top: 10px; }
-  .sc-list-title { font-size: 15px; font-weight: 800; color: var(--ink-2); margin-bottom: 2px; }
-  .sc-list-row { display: flex; align-items: center; gap: 10px; padding: 7px 2px; border-bottom: 1px solid var(--line); }
-  .sc-list-hole { flex: 0 0 46px; font-size: 15px; font-weight: 700; color: var(--turf); }
+  /* Two columns side by side (전반 left, 후반 right) so hole 10 lands next to hole 1 instead of
+     below hole 9 — matches how the info row already puts 전반/후반 코스명 side by side above it. */
+  .sc-list-view { display: flex; gap: 10px; margin-top: 6px; }
+  .sc-list-section { flex: 1 1 0; min-width: 0; }
+  .sc-list-row { display: flex; align-items: center; gap: 6px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .sc-list-hole { flex: 0 0 38px; font-size: 14px; font-weight: 700; color: var(--turf); }
   .sc-list-row .sc-par-select {
-    flex: 0 0 64px; width: auto; border: 1px solid var(--line); background: var(--paper);
-    border-radius: 7px; padding: 8px 4px;
+    flex: 0 0 52px; width: auto; border: 1px solid var(--line); background: var(--paper);
+    border-radius: 7px; padding: 8px 2px;
   }
   .sc-list-row .sc-score-cell { flex: 1 1 auto; border-radius: 7px; }
+  .sc-rotate-hint { margin-top: 14px; }
 
   .scorecard-table-wrap { display: none; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
   .scorecard-table { border-collapse: collapse; width: 100%; table-layout: fixed; }
@@ -226,28 +228,31 @@
   .scorecard-round-actions { display: flex; justify-content: center; margin: 18px 0 4px; }
   .scorecard-finish-btn { max-width: 260px; }
 
-  /* Landscape: swap in the wide table (with 합계 columns) over the vertical list, and size
-     everything up a lot — landscape has plenty of spare width/height now that the header is gone. */
+  /* Landscape: swap in the wide table (with 합계 columns) over the vertical list, sized up since
+     landscape has plenty of spare width — but height is scarce (short rotated viewport), so keep
+     vertical padding tight everywhere to avoid the page overflowing top-to-bottom. */
   @media (orientation: landscape) {
+    main { padding: 4px 10px; }
     .sc-info-portrait { display: none; }
     .sc-info-landscape { display: flex; align-items: center; gap: 10px; }
     .sc-info-landscape .sc-date-input, .sc-info-landscape .sc-course-input, .sc-info-landscape .sc-nine-input {
-      font-size: 19px; padding: 10px 12px;
+      font-size: 17px; padding: 6px 10px;
     }
-    .sc-info-landscape .sc-date-input { width: 168px; }
-    .sc-info-landscape .sc-course-input { width: 170px; flex: 1 1 130px; }
-    .sc-info-landscape .sc-nine-input { width: 150px; flex: 1 1 110px; }
-    .sc-info-landscape .sc-total-score { font-size: 32px; }
-    .sc-info-landscape .sc-total-sub { font-size: 17px; }
+    .sc-info-landscape .sc-date-input { width: 154px; }
+    .sc-info-landscape .sc-course-input { width: 160px; flex: 1 1 120px; }
+    .sc-info-landscape .sc-nine-input { width: 140px; flex: 1 1 100px; }
+    .sc-info-landscape .sc-total-score { font-size: 27px; }
+    .sc-info-landscape .sc-total-sub { font-size: 15px; }
     .sc-list-view { display: none; }
-    .scorecard-table-wrap { display: block; }
-    .scorecard-table .sc-row-label { font-size: 18px; width: 70px; min-width: 70px; padding: 12px 6px; }
-    .scorecard-table th.sc-hole-num { font-size: 22px; padding: 12px 4px; min-width: 56px; }
-    .scorecard-table .sc-total-col { font-size: 18px; }
-    .sc-par-select { font-size: 20px; padding: 12px 0; }
-    .sc-score-cell { font-size: 24px; padding: 14px 4px; }
-    .scorecard-round-actions { margin: 24px 0 8px; }
-    .scorecard-finish-btn { max-width: 320px; font-size: 22px; padding: 20px; }
+    .sc-rotate-hint { display: none; }
+    .scorecard-table-wrap { display: block; margin-top: 5px; }
+    .scorecard-table .sc-row-label { font-size: 16px; width: 66px; min-width: 66px; padding: 6px 6px; }
+    .scorecard-table th.sc-hole-num { font-size: 19px; padding: 6px 4px; min-width: 50px; }
+    .scorecard-table .sc-total-col { font-size: 16px; }
+    .sc-par-select { font-size: 17px; padding: 6px 0; }
+    .sc-score-cell { font-size: 20px; padding: 8px 4px; }
+    .scorecard-round-actions { margin: 10px 0 4px; }
+    .scorecard-finish-btn { max-width: 300px; font-size: 18px; padding: 12px; }
   }
 
   .cat-group { margin-bottom: 5px; }
@@ -876,7 +881,7 @@
     const rawSum = sum(saved9.map(h => h.result.rawStrokes));
     return { parSum, text: saved9.length ? fmtScoreZ(rawSum, diffSum) : "-" };
   }
-  function scHoleListSectionHTML(startIdx, title) {
+  function scHoleListSectionHTML(startIdx) {
     const rows = Array.from({ length: 9 }, (_, i) => {
       const idx = startIdx + i;
       return `<div class="sc-list-row">
@@ -885,7 +890,7 @@
         ${scScoreCellHTML(idx, "span")}
       </div>`;
     }).join("");
-    return `<div class="sc-list-section"><div class="sc-list-title">${title}</div>${rows}</div>`;
+    return `<div class="sc-list-section">${rows}</div>`;
   }
   function scHoleTableHTML(startIdx) {
     const idxs = Array.from({ length: 9 }, (_, i) => startIdx + i);
@@ -930,8 +935,8 @@
       <div class="sc-info-landscape">${dateField}${courseField}${frontField}${backField}${totalHTML}</div>
 
       <div class="sc-list-view">
-        ${scHoleListSectionHTML(0, "전반")}
-        ${scHoleListSectionHTML(9, "후반")}
+        ${scHoleListSectionHTML(0)}
+        ${scHoleListSectionHTML(9)}
       </div>
 
       ${scHoleTableHTML(0)}
@@ -940,6 +945,7 @@
       <div class="scorecard-round-actions">
         <button type="button" class="save-btn scorecard-finish-btn" id="scFinishBtn">라운드 종료</button>
       </div>
+      <div class="hint sc-rotate-hint">가로모드로 보려면 화면을 돌리세요</div>
     `;
     document.getElementById("liveBottomBar").innerHTML = "";
     updateBottomBarVisibility();
