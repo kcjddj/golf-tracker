@@ -217,21 +217,30 @@
   .cover-course-input::placeholder, .cover-nine-input::placeholder { color: var(--ink); opacity: 1; }
   .cover-nine-row { display: flex; gap: 8px; margin-top: 8px; }
 
-  .cover-par-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  /* Fills whatever vertical space the real device actually has (rather than a fixed px guess that
+     only matched one test window) — the Par card grows via flex:1 to the bottom of the viewport,
+     and each of its 9 rows shares that grown height equally, so buttons scale up on tall phones and
+     shrink gracefully (never below a usable touch size) on short ones. */
+  .cover-page { display: flex; flex-direction: column; gap: 14px; min-height: calc(100vh - var(--header-h, 82px) - 16px); }
+  .cover-par-card { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .cover-par-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; gap: 0 10px; min-height: 0; }
   .cover-par-col-title {
     font-size: 15px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase;
     color: var(--ink-2); text-align: center; margin-bottom: 5px;
   }
-  .cover-hole-row { display: flex; align-items: center; gap: 4px; padding: 3px 0; }
+  .cover-par-col { display: flex; flex-direction: column; min-height: 0; }
+  .cover-hole-row { flex: 1; display: flex; align-items: stretch; gap: 4px; padding: 0; min-height: 34px; }
   .cover-hole-row + .cover-hole-row { border-top: 1px solid var(--line); }
-  .cover-hole-label { flex: 0 0 30px; font-size: 13px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+  .cover-hole-label { flex: 0 0 30px; display: flex; align-items: center; font-size: 13px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
   /* only 3,4,5 fit in view; Par 6 sits past the edge and is reached by scrolling the row */
   .cover-hole-row .btn-row.compact {
-    flex: 0 0 144px; gap: 4px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+    flex: 0 0 168px; gap: 4px; align-items: stretch; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
   }
   .cover-hole-row .btn-row.compact::-webkit-scrollbar { display: none; }
-  .cover-hole-row .btn-row.compact .pill-btn { flex: 0 0 45px; padding: 6px 0; font-size: 14px; }
-  .cover-start-btn { margin-top: 4px; }
+  .cover-hole-row .btn-row.compact .pill-btn {
+    flex: 0 0 52px; display: flex; align-items: center; justify-content: center; padding: 0; font-size: 15px;
+  }
+  .cover-start-btn { flex: 0 0 auto; margin-top: 4px; }
 
   .cat-group { margin-bottom: 5px; }
   .cat-group.disabled { opacity: 0.45; }
@@ -875,31 +884,33 @@
   }
   function renderCoverPage() {
     document.getElementById("panel-add").innerHTML = `
-      <div class="card">
-        <div class="cover-info-grid">
-          <input type="date" id="coverDate" class="cover-date-input" value="${live.date || todayISO()}">
-          <input type="text" id="coverCourse" class="cover-course-input" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">
-        </div>
-        <div class="cover-nine-row">
-          <input type="text" id="coverCourseFront" class="cover-nine-input" placeholder="전반 코스명" lang="ko" inputmode="text" value="${esc(live.courseFront)}">
-          <input type="text" id="coverCourseBack" class="cover-nine-input" placeholder="후반 코스명" lang="ko" inputmode="text" value="${esc(live.courseBack)}">
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="cover-par-grid">
-          <div class="cover-par-col">
-            <div class="cover-par-col-title">전반홀 Par</div>
-            ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i)).join("")}
+      <div class="cover-page">
+        <div class="card">
+          <div class="cover-info-grid">
+            <input type="date" id="coverDate" class="cover-date-input" value="${live.date || todayISO()}">
+            <input type="text" id="coverCourse" class="cover-course-input" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">
           </div>
-          <div class="cover-par-col">
-            <div class="cover-par-col-title">후반홀 Par</div>
-            ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i + 9)).join("")}
+          <div class="cover-nine-row">
+            <input type="text" id="coverCourseFront" class="cover-nine-input" placeholder="전반 코스명" lang="ko" inputmode="text" value="${esc(live.courseFront)}">
+            <input type="text" id="coverCourseBack" class="cover-nine-input" placeholder="후반 코스명" lang="ko" inputmode="text" value="${esc(live.courseBack)}">
           </div>
         </div>
-      </div>
 
-      <button type="button" class="save-btn cover-start-btn" id="coverStartBtn">라운드 시작</button>
+        <div class="card cover-par-card">
+          <div class="cover-par-grid">
+            <div class="cover-par-col">
+              <div class="cover-par-col-title">전반홀 Par</div>
+              ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i)).join("")}
+            </div>
+            <div class="cover-par-col">
+              <div class="cover-par-col-title">후반홀 Par</div>
+              ${Array.from({ length: 9 }, (_, i) => coverHoleRowHTML(i + 9)).join("")}
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="save-btn cover-start-btn" id="coverStartBtn">라운드 시작</button>
+      </div>
     `;
     document.getElementById("liveBottomBar").innerHTML = "";
     updateBottomBarVisibility();
