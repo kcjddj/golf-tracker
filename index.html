@@ -255,11 +255,14 @@
   }
   .sc-score-cell { padding: 4px 2px; font-size: 25px; font-weight: 700; cursor: pointer; color: var(--ink); }
   .sc-score-cell:active { opacity: 0.75; }
-  /* 가로모드로 보기 (portrait) / 세로모드로 보기 (landscape) sit to the left of 라운드 종료, one always
+  /* 가로모드로 고정 (portrait) / 세로모드로 고정 (landscape) sit to the left of 라운드 종료, one always
      hidden depending on current orientation (only one "switch to the other mode" button makes
-     sense at a time) — replaces the old rotate-hint text entirely. Clicking either requests/exits
-     fullscreen and locks/unlocks the real screen orientation, which is what actually makes
-     @media(orientation:landscape) flip — no separate "force" CSS path needed. */
+     sense at a time) — replaces the old rotate-hint text entirely. Clicking either requests
+     fullscreen (required by most mobile browsers for orientation lock to work at all) then locks
+     the real screen orientation, which is what actually makes @media(orientation:landscape) flip —
+     no separate "force" CSS path needed. Both explicitly *lock* (not unlock) their target
+     orientation, since the phone is normally still held sideways when 세로모드로 고정 is tapped —
+     unlocking alone would just fall back to the sensor reading, which is still landscape. */
   .scorecard-round-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 12px 0 4px; }
   /* button.scorecard-finish-btn (element+class), not just .scorecard-finish-btn — .save-btn's own
      width:100% is defined later in the file and has equal specificity as a bare class selector,
@@ -275,7 +278,7 @@
      landscape has plenty of spare width — but height is scarce (short rotated viewport), so keep
      vertical padding tight everywhere to avoid the page overflowing top-to-bottom. */
   @media (orientation: landscape) {
-    main { padding: 8px 10px; }
+    main { padding: 4px 10px; }
     .sc-info-portrait { display: none; }
     .sc-info-landscape { display: flex; align-items: center; gap: 10px; }
     .sc-info-landscape .sc-date-input, .sc-info-landscape .sc-course-input, .sc-info-landscape .sc-nine-input {
@@ -287,14 +290,14 @@
     .sc-info-landscape .sc-total-score { font-size: 30px; }
     .sc-info-landscape .sc-total-sub { font-size: 17px; }
     .sc-list-view { display: none; }
-    .scorecard-table-wrap { display: block; margin-top: 8px; }
+    .scorecard-table-wrap { display: block; margin-top: 4px; }
     .scorecard-table .sc-row-label { font-size: 18px; width: 70px; min-width: 70px; padding: 9px 6px; }
     .scorecard-table th.sc-hole-num { font-size: 22px; padding: 9px 4px; min-width: 52px; }
     .scorecard-table .sc-total-col { font-size: 18px; }
     .sc-par-select { font-size: 19px; padding: 9px 0; }
     .sc-score-cell { font-size: 23px; padding: 11px 4px; }
-    .scorecard-round-actions { justify-content: center; margin: 18px 0 8px; }
-    button.scorecard-finish-btn { width: 100%; max-width: 320px; font-size: 20px; padding: 16px; }
+    .scorecard-round-actions { justify-content: center; margin: 8px 0 4px; }
+    button.scorecard-finish-btn { width: 100%; max-width: 320px; font-size: 18px; padding: 11px; }
     .sc-landscape-btn { display: none; }
     .sc-portrait-btn { display: inline-block; }
   }
@@ -1011,8 +1014,8 @@
       ${scHoleTableHTML(9)}
 
       <div class="scorecard-round-actions">
-        <button type="button" class="sc-orient-btn sc-landscape-btn" id="scLandscapeBtn">가로모드로 보기</button>
-        <button type="button" class="sc-orient-btn sc-portrait-btn" id="scPortraitBtn">세로모드로 보기</button>
+        <button type="button" class="sc-orient-btn sc-landscape-btn" id="scLandscapeBtn">가로모드로 고정</button>
+        <button type="button" class="sc-orient-btn sc-portrait-btn" id="scPortraitBtn">세로모드로 고정</button>
         <button type="button" class="save-btn scorecard-finish-btn" id="scFinishBtn">라운드 종료</button>
       </div>
     `;
@@ -1089,11 +1092,14 @@
     });
 
     document.getElementById("scPortraitBtn").addEventListener("click", async () => {
-      // Reverse of scLandscapeBtn — unlock orientation and drop fullscreen so the phone (and this
-      // page's real @media(orientation:...) rules) go back to normal portrait behavior.
+      // NOT just unlock() — if the phone is still physically held sideways (the normal case,
+      // since the user got here via 가로모드로 고정), unlocking just falls back to the sensor's
+      // current reading, which is still landscape, so nothing would visibly change. Explicitly
+      // locking to "portrait" forces the view back regardless of how the phone is actually held,
+      // mirroring scLandscapeBtn exactly.
       try {
-        if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
-        if (document.fullscreenElement) await document.exitFullscreen();
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+        if (screen.orientation && screen.orientation.lock) await screen.orientation.lock("portrait");
       } catch (e) { /* unsupported on this browser/OS — nothing further to do */ }
     });
   }
