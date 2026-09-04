@@ -110,6 +110,15 @@
   .hdr-title { text-align: center; font-size: 26px; font-weight: 800; color: var(--turf); margin: 2px 0 6px; }
   .hdr-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 
+  /* 현재 스코어 lives here now (moved out of the portrait info row — see .sc-info-portrait-row1 —
+     since the bigger fonts from a prior pass made it wrap onto its own line there, pushing 라운드
+     종료 down). Centered in the space between the icons and the HCP chip, sized to fit this row's
+     existing 34px icon-button height rather than at its larger scorecard-page size. */
+  .hdr-row .sc-total { flex: 1 1 auto; justify-content: center; margin-left: 0; }
+  .hdr-row .sc-total-score { font-size: 19px; }
+  .hdr-row .sc-total-sub { font-size: 12.5px; }
+  .hdr-row .sc-score-toggle { font-size: 12.5px; padding: 3px 9px; }
+
   .hcp-chip { flex: 0 0 auto; margin-left: auto; display: flex; align-items: baseline; gap: 5px; }
   .hcp-chip-inner {
     display: flex; align-items: baseline; gap: 4px;
@@ -145,7 +154,7 @@
   }
   nav.tabs button.active { background: var(--turf); color: #fff; border-color: var(--turf); }
 
-  main { max-width: 560px; margin: 0 auto; padding: 8px 10px; }
+  main { max-width: 560px; margin: 0 auto; padding: 8px 20px; }
   /* Rotate the phone to landscape → hide the header entirely so the scorecard gets the whole screen.
      Portrait keeps the normal header + tabs; landscape is a dedicated full-screen scorecard view. */
   @media (orientation: landscape) {
@@ -229,7 +238,6 @@
      black-on-light in light mode (both vars are already theme-aware, no new colors needed). */
   .sc-list-row.sc-unsaved { background: var(--paper-alt); }
   .sc-list-row.sc-unsaved .sc-par-select { background: var(--line); }
-  .sc-rotate-hint { margin: 10px 0 6px; font-size: 15px; }
 
   .scorecard-table-wrap { display: none; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
   .scorecard-table { border-collapse: collapse; width: 100%; table-layout: fixed; }
@@ -246,11 +254,15 @@
   }
   .sc-score-cell { padding: 4px 2px; font-size: 25px; font-weight: 700; cursor: pointer; color: var(--ink); }
   .sc-score-cell:active { opacity: 0.75; }
-  /* Rotate-hint moved into this same row (left side) so 라운드 종료 — now roughly half its old
-     size, right-aligned rather than a full-width bar — doesn't leave the freed-up space empty. */
-  .scorecard-round-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 12px 0 4px; }
-  .scorecard-round-actions .sc-rotate-hint { flex: 1 1 auto; text-align: left; margin: 0; }
-  .scorecard-finish-btn { flex: 0 0 auto; width: auto; padding: 9px 18px; font-size: 14px; border-radius: 9px; }
+  /* 가로모드로 보기 sits to the left of 라운드 종료 (both roughly half-size, auto-width) — replaces
+     the old rotate-hint text entirely; clicking it requests fullscreen + locks screen orientation
+     to landscape (see landscapeViewBtn handler), which is what actually makes the real
+     @media(orientation:landscape) rules kick in — no separate "force" CSS path needed. */
+  .scorecard-round-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 12px 0 4px; }
+  .scorecard-finish-btn, .sc-landscape-btn { flex: 0 0 auto; width: auto; padding: 9px 18px; font-size: 14px; border-radius: 9px; }
+  .sc-landscape-btn {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-2); font-weight: 700; cursor: pointer;
+  }
 
   /* Landscape: swap in the wide table (with 합계 columns) over the vertical list, sized up since
      landscape has plenty of spare width — but height is scarce (short rotated viewport), so keep
@@ -268,7 +280,6 @@
     .sc-info-landscape .sc-total-score { font-size: 27px; }
     .sc-info-landscape .sc-total-sub { font-size: 15px; }
     .sc-list-view { display: none; }
-    .sc-rotate-hint { display: none; }
     .scorecard-table-wrap { display: block; margin-top: 5px; }
     .scorecard-table .sc-row-label { font-size: 16px; width: 66px; min-width: 66px; padding: 6px 6px; }
     .scorecard-table th.sc-hole-num { font-size: 19px; padding: 6px 4px; min-width: 50px; }
@@ -277,6 +288,7 @@
     .sc-score-cell { font-size: 20px; padding: 8px 4px; }
     .scorecard-round-actions { justify-content: center; margin: 10px 0 4px; }
     .scorecard-finish-btn { width: 100%; max-width: 300px; font-size: 18px; padding: 12px; }
+    .sc-landscape-btn { display: none; }
   }
 
   .cat-group { margin-bottom: 5px; }
@@ -578,6 +590,7 @@
   <div class="hdr-row">
     <button type="button" class="theme-toggle" id="refreshBtn" aria-label="새로고침" title="최신 버전으로 새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button>
     <button type="button" class="theme-toggle" id="themeToggle" aria-label="다크모드 전환"></button>
+    <div class="sc-total" id="hdrTotal"></div>
     <div class="hcp-chip"><div class="hcp-chip-inner"><span class="lbl">HCP</span><span class="val" id="hdrHcp">—</span></div></div>
   </div>
   <nav class="tabs">
@@ -958,24 +971,28 @@
     const frontRaw = sum(live.holes.slice(0, 9).filter(h => h.saved).map(h => h.result.rawStrokes));
     const backRaw  = sum(live.holes.slice(9, 18).filter(h => h.saved).map(h => h.result.rawStrokes));
 
-    const totalHTML = `
-      <div class="sc-total">
+    // Inner content only (no wrapping div) — reused both inline (wrapped in its own .sc-total
+    // div in the landscape info row) and dropped straight into the header's #hdrTotal, which
+    // already carries the .sc-total class itself (see 현재 스코어 relocation note in the CSS).
+    const totalInner = `
         <button type="button" class="score-toggle sc-score-toggle" title="점수 표기 전환">${scoreNotation === "total" ? "73" : "E"}</button>
         <span class="sc-total-score">${fmtScore(totalRaw, total)}</span>
-        <span class="sc-total-sub">(전${fmtScore(frontRaw, front)}/후${fmtScore(backRaw, back)})</span>
-      </div>`;
+        <span class="sc-total-sub">(전${fmtScore(frontRaw, front)}/후${fmtScore(backRaw, back)})</span>`;
     const dateField = `<input type="date" class="sc-date-input" data-field="date" value="${live.date || todayISO()}">`;
     const courseField = `<input type="text" class="sc-course-input" data-field="course" placeholder="골프장명" lang="ko" inputmode="text" value="${esc(live.course)}">`;
     const frontField = `<input type="text" class="sc-nine-input" data-field="courseFront" placeholder="전반 코스명" lang="ko" inputmode="text" value="${esc(live.courseFront)}">`;
     const backField = `<input type="text" class="sc-nine-input" data-field="courseBack" placeholder="후반 코스명" lang="ko" inputmode="text" value="${esc(live.courseBack)}">`;
 
+    const hdrTotal = document.getElementById("hdrTotal");
+    if (hdrTotal) hdrTotal.innerHTML = totalInner;
+
     document.getElementById("panel-add").innerHTML = `
       <div class="sc-info-portrait">
-        <div class="sc-info-portrait-row1">${dateField}${courseField}${totalHTML}</div>
+        <div class="sc-info-portrait-row1">${dateField}${courseField}</div>
         <div class="sc-info-portrait-row2">${frontField}${backField}</div>
       </div>
 
-      <div class="sc-info-landscape">${dateField}${courseField}${frontField}${backField}${totalHTML}</div>
+      <div class="sc-info-landscape">${dateField}${courseField}${frontField}${backField}<div class="sc-total">${totalInner}</div></div>
 
       <div class="sc-list-view">
         ${scHoleListSectionHTML(0)}
@@ -986,7 +1003,7 @@
       ${scHoleTableHTML(9)}
 
       <div class="scorecard-round-actions">
-        <div class="hint sc-rotate-hint">가로모드로 보려면 화면을 돌리세요</div>
+        <button type="button" class="sc-landscape-btn" id="scLandscapeBtn">가로모드로 보기</button>
         <button type="button" class="save-btn scorecard-finish-btn" id="scFinishBtn">라운드 종료</button>
       </div>
     `;
@@ -1016,7 +1033,8 @@
       blurOnEnter(inp);
     });
 
-    panel.querySelectorAll(".sc-score-toggle").forEach(btn => {
+    // document-wide, not panel-scoped: #hdrTotal's copy of this button lives in <header>, outside #panel-add.
+    document.querySelectorAll(".sc-score-toggle").forEach(btn => {
       btn.addEventListener("click", () => {
         scoreNotation = scoreNotation === "total" ? "diff" : "total";
         saveScoreNotation();
@@ -1048,6 +1066,17 @@
         renderAddPanel();
         renderAnalysis(); renderRoundLog(); renderHeaderHcp();
       });
+    });
+
+    document.getElementById("scLandscapeBtn").addEventListener("click", async () => {
+      // Actually flips window.innerWidth/innerHeight so the real @media(orientation:landscape)
+      // rules apply — not a fake CSS override — but most mobile browsers only allow an
+      // orientation lock while the page is fullscreen, and iOS Safari doesn't support the API
+      // at all, so this can silently no-op there; nothing to do on failure but let it be.
+      try {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+        if (screen.orientation && screen.orientation.lock) await screen.orientation.lock("landscape");
+      } catch (e) { /* unsupported on this browser/OS — nothing further to do */ }
     });
   }
 
