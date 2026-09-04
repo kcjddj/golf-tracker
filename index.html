@@ -227,8 +227,8 @@
   /* Whole row (not just the 타수 cell) flagged for any hole that hasn't been entered yet —
      ink-colored fill with paper-colored text, so it's white-on-dark in dark mode and
      black-on-light in light mode (both vars are already theme-aware, no new colors needed). */
-  .sc-list-row.sc-unsaved { background: var(--ink); }
-  .sc-list-row.sc-unsaved .sc-list-hole, .sc-list-row.sc-unsaved .sc-score-cell { color: var(--paper); }
+  .sc-list-row.sc-unsaved { background: var(--paper-alt); }
+  .sc-list-row.sc-unsaved .sc-par-select { background: var(--line); }
   .sc-rotate-hint { margin: 10px 0 6px; font-size: 15px; }
 
   .scorecard-table-wrap { display: none; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
@@ -246,8 +246,11 @@
   }
   .sc-score-cell { padding: 4px 2px; font-size: 25px; font-weight: 700; cursor: pointer; color: var(--ink); }
   .sc-score-cell:active { opacity: 0.75; }
-  .scorecard-round-actions { display: flex; justify-content: center; margin: 12px 0 4px; }
-  .scorecard-finish-btn { max-width: 260px; }
+  /* Rotate-hint moved into this same row (left side) so 라운드 종료 — now roughly half its old
+     size, right-aligned rather than a full-width bar — doesn't leave the freed-up space empty. */
+  .scorecard-round-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 12px 0 4px; }
+  .scorecard-round-actions .sc-rotate-hint { flex: 1 1 auto; text-align: left; margin: 0; }
+  .scorecard-finish-btn { flex: 0 0 auto; width: auto; padding: 9px 18px; font-size: 14px; border-radius: 9px; }
 
   /* Landscape: swap in the wide table (with 합계 columns) over the vertical list, sized up since
      landscape has plenty of spare width — but height is scarce (short rotated viewport), so keep
@@ -272,8 +275,8 @@
     .scorecard-table .sc-total-col { font-size: 16px; }
     .sc-par-select { font-size: 17px; padding: 6px 0; }
     .sc-score-cell { font-size: 20px; padding: 8px 4px; }
-    .scorecard-round-actions { margin: 10px 0 4px; }
-    .scorecard-finish-btn { max-width: 300px; font-size: 18px; padding: 12px; }
+    .scorecard-round-actions { justify-content: center; margin: 10px 0 4px; }
+    .scorecard-finish-btn { width: 100%; max-width: 300px; font-size: 18px; padding: 12px; }
   }
 
   .cat-group { margin-bottom: 5px; }
@@ -983,9 +986,9 @@
       ${scHoleTableHTML(9)}
 
       <div class="scorecard-round-actions">
+        <div class="hint sc-rotate-hint">가로모드로 보려면 화면을 돌리세요</div>
         <button type="button" class="save-btn scorecard-finish-btn" id="scFinishBtn">라운드 종료</button>
       </div>
-      <div class="hint sc-rotate-hint">가로모드로 보려면 화면을 돌리세요</div>
     `;
     document.getElementById("liveBottomBar").innerHTML = "";
     updateBottomBarVisibility();
