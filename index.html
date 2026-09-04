@@ -567,7 +567,11 @@
   }
   .log-course-input:hover, .log-course-input:focus { border-color: var(--line); background: var(--paper); }
   .log-score { font-family: ui-serif, Georgia, serif; font-size: 15.5px; font-weight: 700; color: var(--flag); white-space: nowrap; margin-left: 10px; }
-  .log-nine-tag { flex: 0 0 auto; font-size: 15.5px; color: var(--ink-2); white-space: nowrap; }
+  .log-nines { display: flex; gap: 8px; }
+  .log-front-input, .log-back-input {
+    flex: 1 1 0; min-width: 0; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 7px; padding: 6px 9px; font-size: 13.5px; font-family: inherit;
+  }
   .log-scorecard-btn {
     flex: 0 0 auto; border: none; background: var(--turf); color: #fff;
     border-radius: 8px; padding: 6px 10px; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap;
@@ -1034,14 +1038,27 @@
     });
     panel.querySelectorAll(".sc-course-input").forEach(inp => {
       inp.addEventListener("input", e => { live.course = e.target.value; persistLive(); });
+      inp.addEventListener("change", () => {
+        // Re-check both nines here too — 골프장명 is often filled in after 전반/후반 코스명,
+        // and the match requires both to be present regardless of fill order.
+        const front = autofillParFromHistory("courseFront", 0);
+        const back = autofillParFromHistory("courseBack", 9);
+        if (front || back) { persistLive(); renderScorecardPage(); }
+      });
       blurOnEnter(inp);
     });
     panel.querySelectorAll('.sc-nine-input[data-field="courseFront"]').forEach(inp => {
       inp.addEventListener("input", e => { live.courseFront = e.target.value; persistLive(); });
+      inp.addEventListener("change", () => {
+        if (autofillParFromHistory("courseFront", 0)) { persistLive(); renderScorecardPage(); }
+      });
       blurOnEnter(inp);
     });
     panel.querySelectorAll('.sc-nine-input[data-field="courseBack"]').forEach(inp => {
       inp.addEventListener("input", e => { live.courseBack = e.target.value; persistLive(); });
+      inp.addEventListener("change", () => {
+        if (autofillParFromHistory("courseBack", 9)) { persistLive(); renderScorecardPage(); }
+      });
       blurOnEnter(inp);
     });
 
@@ -1398,6 +1415,34 @@
     };
     rounds.push(round);
     saveRounds(rounds);
+  }
+
+  // ── 코스명으로 Par 자동 연동: 전반/후반 코스명 입력을 마치면(change, 타이핑 중엔 아님) 과거
+  // 저장된 라운드 중 같은 9홀 코스명이 정확히 일치(대소문자·공백 그대로)하는 가장 최근 기록을
+  // 찾아 그 홀들의 Par를 그대로 가져온다. 부분 일치/유사 일치는 적용하지 않는다. ──
+  function autofillParFromHistory(nineKey, holeStart) {
+    // Both 골프장명 AND the 9-hole 코스명 must match — many golf courses reuse generic segment
+    // names ("동코스", "서코스", etc.) across entirely different venues, so matching the 9-hole
+    // name alone could pull Par data from the wrong golf course.
+    const courseVal = (live.course || "").trim();
+    const val = (live[nineKey] || "").trim();
+    if (!courseVal || !val) return false;
+    let match = null;
+    for (let i = rounds.length - 1; i >= 0; i--) {
+      if ((rounds[i].course || "").trim() === courseVal && (rounds[i][nineKey] || "").trim() === val) { match = rounds[i]; break; }
+    }
+    if (!match) return false;
+    let changed = false;
+    for (let i = 0; i < 9; i++) {
+      const h = live.holes[holeStart + i];
+      const srcPar = match.holes[holeStart + i] && match.holes[holeStart + i].par;
+      if (srcPar && h.par !== srcPar) {
+        h.par = srcPar;
+        if (h.saved) h.result = computeHoleResult(h);
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   // ── per-round derived metrics ────────────────────────
@@ -2075,17 +2120,16 @@
         sorted.map(({ r, idx }) => {
           const m = roundMetrics(r);
           const diffStr = m.diff === 0 ? "E" : (m.diff > 0 ? `+${m.diff}` : `${m.diff}`);
-          const compactParts = [];
-          if (r.courseFront) compactParts.push(esc(r.courseFront));
-          if (r.courseBack) compactParts.push(esc(r.courseBack));
-          const compactTag = compactParts.length ? `<span class="log-nine-tag">(${compactParts.join("/")})</span>` : "";
           return `<div class="log-row">
             <div class="log-top">
               <span class="log-date">${r.date}</span>
               <input type="text" class="log-course-input" data-idx="${idx}" placeholder="골프장명" value="${esc(r.course)}">
-              ${compactTag}
               <button type="button" class="log-scorecard-btn" data-idx="${idx}">스코어카드 보기</button>
               <span class="log-score">${scoreNotation === "total" ? `${m.totalScore}` : diffStr}</span>
+            </div>
+            <div class="log-nines">
+              <input type="text" class="log-front-input" data-idx="${idx}" placeholder="전반 코스명" value="${esc(r.courseFront || "")}">
+              <input type="text" class="log-back-input" data-idx="${idx}" placeholder="후반 코스명" value="${esc(r.courseBack || "")}">
             </div>
             <input type="text" class="log-memo-input" data-idx="${idx}" placeholder="메모" value="${esc(r.memo || "")}">
           </div>`;
@@ -2099,6 +2143,20 @@
         const val = inp.value.trim() || "이름 없는 골프장";
         rounds[idx].course = val;
         inp.value = val;
+        saveRounds(rounds);
+      });
+      blurOnEnter(inp);
+    });
+    el.querySelectorAll(".log-front-input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        rounds[+inp.dataset.idx].courseFront = inp.value.trim();
+        saveRounds(rounds);
+      });
+      blurOnEnter(inp);
+    });
+    el.querySelectorAll(".log-back-input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        rounds[+inp.dataset.idx].courseBack = inp.value.trim();
         saveRounds(rounds);
       });
       blurOnEnter(inp);
