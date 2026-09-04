@@ -112,12 +112,13 @@
 
   /* 현재 스코어 lives here now (moved out of the portrait info row — see .sc-info-portrait-row1 —
      since the bigger fonts from a prior pass made it wrap onto its own line there, pushing 라운드
-     종료 down). Centered in the space between the icons and the HCP chip, sized to fit this row's
-     existing 34px icon-button height rather than at its larger scorecard-page size. */
+     종료 down). Centered in the space between the icons and the HCP chip. Kept at its full
+     scorecard-page size (not shrunk to fit the 34px icon row) — the row is allowed to grow taller
+     to fit it instead, since there's spare vertical room at the bottom of the page for that now. */
   .hdr-row .sc-total { flex: 1 1 auto; justify-content: center; margin-left: 0; }
-  .hdr-row .sc-total-score { font-size: 19px; }
-  .hdr-row .sc-total-sub { font-size: 12.5px; }
-  .hdr-row .sc-score-toggle { font-size: 12.5px; padding: 3px 9px; }
+  .hdr-row .sc-total-score { font-size: 32px; }
+  .hdr-row .sc-total-sub { font-size: 19px; }
+  .hdr-row .sc-score-toggle { font-size: 17px; padding: 5px 13px; }
 
   .hcp-chip { flex: 0 0 auto; margin-left: auto; display: flex; align-items: baseline; gap: 5px; }
   .hcp-chip-inner {
@@ -259,7 +260,11 @@
      to landscape (see landscapeViewBtn handler), which is what actually makes the real
      @media(orientation:landscape) rules kick in — no separate "force" CSS path needed. */
   .scorecard-round-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 12px 0 4px; }
-  .scorecard-finish-btn, .sc-landscape-btn { flex: 0 0 auto; width: auto; padding: 9px 18px; font-size: 14px; border-radius: 9px; }
+  /* button.scorecard-finish-btn (element+class), not just .scorecard-finish-btn — .save-btn's own
+     width:100% is defined later in the file and has equal specificity as a bare class selector,
+     so it was winning and stretching this button full-width, pushing 가로모드로 보기 off the left
+     edge entirely. The extra specificity here wins regardless of where either rule sits. */
+  button.scorecard-finish-btn, .sc-landscape-btn { flex: 0 0 auto; width: auto; padding: 9px 18px; font-size: 14px; border-radius: 9px; }
   .sc-landscape-btn {
     border: 1px solid var(--line); background: var(--card); color: var(--ink-2); font-weight: 700; cursor: pointer;
   }
@@ -287,7 +292,7 @@
     .sc-par-select { font-size: 17px; padding: 6px 0; }
     .sc-score-cell { font-size: 20px; padding: 8px 4px; }
     .scorecard-round-actions { justify-content: center; margin: 10px 0 4px; }
-    .scorecard-finish-btn { width: 100%; max-width: 300px; font-size: 18px; padding: 12px; }
+    button.scorecard-finish-btn { width: 100%; max-width: 300px; font-size: 18px; padding: 12px; }
     .sc-landscape-btn { display: none; }
   }
 
