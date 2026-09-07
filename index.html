@@ -531,7 +531,12 @@
     border: none; background: var(--paper-alt); color: var(--ink-2);
     width: 32px; height: 32px; border-radius: 999px; font-size: 16px; cursor: pointer; flex: 0 0 auto;
   }
-  .hd-scroll { flex: 1; overflow-y: auto; padding: 10px 10px 24px; }
+  /* display:flex/column so .hd-score-portrait (flex:1 below) can consume whatever vertical space
+     is left after the cat-groups above it and center itself there — the gap between 퍼팅 and 저장
+     isn't a fixed amount (varies with Par, since fewer active shot rows for low Par shortens the
+     content above), so a fixed margin can't reliably center it; letting flex do the centering
+     against the *actual* remaining space handles that automatically. */
+  .hd-scroll { flex: 1; overflow-y: auto; padding: 10px 10px 24px; display: flex; flex-direction: column; }
   /* Explicit 저장 button for the hole-entry popup, on top of the existing auto-save-per-tap — a
      fixed footer bar in portrait (always the same position regardless of Par, since fewer active
      shot rows for lower Par changes .hd-scroll's content height but never this bar's) and inline
@@ -546,10 +551,12 @@
   .hd-save-bar .hd-save-btn { width: 100%; padding: 14px; border-radius: 11px; font-size: 17px; }
   .hd-save-inline { display: none; flex: 0 0 auto; padding: 8px 18px; border-radius: 9px; font-size: 14px; }
   .hd-score-line { font-size: 32px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
-  .hd-score-line .hd-score-value { font-size: 38px; color: var(--turf); margin-left: 6px; }
-  /* Extra bottom margin (not just adjacent) so this reads as "a couple of rows above 저장", not
-     touching the fixed save bar. */
-  .hd-score-portrait { display: block; text-align: center; padding: 8px 2px; margin-bottom: 24px; }
+  .hd-score-line .hd-score-value { font-size: 38px; color: var(--turf); }
+  /* flex:1 within .hd-scroll's now-flex-column layout — grows to fill whatever space is left
+     below the last cat-group, then centers its own text in that space, landing it exactly midway
+     between the 퍼팅 row and the (fixed, outside .hd-scroll) 저장 bar regardless of how tall the
+     content above happens to be. */
+  .hd-score-portrait { display: flex; flex: 1; align-items: center; justify-content: center; }
   /* margin:0 auto (not just margin-left) — a flex item with auto margins on BOTH sides centers
      itself in whatever free space is left after its siblings, so this lands exactly halfway
      between the 퍼팅4 button and 저장 rather than sitting flush against either one. 저장 itself
@@ -1170,7 +1177,7 @@
       // the fixed save bar), landscape wants it inline in the 퍼팅 row, to the left of 저장 there.
       // CSS shows only the copy matching the current orientation.
       const liveResult = computeHoleResult(h);
-      const scoreText = `이번 홀 타수 <span class="hd-score-value">${fmtScoreZ(liveResult.rawStrokes, liveResult.score)}</span>`;
+      const scoreText = `<span class="hd-score-value">${fmtScoreZ(liveResult.rawStrokes, liveResult.score)}</span>`;
       const scorePortrait = `<div class="hd-score-line hd-score-portrait">${scoreText}</div>`;
       const scoreLandscape = `<span class="hd-score-line hd-score-landscape">${scoreText}</span>`;
       // 퍼팅 row built directly (not via the shared puttRowHTML, which 복기/replay also calls
