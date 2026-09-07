@@ -544,10 +544,16 @@
     border: none; background: var(--turf); color: #fff; font-weight: 700; cursor: pointer;
   }
   .hd-save-bar .hd-save-btn { width: 100%; padding: 14px; border-radius: 11px; font-size: 17px; }
-  .hd-save-inline { display: none; flex: 0 0 auto; margin-left: auto; padding: 8px 18px; border-radius: 9px; font-size: 14px; }
+  .hd-save-inline { display: none; flex: 0 0 auto; margin-left: 10px; padding: 8px 18px; border-radius: 9px; font-size: 14px; }
+  .hd-score-line { font-size: 16px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+  .hd-score-line .hd-score-value { font-size: 19px; color: var(--turf); margin-left: 4px; }
+  .hd-score-portrait { display: block; text-align: center; padding: 8px 2px; }
+  .hd-score-landscape { display: none; flex: 0 0 auto; margin-left: auto; }
   @media (orientation: landscape) {
     .hd-save-bar { display: none; }
     .hd-save-inline { display: inline-flex; align-items: center; }
+    .hd-score-portrait { display: none; }
+    .hd-score-landscape { display: inline; }
   }
   .hd-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 10px 2px; border-bottom: 1px solid var(--line); font-size: 14px; }
   .hd-line:last-child { border-bottom: none; }
@@ -1151,12 +1157,22 @@
       const shotRows = [0, 1, 2, 3].map(r => shotRowHTML(h, r, {})).join("");
       const approachRows = [["pitching", "피칭"], ["bunker", "벙커"], ["chip", "칩샷"], ["penalty", "벌타"]]
         .map(([k, l]) => approachRowHTML(h, k, l, true, {})).join("");
+      // Live score, recomputed fresh every render (not read from h.result, which only updates on
+      // commit()) — rendered twice, once per layout, since the two placements wanted don't share
+      // a DOM position: portrait wants it directly above 저장 (after the 퍼팅 row, right before
+      // the fixed save bar), landscape wants it inline in the 퍼팅 row, to the left of 저장 there.
+      // CSS shows only the copy matching the current orientation.
+      const liveResult = computeHoleResult(h);
+      const scoreText = `이번 홀 타수 <span class="hd-score-value">${fmtScoreZ(liveResult.rawStrokes, liveResult.score)}</span>`;
+      const scorePortrait = `<div class="hd-score-line hd-score-portrait">${scoreText}</div>`;
+      const scoreLandscape = `<span class="hd-score-line hd-score-landscape">${scoreText}</span>`;
       // 퍼팅 row built directly (not via the shared puttRowHTML, which 복기/replay also calls
-      // unchanged) so a landscape-only 저장 button can sit inline as its last flex child, flush
-      // right via margin-left:auto.
+      // unchanged) so the landscape score display and 저장 button can sit inline as flex
+      // children, flush right via margin-left:auto on the first of the pair.
       const puttRow = `<div class="cat-sub-row">
         <span class="cat-sub-label">퍼팅</span>
         ${renderBtnRow([0, 1, 2, 3, 4], h.putt, false, { kind: "putt" }, true)}
+        ${scoreLandscape}
         <button type="button" class="hd-save-btn hd-save-inline" id="holeEntrySaveInline">저장</button>
       </div>`;
       overlay.innerHTML = `
@@ -1168,6 +1184,7 @@
           <div class="cat-group">${shotRows}</div>
           <div class="cat-group">${approachRows}</div>
           <div class="cat-group">${puttRow}</div>
+          ${scorePortrait}
         </div>
         <div class="hd-save-bar"><button type="button" class="hd-save-btn" id="holeEntrySaveFixed">저장</button></div>
       `;
