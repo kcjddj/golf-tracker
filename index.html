@@ -544,11 +544,18 @@
     border: none; background: var(--turf); color: #fff; font-weight: 700; cursor: pointer;
   }
   .hd-save-bar .hd-save-btn { width: 100%; padding: 14px; border-radius: 11px; font-size: 17px; }
-  .hd-save-inline { display: none; flex: 0 0 auto; margin-left: 10px; padding: 8px 18px; border-radius: 9px; font-size: 14px; }
-  .hd-score-line { font-size: 16px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
-  .hd-score-line .hd-score-value { font-size: 19px; color: var(--turf); margin-left: 4px; }
-  .hd-score-portrait { display: block; text-align: center; padding: 8px 2px; }
-  .hd-score-landscape { display: none; flex: 0 0 auto; margin-left: auto; }
+  .hd-save-inline { display: none; flex: 0 0 auto; padding: 8px 18px; border-radius: 9px; font-size: 14px; }
+  .hd-score-line { font-size: 32px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+  .hd-score-line .hd-score-value { font-size: 38px; color: var(--turf); margin-left: 6px; }
+  /* Extra bottom margin (not just adjacent) so this reads as "a couple of rows above 저장", not
+     touching the fixed save bar. */
+  .hd-score-portrait { display: block; text-align: center; padding: 8px 2px; margin-bottom: 24px; }
+  /* margin:0 auto (not just margin-left) — a flex item with auto margins on BOTH sides centers
+     itself in whatever free space is left after its siblings, so this lands exactly halfway
+     between the 퍼팅4 button and 저장 rather than sitting flush against either one. 저장 itself
+     drops its own margin-left:auto (now redundant — there's no free space left for it to consume
+     once this element's two auto margins have split it) and lands flush at the row's right edge. */
+  .hd-score-landscape { display: none; flex: 0 0 auto; margin: 0 auto; }
   @media (orientation: landscape) {
     .hd-save-bar { display: none; }
     .hd-save-inline { display: inline-flex; align-items: center; }
