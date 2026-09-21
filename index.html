@@ -143,7 +143,7 @@
      size instead of wrapping — minmax(0,1fr)/break-word kept as a safety net for very narrow
      screens rather than assuming this measured width holds on every real device. */
   nav.tabs {
-    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px; width: 100%;
   }
   nav.tabs button {
@@ -602,6 +602,35 @@
     border-radius: 7px; padding: 6px 9px; font-size: 13.5px; font-family: inherit;
   }
 
+  /* ── 골프게임: freeform 5x20 manual scorecard grid, unrelated to the app's own digital round
+     tracking — just a blank table for jotting scores during a side game. Fills main's full
+     width (already effectively the whole screen on a phone) via width:100% + table-layout:fixed;
+     the 3-row zebra banding uses two alternating classes assigned by row-group in JS rather than
+     an nth-child CSS selector, since the group size (3) doesn't divide evenly into anything
+     :nth-child can express cleanly against a 20-row table. */
+  .gg-title-row { display: flex; align-items: center; margin-bottom: 10px; }
+  .gg-title { flex: 1 1 auto; text-align: center; font-size: 21px; font-weight: 800; color: var(--turf); }
+  .gg-clear-btn {
+    flex: 0 0 auto; border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+    border-radius: 9px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .gg-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .gg-table td { border: 1px solid var(--line); text-align: center; padding: 0; }
+  .gg-col-first { width: 15%; }
+  .gg-band-a td { background: var(--paper); }
+  .gg-band-b td { background: var(--paper-alt); }
+  .gg-col-label { font-weight: 700; color: var(--ink-2); font-size: 14px; padding: 9px 2px; }
+  .gg-cell {
+    width: 100%; border: none; background: transparent; color: var(--ink); text-align: center;
+    font-size: 15px; font-weight: 700; font-family: inherit; padding: 9px 2px; -moz-appearance: textfield;
+  }
+  .gg-cell::-webkit-outer-spin-button, .gg-cell::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .gg-name-input {
+    width: 100%; border: none; background: transparent; color: var(--ink); text-align: center;
+    font-size: 13.5px; font-family: inherit; padding: 7px 2px;
+  }
+  .gg-sum { display: block; padding: 9px 2px; font-weight: 800; color: var(--turf); font-size: 15px; }
+
   .backup-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
   .backup-bar-vertical { flex-direction: column; align-items: stretch; }
   .backup-btn {
@@ -632,6 +661,7 @@
     <button data-tab="add" class="active">기록 추가</button>
     <button data-tab="analysis">분석</button>
     <button data-tab="roundlog">라운드기록</button>
+    <button data-tab="golfgame">골프게임</button>
     <button data-tab="backup">백업</button>
   </nav>
 </header>
@@ -645,6 +675,9 @@
 
   <!-- ── 라운드기록 ───────────────────────────────────── -->
   <section class="panel" id="panel-roundlog"></section>
+
+  <!-- ── 골프게임 ─────────────────────────────────────── -->
+  <section class="panel" id="panel-golfgame"></section>
 
   <!-- ── 백업 ─────────────────────────────────────────── -->
   <section class="panel" id="panel-backup"></section>
@@ -701,6 +734,8 @@
 
   const STORE_KEY = "golf-tracker-rounds-v2";
   const LIVE_KEY = "golf-tracker-live-v2";
+  const GOLFGAME_KEY = "golf-tracker-golfgame-v1";
+  const GG_PLAYER_NAMES = ["정인태", "김철수", "김성진", "김철준", "이재학", "정창호", "김영인", "조수현", "박철완", "김호영", "전성룡"];
   const PAR_COLORS = { par: "var(--muted)" };
   const BUCKET_META = [
     { key: "eagle",  label: "이글",     color: "var(--good-deep)" },
@@ -768,6 +803,20 @@
     localStorage.setItem(STORE_KEY, JSON.stringify(rounds));
   }
   let rounds = loadRounds();
+
+  // ── 골프게임: a freeform 5x20 manual scorecard grid, independent of the app's own round
+  // tracking above — persisted separately since "내용지우기" needs something real to clear. ──
+  function loadGolfGame() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(GOLFGAME_KEY));
+      if (raw && Array.isArray(raw.scores) && raw.scores.length === 18 && Array.isArray(raw.names) && raw.names.length === 4) return raw;
+    } catch {}
+    return { scores: Array.from({ length: 18 }, () => ["", "", "", ""]), names: ["", "", "", ""] };
+  }
+  function saveGolfGame(gg) {
+    localStorage.setItem(GOLFGAME_KEY, JSON.stringify(gg));
+  }
+  let golfGame = loadGolfGame();
 
   const fmtDiff = d => d === 0 ? "E" : (d > 0 ? `+${d}` : `${d}`);
   const fmtDiffZ = d => d === 0 ? "0" : fmtDiff(d);
@@ -2204,6 +2253,75 @@
     });
   }
 
+  // ── 골프게임 panel (freeform 5x20 manual scorecard grid) ──
+  function ggUpdateSums() {
+    for (let c = 0; c < 4; c++) {
+      let sum = 0;
+      for (let r = 0; r < 18; r++) {
+        const v = parseFloat(golfGame.scores[r][c]);
+        if (!isNaN(v)) sum += v;
+      }
+      const el = document.querySelector(`.gg-sum[data-col="${c}"]`);
+      if (el) el.textContent = sum;
+    }
+  }
+  function renderGolfGame() {
+    const el = document.getElementById("panel-golfgame");
+    const rowsHTML = Array.from({ length: 20 }, (_, r) => {
+      const band = Math.floor(r / 3) % 2 === 0 ? "gg-band-a" : "gg-band-b";
+      let labelCell;
+      if (r < 18) labelCell = `<td class="gg-col-label">${(r % 9) + 1}</td>`;
+      else if (r === 18) labelCell = `<td class="gg-col-label">이름</td>`;
+      else labelCell = `<td class="gg-col-label">합계</td>`;
+      let dataCells;
+      if (r < 18) {
+        dataCells = [0, 1, 2, 3].map(c =>
+          `<td><input type="number" class="gg-cell" data-row="${r}" data-col="${c}" value="${esc(golfGame.scores[r][c] || "")}" inputmode="numeric"></td>`
+        ).join("");
+      } else if (r === 18) {
+        dataCells = [0, 1, 2, 3].map(c =>
+          `<td><input type="text" class="gg-name-input" list="ggNameList" data-col="${c}" value="${esc(golfGame.names[c] || "")}" placeholder="이름" lang="ko" inputmode="text"></td>`
+        ).join("");
+      } else {
+        dataCells = [0, 1, 2, 3].map(c => `<td><span class="gg-sum" data-col="${c}">0</span></td>`).join("");
+      }
+      return `<tr class="${band}">${labelCell}${dataCells}</tr>`;
+    }).join("");
+    el.innerHTML = `
+      <div class="gg-title-row">
+        <div class="gg-title">골프게임</div>
+        <button type="button" class="gg-clear-btn" id="ggClearBtn">내용지우기</button>
+      </div>
+      <table class="gg-table">
+        <colgroup><col class="gg-col-first"><col><col><col><col></colgroup>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+      <datalist id="ggNameList">${GG_PLAYER_NAMES.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    `;
+    el.querySelectorAll(".gg-cell").forEach(inp => {
+      inp.addEventListener("input", () => {
+        golfGame.scores[+inp.dataset.row][+inp.dataset.col] = inp.value;
+        saveGolfGame(golfGame);
+        ggUpdateSums();
+      });
+    });
+    el.querySelectorAll(".gg-name-input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        golfGame.names[+inp.dataset.col] = inp.value;
+        saveGolfGame(golfGame);
+      });
+      blurOnEnter(inp);
+    });
+    document.getElementById("ggClearBtn").addEventListener("click", () => {
+      openConfirmPopup("입력한 점수를 모두 지우시겠습니까?", () => {
+        golfGame.scores = Array.from({ length: 18 }, () => ["", "", "", ""]);
+        saveGolfGame(golfGame);
+        renderGolfGame();
+      });
+    });
+    ggUpdateSums();
+  }
+
   // ── 백업 panel (export/import buttons) ─────────────────
   function renderBackup() {
     const el = document.getElementById("panel-backup");
@@ -2263,6 +2381,7 @@
   renderAddPanel();
   renderAnalysis();
   renderRoundLog();
+  renderGolfGame();
   renderBackup();
   renderHeaderHcp();
   syncHeaderHeight();
