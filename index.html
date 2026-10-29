@@ -749,7 +749,8 @@
   const STORE_KEY = "golf-tracker-rounds-v2";
   const LIVE_KEY = "golf-tracker-live-v2";
   const GOLFGAME_KEY = "golf-tracker-golfgame-v1";
-  const GG_CUSTOM_NAMES_KEY = "golf-tracker-gg-custom-names";
+  const GG_NAMES_KEY = "golf-tracker-gg-names";
+  const GG_LEGACY_CUSTOM_NAMES_KEY = "golf-tracker-gg-custom-names";
   const GG_PLAYER_NAMES = ["정인태", "김철수", "김성진", "김철준", "이재학", "정창호", "김영인", "조수현", "박철완", "김호영", "전성룡"];
   const PAR_COLORS = { par: "var(--muted)" };
   const BUCKET_META = [
@@ -833,18 +834,25 @@
   }
   let golfGame = loadGolfGame();
 
-  // names added via 직접 입력 — device-local only, not part of backups
-  function loadGgCustomNames() {
+  // 이름 선택 목록: starts as GG_PLAYER_NAMES, grows via 직접 입력, any entry deletable —
+  // device-local only, not part of backups
+  function loadGgNames() {
     try {
-      const raw = JSON.parse(localStorage.getItem(GG_CUSTOM_NAMES_KEY));
+      const raw = JSON.parse(localStorage.getItem(GG_NAMES_KEY));
       if (Array.isArray(raw)) return raw.filter(n => typeof n === "string" && n);
     } catch {}
-    return [];
+    let legacy = [];
+    try {
+      const raw = JSON.parse(localStorage.getItem(GG_LEGACY_CUSTOM_NAMES_KEY));
+      if (Array.isArray(raw)) legacy = raw.filter(n => typeof n === "string" && n && !GG_PLAYER_NAMES.includes(n));
+    } catch {}
+    return [...GG_PLAYER_NAMES, ...legacy];
   }
-  function saveGgCustomNames() {
-    localStorage.setItem(GG_CUSTOM_NAMES_KEY, JSON.stringify(ggCustomNames));
+  function saveGgNames() {
+    localStorage.setItem(GG_NAMES_KEY, JSON.stringify(ggNames));
+    localStorage.removeItem(GG_LEGACY_CUSTOM_NAMES_KEY);
   }
-  let ggCustomNames = loadGgCustomNames();
+  let ggNames = loadGgNames();
 
   const fmtDiff = d => d === 0 ? "E" : (d > 0 ? `+${d}` : `${d}`);
   const fmtDiffZ = d => d === 0 ? "0" : fmtDiff(d);
@@ -1771,8 +1779,7 @@
       <div class="detail-popup-sheet confirm-sheet">
         <p class="confirm-msg">이름 선택</p>
         <div class="name-pick-grid">
-          ${GG_PLAYER_NAMES.map(n => `<button type="button" class="name-pick-btn${n === current ? " selected" : ""}" data-name="${esc(n)}">${esc(n)}</button>`).join("")}
-          ${ggCustomNames.map(n => `<div class="name-pick-item"><button type="button" class="name-pick-btn${n === current ? " selected" : ""}" data-name="${esc(n)}">${esc(n)}</button><button type="button" class="name-pick-del" data-name="${esc(n)}" aria-label="${esc(n)} 목록에서 삭제">×</button></div>`).join("")}
+          ${ggNames.map(n => `<div class="name-pick-item"><button type="button" class="name-pick-btn${n === current ? " selected" : ""}" data-name="${esc(n)}">${esc(n)}</button><button type="button" class="name-pick-del" data-name="${esc(n)}" aria-label="${esc(n)} 목록에서 삭제">×</button></div>`).join("")}
         </div>
         <div class="confirm-actions">
           <button type="button" class="confirm-btn name-pick-manual">직접 입력</button>
@@ -1784,8 +1791,8 @@
     const close = () => overlay.remove();
     overlay.querySelectorAll(".name-pick-btn").forEach(b => b.addEventListener("click", () => { close(); onPick(b.dataset.name); }));
     overlay.querySelectorAll(".name-pick-del").forEach(b => b.addEventListener("click", () => {
-      ggCustomNames = ggCustomNames.filter(n => n !== b.dataset.name);
-      saveGgCustomNames();
+      ggNames = ggNames.filter(n => n !== b.dataset.name);
+      saveGgNames();
       b.closest(".name-pick-item").remove();
     }));
     overlay.querySelector(".name-pick-manual").addEventListener("click", () => { close(); onManual(); });
@@ -2389,9 +2396,9 @@
         if (inp.readOnly) return;
         inp.readOnly = true;
         const name = inp.value.trim();
-        if (name && !GG_PLAYER_NAMES.includes(name) && !ggCustomNames.includes(name)) {
-          ggCustomNames.push(name);
-          saveGgCustomNames();
+        if (name && !ggNames.includes(name)) {
+          ggNames.push(name);
+          saveGgNames();
         }
       });
     });
