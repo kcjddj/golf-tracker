@@ -511,6 +511,13 @@
   }
   .name-pick-btn.selected { background: var(--turf); border-color: var(--turf); color: #fff; }
   .name-pick-btn:active { background: var(--turf-wash); }
+  .name-pick-item { position: relative; display: flex; }
+  .name-pick-item .name-pick-btn { flex: 1; }
+  .name-pick-del {
+    position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; border-radius: 50%;
+    border: none; background: var(--flag); color: #fff; font-size: 14px; font-weight: 700; line-height: 22px;
+    padding: 0; cursor: pointer;
+  }
 
   /* ── replay (복기) mode header ────────────────────────── */
   .replay-header { justify-content: space-between; }
@@ -742,6 +749,7 @@
   const STORE_KEY = "golf-tracker-rounds-v2";
   const LIVE_KEY = "golf-tracker-live-v2";
   const GOLFGAME_KEY = "golf-tracker-golfgame-v1";
+  const GG_CUSTOM_NAMES_KEY = "golf-tracker-gg-custom-names";
   const GG_PLAYER_NAMES = ["정인태", "김철수", "김성진", "김철준", "이재학", "정창호", "김영인", "조수현", "박철완", "김호영", "전성룡"];
   const PAR_COLORS = { par: "var(--muted)" };
   const BUCKET_META = [
@@ -824,6 +832,19 @@
     localStorage.setItem(GOLFGAME_KEY, JSON.stringify(gg));
   }
   let golfGame = loadGolfGame();
+
+  // names added via 직접 입력 — device-local only, not part of backups
+  function loadGgCustomNames() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(GG_CUSTOM_NAMES_KEY));
+      if (Array.isArray(raw)) return raw.filter(n => typeof n === "string" && n);
+    } catch {}
+    return [];
+  }
+  function saveGgCustomNames() {
+    localStorage.setItem(GG_CUSTOM_NAMES_KEY, JSON.stringify(ggCustomNames));
+  }
+  let ggCustomNames = loadGgCustomNames();
 
   const fmtDiff = d => d === 0 ? "E" : (d > 0 ? `+${d}` : `${d}`);
   const fmtDiffZ = d => d === 0 ? "0" : fmtDiff(d);
@@ -1751,6 +1772,7 @@
         <p class="confirm-msg">이름 선택</p>
         <div class="name-pick-grid">
           ${GG_PLAYER_NAMES.map(n => `<button type="button" class="name-pick-btn${n === current ? " selected" : ""}" data-name="${esc(n)}">${esc(n)}</button>`).join("")}
+          ${ggCustomNames.map(n => `<div class="name-pick-item"><button type="button" class="name-pick-btn${n === current ? " selected" : ""}" data-name="${esc(n)}">${esc(n)}</button><button type="button" class="name-pick-del" data-name="${esc(n)}" aria-label="${esc(n)} 목록에서 삭제">×</button></div>`).join("")}
         </div>
         <div class="confirm-actions">
           <button type="button" class="confirm-btn name-pick-manual">직접 입력</button>
@@ -1761,6 +1783,11 @@
     document.body.appendChild(overlay);
     const close = () => overlay.remove();
     overlay.querySelectorAll(".name-pick-btn").forEach(b => b.addEventListener("click", () => { close(); onPick(b.dataset.name); }));
+    overlay.querySelectorAll(".name-pick-del").forEach(b => b.addEventListener("click", () => {
+      ggCustomNames = ggCustomNames.filter(n => n !== b.dataset.name);
+      saveGgCustomNames();
+      b.closest(".name-pick-item").remove();
+    }));
     overlay.querySelector(".name-pick-manual").addEventListener("click", () => { close(); onManual(); });
     overlay.querySelector(".name-pick-clear").addEventListener("click", () => { close(); onPick(""); });
     overlay.querySelector(".name-pick-cancel").addEventListener("click", close);
@@ -2355,7 +2382,15 @@
           inp.focus();
         });
       });
-      inp.addEventListener("blur", () => { inp.readOnly = true; });
+      inp.addEventListener("blur", () => {
+        if (inp.readOnly) return;
+        inp.readOnly = true;
+        const name = inp.value.trim();
+        if (name && !GG_PLAYER_NAMES.includes(name) && !ggCustomNames.includes(name)) {
+          ggCustomNames.push(name);
+          saveGgCustomNames();
+        }
+      });
     });
     document.getElementById("ggClearBtn").addEventListener("click", () => {
       openConfirmPopup("입력한 점수를 모두 지우시겠습니까?", () => {
