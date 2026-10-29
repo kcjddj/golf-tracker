@@ -504,6 +504,13 @@
     border-radius: 10px; padding: 12px 0; font-size: 16px; font-weight: 700; cursor: pointer;
   }
   .confirm-btn:active { background: var(--turf-deep); }
+  .name-pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .name-pick-btn {
+    border: 1px solid var(--line); background: var(--paper-alt); color: var(--ink);
+    border-radius: 10px; padding: 12px 0; font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer;
+  }
+  .name-pick-btn.selected { background: var(--turf); border-color: var(--turf); color: #fff; }
+  .name-pick-btn:active { background: var(--turf-wash); }
 
   /* ── replay (복기) mode header ────────────────────────── */
   .replay-header { justify-content: space-between; }
@@ -1734,6 +1741,32 @@
     overlay.querySelector(".detail-popup-backdrop").addEventListener("click", () => { close(); if (onNo) onNo(); });
   }
 
+  // ── name picker popup (골프게임 이름칸): all names at once, plus 직접 입력 / 지우기 ──
+  function openNamePickerPopup(current, onPick, onManual) {
+    const overlay = document.createElement("div");
+    overlay.className = "detail-popup-overlay";
+    overlay.innerHTML = `
+      <div class="detail-popup-backdrop"></div>
+      <div class="detail-popup-sheet confirm-sheet">
+        <p class="confirm-msg">이름 선택</p>
+        <div class="name-pick-grid">
+          ${GG_PLAYER_NAMES.map(n => `<button type="button" class="name-pick-btn${n === current ? " selected" : ""}" data-name="${esc(n)}">${esc(n)}</button>`).join("")}
+        </div>
+        <div class="confirm-actions">
+          <button type="button" class="confirm-btn name-pick-manual">직접 입력</button>
+          <button type="button" class="confirm-btn name-pick-clear">지우기</button>
+          <button type="button" class="confirm-btn name-pick-cancel">취소</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    overlay.querySelectorAll(".name-pick-btn").forEach(b => b.addEventListener("click", () => { close(); onPick(b.dataset.name); }));
+    overlay.querySelector(".name-pick-manual").addEventListener("click", () => { close(); onManual(); });
+    overlay.querySelector(".name-pick-clear").addEventListener("click", () => { close(); onPick(""); });
+    overlay.querySelector(".name-pick-cancel").addEventListener("click", close);
+    overlay.querySelector(".detail-popup-backdrop").addEventListener("click", close);
+  }
+
   // ── distance-entry popup (남은거리): shown when a 피칭/칩샷/퍼팅 row button is activated ──
   function openDistancePopup(label, initial, onSave) {
     const overlay = document.createElement("div");
@@ -2280,7 +2313,7 @@
         ).join("");
       } else if (r === 18) {
         dataCells = [0, 1, 2, 3].map(c =>
-          `<td><input type="text" class="gg-name-input" list="ggNameList" data-col="${c}" value="${esc(golfGame.names[c] || "")}" placeholder="이름" lang="ko" inputmode="text"></td>`
+          `<td><input type="text" class="gg-name-input" data-col="${c}" value="${esc(golfGame.names[c] || "")}" placeholder="이름" lang="ko" inputmode="text" readonly></td>`
         ).join("");
       } else {
         dataCells = [0, 1, 2, 3].map(c => `<td><span class="gg-sum" data-col="${c}">0</span></td>`).join("");
@@ -2296,7 +2329,6 @@
         <colgroup><col class="gg-col-first"><col><col><col><col></colgroup>
         <tbody>${rowsHTML}</tbody>
       </table>
-      <datalist id="ggNameList">${GG_PLAYER_NAMES.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
     `;
     el.querySelectorAll(".gg-cell").forEach(inp => {
       inp.addEventListener("input", () => {
@@ -2311,6 +2343,19 @@
         saveGolfGame(golfGame);
       });
       blurOnEnter(inp);
+      // readonly until 직접 입력 is chosen, so a tap opens the full name list instead of the keyboard
+      inp.addEventListener("click", () => {
+        if (!inp.readOnly) return;
+        openNamePickerPopup(inp.value, name => {
+          inp.value = name;
+          golfGame.names[+inp.dataset.col] = name;
+          saveGolfGame(golfGame);
+        }, () => {
+          inp.readOnly = false;
+          inp.focus();
+        });
+      });
+      inp.addEventListener("blur", () => { inp.readOnly = true; });
     });
     document.getElementById("ggClearBtn").addEventListener("click", () => {
       openConfirmPopup("입력한 점수를 모두 지우시겠습니까?", () => {
