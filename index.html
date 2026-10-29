@@ -2378,6 +2378,9 @@
           golfGame.names[+inp.dataset.col] = name;
           saveGolfGame(golfGame);
         }, () => {
+          inp.value = "";
+          golfGame.names[+inp.dataset.col] = "";
+          saveGolfGame(golfGame);
           inp.readOnly = false;
           inp.focus();
         });
