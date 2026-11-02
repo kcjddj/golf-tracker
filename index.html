@@ -623,11 +623,15 @@
      an nth-child CSS selector, since the group size (3) doesn't divide evenly into anything
      :nth-child can express cleanly against a 20-row table. */
   .gg-title-row { display: flex; align-items: center; margin-bottom: 10px; }
+  /* 골프게임 is a full-screen view: no header/tabs, the 나가기 button returns to the previous tab */
+  body.gg-full > header { display: none; }
   .gg-title { flex: 1 1 auto; text-align: center; font-size: 21px; font-weight: 800; color: var(--turf); }
   .gg-clear-btn {
     flex: 0 0 auto; border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
     border-radius: 9px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
   }
+  .gg-exit-btn { min-width: 84px; text-align: left; }
+  .gg-title-row .gg-clear-btn:last-child { min-width: 84px; }
   .gg-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   .gg-table td { border: 1px solid var(--line); text-align: center; padding: 0; }
   /* --gg-row-h is set by ggFitRows() so all 20 rows fit the screen without scrolling */
@@ -2349,7 +2353,7 @@
     if (!table || !panel.classList.contains("active")) return;
     const top = table.getBoundingClientRect().top + window.scrollY;
     const avail = window.innerHeight - top - 12;
-    const rowH = Math.max(24, Math.min(44, Math.floor(avail / 20)));
+    const rowH = Math.max(24, Math.min(64, Math.floor(avail / 20)));
     table.style.setProperty("--gg-row-h", rowH + "px");
   }
   window.addEventListener("resize", ggFitRows);
@@ -2377,6 +2381,7 @@
     }).join("");
     el.innerHTML = `
       <div class="gg-title-row">
+        <button type="button" class="gg-clear-btn gg-exit-btn" id="ggExitBtn">← 나가기</button>
         <div class="gg-title">골프게임</div>
         <button type="button" class="gg-clear-btn" id="ggClearBtn">내용지우기</button>
       </div>
@@ -2429,6 +2434,7 @@
         }
       });
     });
+    document.getElementById("ggExitBtn").addEventListener("click", () => switchTab(ggReturnTab));
     document.getElementById("ggClearBtn").addEventListener("click", () => {
       openConfirmPopup("입력한 점수를 모두 지우시겠습니까?", () => {
         golfGame.scores = Array.from({ length: 18 }, () => ["", "", "", ""]);
@@ -2476,10 +2482,16 @@
     const onAddTab = document.getElementById("panel-add").classList.contains("active");
     document.getElementById("liveBottomBar").classList.toggle("show", onAddTab && !!replayState);
   }
+  let ggReturnTab = "add";
   function switchTab(name) {
+    const current = document.querySelector("nav.tabs button.active");
+    if (name === "golfgame" && current && current.dataset.tab !== "golfgame") ggReturnTab = current.dataset.tab;
+    document.body.classList.toggle("gg-full", name === "golfgame");
+    if (name === "golfgame") window.scrollTo(0, 0);
     document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll("section.panel").forEach(p => p.classList.toggle("active", p.id === `panel-${name}`));
     updateBottomBarVisibility();
+    syncHeaderHeight();
     if (name === "golfgame") requestAnimationFrame(ggFitRows);
   }
   document.querySelectorAll("nav.tabs button").forEach(btn => {
