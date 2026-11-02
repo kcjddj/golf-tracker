@@ -630,20 +630,24 @@
   }
   .gg-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   .gg-table td { border: 1px solid var(--line); text-align: center; padding: 0; }
+  /* --gg-row-h is set by ggFitRows() so all 20 rows fit the screen without scrolling */
+  .gg-table tr { height: var(--gg-row-h, 44px); }
   .gg-col-first { width: 11%; }
   .gg-band-a td { background: var(--paper); }
   .gg-band-b td { background: var(--paper-alt); }
-  .gg-col-label { font-weight: 700; color: var(--ink-2); font-size: 19px; padding: 9px 2px; }
+  .gg-col-label { font-weight: 700; color: var(--ink-2); font-size: 19px; padding: 0 2px; line-height: 1; }
   .gg-cell {
     width: 100%; border: none; background: transparent; color: var(--ink); text-align: center;
-    font-size: 20px; font-weight: 700; font-family: inherit; padding: 9px 2px; -moz-appearance: textfield;
+    font-size: 20px; font-weight: 700; font-family: inherit; padding: 0 2px; -moz-appearance: textfield;
+    height: calc(var(--gg-row-h, 44px) - 1px); box-sizing: border-box; display: block;
   }
   .gg-cell::-webkit-outer-spin-button, .gg-cell::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .gg-name-input {
     width: 100%; border: none; background: transparent; color: var(--ink); text-align: center;
-    font-size: 19px; font-weight: 700; font-family: inherit; padding: 7px 0;
+    font-size: 19px; font-weight: 700; font-family: inherit; padding: 0;
+    height: calc(var(--gg-row-h, 44px) - 1px); box-sizing: border-box; display: block;
   }
-  .gg-sum { display: block; padding: 9px 2px; font-weight: 800; color: var(--turf); font-size: 20px; }
+  .gg-sum { display: block; padding: 0 2px; line-height: 1; font-weight: 800; color: var(--turf); font-size: 20px; }
 
   .backup-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
   .backup-bar-vertical { flex-direction: column; align-items: stretch; }
@@ -1534,7 +1538,7 @@
   }
 
   // ── 코스명으로 Par 자동 연동: 전반/후반 코스명 입력을 마치면(change, 타이핑 중엔 아님) 과거
-  // 저장된 라운드 중 같은 9홀 코스명이 정확히 일치(대소문자·공백 그대로)하는 가장 최근 기록을
+  // 저장된 라운드 중 (전반·후반 구분 없이) 같은 9홀 코스명이 정확히 일치(대소문자·공백 그대로)하는 가장 최근 기록을
   // 찾아 그 홀들의 Par를 그대로 가져온다. 부분 일치/유사 일치는 적용하지 않는다. ──
   function autofillParFromHistory(nineKey, holeStart) {
     // Both 골프장명 AND the 9-hole 코스명 must match — many golf courses reuse generic segment
@@ -1543,15 +1547,20 @@
     const courseVal = (live.course || "").trim();
     const val = (live[nineKey] || "").trim();
     if (!courseVal || !val) return false;
-    let match = null;
-    for (let i = rounds.length - 1; i >= 0; i--) {
-      if ((rounds[i].course || "").trim() === courseVal && (rounds[i][nineKey] || "").trim() === val) { match = rounds[i]; break; }
+    // The same 9-hole course may have been played as either 전반 or 후반 in past rounds, so a
+    // match on either side counts — Par is copied from wherever that nine sat in the old round.
+    let match = null, srcStart = 0;
+    for (let i = rounds.length - 1; i >= 0 && !match; i--) {
+      const r = rounds[i];
+      if ((r.course || "").trim() !== courseVal) continue;
+      if ((r.courseFront || "").trim() === val) { match = r; srcStart = 0; }
+      else if ((r.courseBack || "").trim() === val) { match = r; srcStart = 9; }
     }
     if (!match) return false;
     let changed = false;
     for (let i = 0; i < 9; i++) {
       const h = live.holes[holeStart + i];
-      const srcPar = match.holes[holeStart + i] && match.holes[holeStart + i].par;
+      const srcPar = match.holes[srcStart + i] && match.holes[srcStart + i].par;
       if (srcPar && h.par !== srcPar) {
         h.par = srcPar;
         if (h.saved) h.result = computeHoleResult(h);
@@ -2332,6 +2341,18 @@
       if (el) el.textContent = sum;
     }
   }
+  // Shrink row height so the whole 18홀+이름+합계 table fits between the table's top and the
+  // bottom of the screen; only measurable while the panel is visible.
+  function ggFitRows() {
+    const panel = document.getElementById("panel-golfgame");
+    const table = panel.querySelector(".gg-table");
+    if (!table || !panel.classList.contains("active")) return;
+    const top = table.getBoundingClientRect().top + window.scrollY;
+    const avail = window.innerHeight - top - 12;
+    const rowH = Math.max(24, Math.min(44, Math.floor(avail / 20)));
+    table.style.setProperty("--gg-row-h", rowH + "px");
+  }
+  window.addEventListener("resize", ggFitRows);
   function renderGolfGame() {
     const el = document.getElementById("panel-golfgame");
     const rowsHTML = Array.from({ length: 20 }, (_, r) => {
@@ -2366,7 +2387,13 @@
     `;
     el.querySelectorAll(".gg-cell").forEach(inp => {
       inp.addEventListener("input", () => {
-        golfGame.scores[+inp.dataset.row][+inp.dataset.col] = inp.value;
+        const row = +inp.dataset.row;
+        golfGame.scores[row][+inp.dataset.col] = inp.value;
+        // 0 typed in any cell fills the whole row (all 4 players) with 0
+        if (inp.value === "0") {
+          golfGame.scores[row] = ["0", "0", "0", "0"];
+          el.querySelectorAll(`.gg-cell[data-row="${row}"]`).forEach(c => { c.value = "0"; });
+        }
         saveGolfGame(golfGame);
         ggUpdateSums();
       });
@@ -2410,6 +2437,7 @@
       });
     });
     ggUpdateSums();
+    ggFitRows();
   }
 
   // ── 백업 panel (export/import buttons) ─────────────────
@@ -2452,6 +2480,7 @@
     document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll("section.panel").forEach(p => p.classList.toggle("active", p.id === `panel-${name}`));
     updateBottomBarVisibility();
+    if (name === "golfgame") requestAnimationFrame(ggFitRows);
   }
   document.querySelectorAll("nav.tabs button").forEach(btn => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
