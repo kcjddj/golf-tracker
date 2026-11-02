@@ -637,8 +637,9 @@
   /* --gg-row-h is set by ggFitRows() so all 20 rows fit the screen without scrolling */
   .gg-table tr { height: var(--gg-row-h, 44px); }
   .gg-col-first { width: 11%; }
-  .gg-band-a td { background: var(--paper); }
-  .gg-band-b td { background: var(--paper-alt); }
+  .gg-band-a td { background: var(--card); }
+  /* mixing in --ink darkens the band in light mode and lightens it in dark mode */
+  .gg-band-b td { background: color-mix(in srgb, var(--paper-alt), var(--ink) 14%); }
   .gg-col-label { font-weight: 700; color: var(--ink-2); font-size: 19px; padding: 0 2px; line-height: 1; }
   .gg-cell {
     width: 100%; border: none; background: transparent; color: var(--ink); text-align: center;
